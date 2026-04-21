@@ -1,0 +1,213 @@
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+body {
+        background: linear-gradient(
+        135deg,
+        #F3E8FF,
+        #ECFEFF,
+        #F3E8FF
+    ); 
+        /* Agrega estas líneas: */
+    min-height: 100vh;       /* Obliga al cuerpo a medir el 100% de la altura de la ventana */
+    background-repeat: no-repeat; /* Evita que el fondo se repita si el contenido crece */
+    background-attachment: fixed; /* Opcional: Hace que el fondo se quede fijo al hacer scroll */
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+.dashboard-header {
+    background-color: #fff; /* Fondo blanco para la barra */
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra sutil */
+}
+
+.dashboard-logo {
+    max-height: 150px; /* Asegura que el logo no sea gigante */
+    
+}
+
+/* Quitar los puntos de la lista y el margen por defecto */
+.dashboard-nav-list {
+    list-style: none; 
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-nav-item {
+    margin-left: 20px; /* Espacio entre los items del menú */
+}
+.dashboard-nav-link {
+    text-decoration: none; /* Quitar subrayado */
+    color: #555; /* Color gris oscuro */
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s;
+}
+
+/* --- Estilos Generales del Contenido --- */
+.main-content {
+    max-width: 900px; /* Ancho máximo similar al diseño */
+    margin-top: 40px;
+}
+
+/* Botón volver */
+.back-link {
+    text-decoration: none;
+    color: #111;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+}
+.back-link:hover {
+    color: #555;
+}
+
+
+.flag-circle {
+    width: 60px;           /* 1. Ancho fijo */
+    height: 60px;          /* 2. Alto fijo (igual al ancho) */
+    border-radius: 50%;    /* 3. Círculo perfecto */
+    
+    object-fit: cover;     /* 4. LA CLAVE: Recorta la imagen en lugar de estirarla */
+    object-position: center; /* Centra la bandera en el recorte */
+    
+    /* Opcional: para que se vea más pulido como en el diseño */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+   
+}
+
+.course-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.progress {
+    background-color: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #a855f7, #3b82f6); /* Degradado morado a azul */
+    border-radius: 10px;
+}
+
+/* --- Cartas de Lecciones --- */
+.lessons-section {
+    margin-top: 2rem;
+}
+
+.badge-available {
+    color: #d946ef; /* Color fucsia */
+    font-weight: 600;
+    font-size: 0.9rem;
+    background-color: #fdf4ff;
+    padding: 5px 12px;
+    border-radius: 20px;
+}
+
+.lesson-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s;
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+}
+
+.lesson-title {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    color: #374151;
+}
+
+.lesson-desc {
+    margin-bottom: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+/* Iconos de lección */
+.lesson-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Icono Activo (Círculo azul con borde degradado simulado) */
+.icon-active {
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    position: relative;
+    padding: 2px; /* Grosor del borde */
+}
+.icon-active .inner-circle {
+    width: 100%;
+    height: 100%;
+    background-color: transparent; /* O blanco si quieres borde */
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+/* Icono Bloqueado (Azul claro con candado) */
+.icon-locked {
+    background-color: #93c5fd; /* Azul suave */
+    background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+    opacity: 0.7;
+}
+
+/* Botón Comenzar (Degradado) */
+.btn-primary-gradient {
+    background: linear-gradient(90deg, #a855f7, #06b6d4); /* Morado a Cyan */
+    border: none;
+    color: white;
+    font-weight: 500;
+    padding: 8px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.3s;
+}
+
+.btn-primary-gradient:hover {
+    color: white;
+    opacity: 0.9;
+}
+
+/* Badge Bloqueada */
+.badge-locked {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* --- Consejo Box --- */
+.tip-box {
+   background: linear-gradient(
+        135deg,
+        #F3E8FF,
+        #ECFEFF,
+        #F3E8FF
+    );  /* Cyan muy claro */
+    border: none;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.tip-icon {
+    font-size: 1.5rem;
+}

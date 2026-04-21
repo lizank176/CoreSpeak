@@ -1,0 +1,84 @@
+/* --- Estilos para la página de Configuración --- */
+
+/* Títulos */
+.settings-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Tarjetas */
+.settings-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); /* Sombra muy sutil */
+    background-color: #fff;
+}
+
+/* Inputs Personalizados (Gris claro) */
+.custom-input {
+    background-color: #f3f4f6; /* El gris del diseño */
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s;
+}
+
+.custom-input:focus {
+    background-color: #fff;
+    border-color: #a855f7; /* Borde morado al hacer click */
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    outline: none;
+}
+
+/* Avatar Morado */
+.avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7, #3b82f6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(168, 85, 247, 0.2);
+    flex-shrink: 0;
+}
+
+/* Botón Cancelar (Blanco con borde) */
+.btn-outline-cancel {
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    color: #374151;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.btn-outline-cancel:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+/* Botón Guardar Cambios (Reutilizamos el gradiente, pero centrado) */
+.btn-primary-gradient {
+    /* Si no se carga cursos.css, esto asegura que tenga color */
+    background: linear-gradient(90deg, #a855f7, #06b6d4);
+    border: none;
+    color: white;
+    font-weight: 500;
+    border-radius: 8px;
+}
+.btn-primary-gradient:hover {
+    opacity: 0.9;
+    color: white;
+}
+
+/* Botones pequeños de Preferencias */
+.setting-row .btn {
+    min-width: 100px;
+    border-radius: 8px;
+    font-weight: 500;
+    color: #4b5563;
+    background-color: #fff;
+}

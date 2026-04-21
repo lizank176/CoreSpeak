@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreSpeak — Tu perfil de aprendizaje</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="onboarding-page">
+    <div class="onboarding-bg min-vh-100 py-4 py-md-5 d-flex align-items-center">
+        <div class="container px-3">
+            <div class="onboarding-card mx-auto">
+                <header class="onboarding-header text-center mb-4 pb-3 border-bottom border-light">
+                    <p class="onboarding-brand mb-2"><a href="dashboard.html" class="text-decoration-none text-reset">CoreSpeak</a></p>
+                    <h1 class="onboarding-title h3 mb-2 fw-bold" data-i18n="onboarding.title">Test inicial rápido</h1>
+                    <p class="onboarding-lead text-muted mb-0 small" data-i18n="onboarding.lead">
+                        Así personalizamos tus cursos en el dashboard y los ejercicios con IA.
+                    </p>
+                </header>
+
+                <section class="mb-4">
+                    <label class="onboarding-label" for="onb-ocupacion">
+                        <span class="onboarding-label-icon" aria-hidden="true">◎</span>
+                        <span data-i18n="onboarding.occQ">¿A qué te dedicas?</span>
+                    </label>
+                    <input id="onb-ocupacion" type="text" class="form-control onboarding-input"
+                        data-i18n-placeholder="onboarding.occPh"
+                        placeholder="Ej.: estudiante de medicina, diseñadora UX, enfermero…"
+                        autocomplete="organization-title">
+                </section>
+
+                <section class="mb-4">
+                    <label class="onboarding-label d-block mb-3">
+                        <span class="onboarding-label-icon" aria-hidden="true">◇</span>
+                        <span data-i18n="onboarding.langsQ">¿Qué idiomas quieres aprender?</span>
+                    </label>
+                    <p class="small text-muted mb-3" data-i18n="onboarding.langsHint">Marca uno o varios. Solo esos aparecerán en Mis cursos.</p>
+                    <div class="onb-lang-grid" role="group" aria-label="Idiomas objetivo">
+                        <label class="onb-lang-card">
+                            <input type="checkbox" class="onb-lang visually-hidden" value="en">
+                            <span class="onb-lang-card-inner">
+                                <img src="https://flagcdn.com/w40/gb.png" width="36" height="27" alt="" class="onb-flag rounded-1">
+                                <span class="onb-lang-name" data-i18n="onboarding.langEn">Inglés</span>
+                            </span>
+                        </label>
+                        <label class="onb-lang-card">
+                            <input type="checkbox" class="onb-lang visually-hidden" value="es">
+                            <span class="onb-lang-card-inner">
+                                <img src="https://flagcdn.com/w40/es.png" width="36" height="27" alt="" class="onb-flag rounded-1">
+                                <span class="onb-lang-name" data-i18n="onboarding.langEs">Español</span>
+                            </span>
+                        </label>
+                        <label class="onb-lang-card">
+                            <input type="checkbox" class="onb-lang visually-hidden" value="fr">
+                            <span class="onb-lang-card-inner">
+                                <img src="https://flagcdn.com/w40/fr.png" width="36" height="27" alt="" class="onb-flag rounded-1">
+                                <span class="onb-lang-name" data-i18n="onboarding.langFr">Francés</span>
+                            </span>
+                        </label>
+                        <label class="onb-lang-card">
+                            <input type="checkbox" class="onb-lang visually-hidden" value="de">
+                            <span class="onb-lang-card-inner">
+                                <img src="https://flagcdn.com/w40/de.png" width="36" height="27" alt="" class="onb-flag rounded-1">
+                                <span class="onb-lang-name" data-i18n="onboarding.langDe">Alemán</span>
+                            </span>
+                        </label>
+                        <label class="onb-lang-card">
+                            <input type="checkbox" class="onb-lang visually-hidden" value="uk">
+                            <span class="onb-lang-card-inner">
+                                <img src="https://flagcdn.com/w40/ua.png" width="36" height="27" alt="" class="onb-flag rounded-1">
+                                <span class="onb-lang-name" data-i18n="onboarding.langUk">Ucraniano</span>
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="mb-4 onboarding-levels-section">
+                    <label class="onboarding-label d-block mb-2">
+                        <span class="onboarding-label-icon" aria-hidden="true">▤</span>
+                        <span data-i18n="onboarding.levelSection">Nivel actual por idioma</span> <span class="fw-normal text-muted" data-i18n="onboarding.levelOptional">(opcional)</span>
+                    </label>
+                    <p class="small text-muted mb-3" data-i18n="onboarding.levelHint">Solo se muestran los idiomas que marcaste arriba. Marco CEFR.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6 col-lg-4 onb-level-row d-none" data-lang="en">
+                            <div class="onb-level-field">
+                                <label class="onb-level-label" for="lvl-en" data-i18n="onboarding.langEn">Inglés</label>
+                                <select id="lvl-en" class="form-select onboarding-select">
+                                    <option value="">Nivel —</option>
+                                    <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 onb-level-row d-none" data-lang="es">
+                            <div class="onb-level-field">
+                                <label class="onb-level-label" for="lvl-es" data-i18n="onboarding.langEs">Español</label>
+                                <select id="lvl-es" class="form-select onboarding-select">
+                                    <option value="">Nivel —</option>
+                                    <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 onb-level-row d-none" data-lang="fr">
+                            <div class="onb-level-field">
+                                <label class="onb-level-label" for="lvl-fr" data-i18n="onboarding.langFr">Francés</label>
+                                <select id="lvl-fr" class="form-select onboarding-select">
+                                    <option value="">Nivel —</option>
+                                    <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 onb-level-row d-none" data-lang="de">
+                            <div class="onb-level-field">
+                                <label class="onb-level-label" for="lvl-de" data-i18n="onboarding.langDe">Alemán</label>
+                                <select id="lvl-de" class="form-select onboarding-select">
+                                    <option value="">Nivel —</option>
+                                    <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 onb-level-row d-none" data-lang="uk">
+                            <div class="onb-level-field">
+                                <label class="onb-level-label" for="lvl-uk" data-i18n="onboarding.langUk">Ucraniano</label>
+                                <select id="lvl-uk" class="form-select onboarding-select">
+                                    <option value="">Nivel —</option>
+                                    <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <button id="onboarding-save-btn" type="button" class="btn onboarding-submit w-100 py-3 fw-semibold" data-i18n="onboarding.save">
+                    Guardar y continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

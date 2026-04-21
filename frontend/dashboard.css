@@ -1,0 +1,225 @@
+/* Estilos personalizados para ajustar detalles */
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+body {
+        background: linear-gradient(
+        135deg,
+        #F3E8FF,
+        #ECFEFF,
+        #F3E8FF
+    ); 
+        /* Agrega estas líneas: */
+    min-height: 100vh;       /* Obliga al cuerpo a medir el 100% de la altura de la ventana */
+    background-repeat: no-repeat; /* Evita que el fondo se repita si el contenido crece */
+    background-attachment: fixed; /* Opcional: Hace que el fondo se quede fijo al hacer scroll */
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+.dashboard-header {
+    background-color: #fff; /* Fondo blanco para la barra */
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra sutil */
+}
+
+.dashboard-logo {
+    max-height: 150px; /* Asegura que el logo no sea gigante */
+    
+}
+
+/* Quitar los puntos de la lista y el margen por defecto */
+.dashboard-nav-list {
+    list-style: none; 
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-nav-item {
+    margin-left: 20px; /* Espacio entre los items del menú */
+}
+
+.dashboard-nav-link {
+    text-decoration: none; /* Quitar subrayado */
+    color: #555; /* Color gris oscuro */
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s;
+}
+
+.dashboard-nav-link:hover {
+    color: #000; /* Color al pasar el mouse */
+}
+
+/* Espacio entre el icono y el texto */
+.dashboard-nav-link svg {
+    margin-right: 8px; 
+}
+
+.saludo-section {
+    margin-top: 20px;
+}
+
+.config-card {
+    margin-bottom: 40px; /* Espacio debajo de las tarjetas */
+    margin-top:20px;
+}
+/* Estilos para las tarjetas de estadísticas */
+.stat-card {
+    border: none;
+    border-radius: 15px; /* Bordes redondeados */
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); /* Sombra muy suave */
+    transition: transform 0.2s; /* Animación al pasar el mouse */
+}
+
+.stat-card:hover {
+    transform: translateY(-3px); /* Efecto de elevación al pasar el mouse */
+}
+
+/* Estilo para los círculos de los iconos */
+.icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%; /* Hace que sea un círculo perfecto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Colores específicos para cada icono */
+.bg-blue {
+    background: linear-gradient(135deg, #AD46FF, #00D3F2); /* Azul/Violeta */
+}
+
+.bg-orange {
+    background: linear-gradient(135deg, #FF6900, #FB64B6); /* Naranja/Rojo */
+}
+
+.bg-green {
+    background: linear-gradient(135deg, #00C950, #00D492); /* Verde/Turquesa */
+}
+
+.bg-agenda {
+    background: linear-gradient(135deg, #7c3aed, #f472b6 55%, #22d3ee);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+}
+
+.agenda-card-teaser {
+    position: relative;
+    overflow: hidden;
+}
+
+.agenda-card-teaser::after {
+    content: "";
+    position: absolute;
+    inset: -40% 60% auto -20%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(244, 114, 182, 0.15) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+/* Banderas redondas y grandes */
+.flag-img-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 15px auto; /* Centrado */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Efecto relieve/glossy */
+}
+
+.flag-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.course-card{
+    
+    border: none;
+    border-radius: 15px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    padding: 15px;
+    transition: transform 0.2s;
+}
+.course-title {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.course-subtitle {
+    color: #717182;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* Barra de progreso */
+.progress-bg {
+    background-color: #e5e7eb;
+    height: 8px;
+    border-radius: 10px;
+    width: 100%;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    /* Gradiente diferente según el idioma si quieres, o uno genérico */
+    background: linear-gradient(90deg, #fb2c36 0%, #f0b100 100%); 
+}
+
+/* Botón gradiente */
+.btn-gradient {
+    background: linear-gradient(90deg, rgba(173, 70, 255, 1) 0%, rgba(0, 211, 242, 1) 100%);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    width: 100%;
+    padding: 8px 0;
+    font-weight: 500;
+    transition: opacity 0.3s;
+}
+
+.btn-gradient:hover {
+    opacity: 0.9;
+    color: white;
+}
+
+/* --- Ajustes del Carrusel de Bootstrap --- */
+/* Flechas de control oscuras y posicionadas fuera */
+.carousel-control-prev, .carousel-control-next {
+    width: 5%; 
+    filter: invert(100%); /* Hace las flechas negras */
+}
+.carousel-control-prev { margin-left: 0; }
+.carousel-control-next { margin-right: 0; }
+
+.carousel-inner {
+    padding: 10px; /* Espacio para la sombra de las tarjetas */
+}
+a{
+    text-decoration: none;
+    color: #eee;
+}
+
+/* Foto opcional por ejercicio del catálogo (vista lección) */
+.lesson-exercise-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+}

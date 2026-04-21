@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoreSpeak — Reto diario</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+          keyframes: {
+            'streak-pop': {
+              '0%, 100%': { boxShadow: '0 0 0 0 rgba(251, 146, 60, 0)' },
+              '50%': { boxShadow: '0 0 24px 8px rgba(251, 146, 60, 0.55)' },
+            },
+          },
+          animation: { 'streak-pop': 'streak-pop 0.9s ease-in-out 2' },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    @keyframes bubble-in {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-bubble-in { animation: bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans text-slate-100 antialiased">
+  <div class="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-8 pt-4">
+    <!-- Gamificación -->
+    <div class="mb-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span id="streak-badge" class="flex shrink-0 items-center gap-1 rounded-xl bg-orange-500/20 px-2.5 py-1.5 text-sm font-bold text-orange-200 ring-1 ring-orange-500/30 transition-shadow" title="Racha de días seguidos">
+            <span aria-hidden="true" class="text-lg leading-none">🔥</span>
+            <span id="streak-count">0</span>
+          </span>
+          <div class="min-w-0">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500">Nivel <span id="level-num" class="text-sky-300">1</span></div>
+            <div class="truncate text-xs text-slate-400"><span id="lang-label">—</span> · <span id="xp-label">0</span> XP</div>
+          </div>
+        </div>
+        <a href="dashboard.html" class="shrink-0 text-xs text-sky-400/90 hover:text-sky-300">Panel →</a>
+      </div>
+      <div class="h-2 overflow-hidden rounded-full bg-slate-800">
+        <div id="xp-bar" class="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-500 ease-out" style="width: 0%"></div>
+      </div>
+      <p id="xp-subline" class="mt-1 text-center text-[11px] text-slate-500"></p>
+    </div>
+
+    <header class="mb-2 flex items-center justify-between gap-3">
+      <span id="priority-pill" class="hidden max-w-[70%] truncate rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs text-sky-200/90"></span>
+    </header>
+
+    <div class="mb-2 flex items-center gap-3">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg shadow-lg shadow-sky-900/40" aria-hidden="true">✦</div>
+      <div>
+        <h1 class="text-lg font-semibold tracking-tight text-white">Tutor CoreSpeak</h1>
+        <p class="text-xs text-slate-400">Micro-reto del día (~5 min)</p>
+      </div>
+    </div>
+
+    <div id="status-line" class="mb-2 min-h-[1.25rem] text-center text-sm text-amber-300/90"></div>
+    <div id="toast-line" class="mb-2 hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-200"></div>
+
+    <main id="chat-thread" class="flex flex-1 flex-col gap-3 overflow-y-auto rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-inner backdrop-blur-sm" style="max-height: min(52vh, 480px);" aria-live="polite"></main>
+
+    <div class="mt-4 flex gap-2 rounded-2xl border border-white/10 bg-slate-900/60 p-2 shadow-xl backdrop-blur-md">
+      <label class="sr-only" for="user-reply">Tu respuesta</label>
+      <input id="user-reply" type="text" autocomplete="off" placeholder="Escribe tu respuesta…"
+        class="min-w-0 flex-1 rounded-xl border-0 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50" />
+      <button type="button" id="send-reply"
+        class="shrink-0 rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50">
+        Enviar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const TOKEN_KEY = "corespeak_token";
+      const USER_ID_KEY = "corespeak_user_id";
+      const XP_CAP = 100;
+
+      function getApiOrigin() {
+        try {
+          if (window.CORESPEAK_API_ORIGIN != null && String(window.CORESPEAK_API_ORIGIN).trim() !== "") {
+            return String(window.CORESPEAK_API_ORIGIN).replace(/\/$/, "");
+          }
+          const loc = window.location;
+          if (loc.protocol === "file:" || loc.hostname === "") return "http://127.0.0.1:8000";
+          const isLocal = loc.hostname === "localhost" || loc.hostname === "127.0.0.1";
+          if (isLocal && loc.port && loc.port !== "8000") {
+            return loc.protocol + "//" + loc.hostname + ":8000";
+          }
+        } catch (e) {}
+        return "";
+      }
+
+      function apiUrl(path) {
+        if (!path.startsWith("/")) path = "/" + path;
+        const o = getApiOrigin();
+        return o ? o + path : path;
+      }
+
+      function requireAuth() {
+        const token = localStorage.getItem(TOKEN_KEY);
+        const userId = localStorage.getItem(USER_ID_KEY);
+        if (!token || !userId || !/^-?\d+$/.test(String(userId).trim())) {
+          window.location.href = "inicio_session.html";
+          return null;
+        }
+        return { token, userId: parseInt(String(userId).trim(), 10) };
+      }
+
+      function applyGamification(g) {
+        if (!g) return;
+        const streak = document.getElementById("streak-count");
+        const level = document.getElementById("level-num");
+        const xpLab = document.getElementById("xp-label");
+        const bar = document.getElementById("xp-bar");
+        const sub = document.getElementById("xp-subline");
+        if (streak) streak.textContent = String(g.streak_days ?? 0);
+        if (level) level.textContent = String(g.current_level ?? 1);
+        if (xpLab) xpLab.textContent = String(g.total_xp ?? 0);
+        const xin = Number(g.xp_in_current_level ?? 0);
+        const pct = Math.min(100, Math.round((xin / XP_CAP) * 100));
+        if (bar) bar.style.width = pct + "%";
+        if (sub) {
+          const need = g.xp_to_next_level != null ? g.xp_to_next_level : XP_CAP - xin;
+          sub.textContent = need ? need + " XP hasta el siguiente nivel" : "";
+        }
+      }
+
+      function setInputPlaceholder(lang) {
+        const input = document.getElementById("user-reply");
+        if (!input) return;
+        const ph = { en: "Type your answer…", es: "Escribe tu respuesta…", fr: "Écris ta réponse…", de: "Schreib deine Antwort…" };
+        input.placeholder = ph[lang] || ph.en;
+      }
+
+      function appendTutorBubble(text) {
+        const thread = document.getElementById("chat-thread");
+        if (!thread || text == null) return;
+        const wrap = document.createElement("div");
+        wrap.className = "flex justify-start opacity-0";
+        wrap.innerHTML =
+          '<div class="max-w-[92%] rounded-2xl rounded-tl-md border border-sky-500/20 bg-gradient-to-br from-slate-800 to-slate-800/80 px-4 py-3 text-sm leading-relaxed text-slate-100 shadow-lg">' +
+          '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-400/90">Tutor IA</div>' +
+          '<div class="whitespace-pre-wrap chat-body"></div></div>';
+        thread.appendChild(wrap);
+        requestAnimationFrame(() => {
+          wrap.classList.add("animate-bubble-in");
+          wrap.style.opacity = "";
+          const body = wrap.querySelector(".chat-body");
+          if (body) body.textContent = text;
+        });
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      function appendUserBubble(text) {
+        const thread = document.getElementById("chat-thread");
+        if (!thread) return;
+        const wrap = document.createElement("div");
+        wrap.className = "flex justify-end animate-bubble-in";
+        wrap.innerHTML =
+          '<div class="max-w-[85%] rounded-2xl rounded-tr-md border border-white/10 bg-sky-600/25 px-4 py-3 text-sm text-slate-100">' +
+          '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-200/70">Tú</div>' +
+          '<div class="whitespace-pre-wrap"></div></div>';
+        wrap.querySelector("div div:last-child").textContent = text;
+        thread.appendChild(wrap);
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      function appendFeedbackBubble(text, ok) {
+        const thread = document.getElementById("chat-thread");
+        if (!thread) return;
+        const wrap = document.createElement("div");
+        wrap.className = "flex justify-start animate-bubble-in";
+        const border = ok ? "border-emerald-500/30 bg-emerald-950/40" : "border-amber-500/25 bg-amber-950/30";
+        wrap.innerHTML =
+          '<div class="max-w-[92%] rounded-2xl rounded-tl-md border px-4 py-3 text-sm leading-relaxed ' + border + '">' +
+          '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider ' + (ok ? "text-emerald-400" : "text-amber-400") + '">CoreSpeak</div>' +
+          '<div class="whitespace-pre-wrap"></div></div>';
+        wrap.querySelector("div div:last-child").textContent = text;
+        thread.appendChild(wrap);
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      function flashStreak() {
+        const el = document.getElementById("streak-badge");
+        if (!el) return;
+        el.classList.add("animate-streak-pop", "ring-2", "ring-orange-400");
+        setTimeout(() => {
+          el.classList.remove("animate-streak-pop", "ring-2", "ring-orange-400");
+        }, 2000);
+      }
+
+      window.__dailyChallenge = { expected: "", loaded: false };
+
+      async function loadChallenge() {
+        const auth = requireAuth();
+        if (!auth) return;
+
+        const status = document.getElementById("status-line");
+        const toast = document.getElementById("toast-line");
+        const pill = document.getElementById("priority-pill");
+        const thread = document.getElementById("chat-thread");
+        if (toast) {
+          toast.classList.add("hidden");
+          toast.textContent = "";
+        }
+        if (thread) thread.innerHTML = "";
+        if (status) {
+          status.textContent = "Generando tu reto personalizado…";
+          status.classList.remove("hidden");
+        }
+
+        const url = apiUrl("/get-daily-challenge/" + auth.userId);
+        let res;
+        try {
+          res = await fetch(url, { headers: { Authorization: "Bearer " + auth.token } });
+        } catch (e) {
+          if (status) status.textContent = "No se pudo conectar con el servidor.";
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const d = data.detail;
+          if (status) status.textContent = typeof d === "string" ? d : "Error al cargar el reto.";
+          return;
+        }
+
+        if (status) status.textContent = "";
+        window.__dailyChallenge.loaded = true;
+
+        const lang = (data.idioma_estudio || "en").toLowerCase().slice(0, 2);
+        const langName = data.idioma_estudio_nombre || "English";
+        const ll = document.getElementById("lang-label");
+        if (ll) ll.textContent = langName;
+
+        setInputPlaceholder(lang);
+
+        const cj = data.challenge_json || {};
+        window.__dailyChallenge.expected = String(cj.respuesta_esperada || "").trim();
+
+        if (data.gamification) applyGamification(data.gamification);
+
+        const pr = data.prioridad || {};
+        if (pill && pr.categoria) {
+          pill.classList.remove("hidden");
+          pill.textContent = (pr.modo === "prioridad" ? "Prioridad: " : pr.modo === "refuerzo" ? "Refuerzo: " : "Tema: ") + pr.categoria;
+        }
+
+        const msgs = Array.isArray(data.messages) ? data.messages : [];
+        for (let i = 0; i < msgs.length; i++) {
+          const m = msgs[i];
+          if (m && m.role === "tutor" && m.text) {
+            await new Promise((r) => setTimeout(r, 280 + i * 120));
+            appendTutorBubble(String(m.text));
+          }
+        }
+
+        const sendBtn = document.getElementById("send-reply");
+        if (sendBtn) sendBtn.disabled = false;
+      }
+
+      async function submitReply() {
+        const auth = requireAuth();
+        if (!auth) return;
+        const input = document.getElementById("user-reply");
+        const t = (input && input.value || "").trim();
+        if (!t) return;
+
+        if (!window.__dailyChallenge.loaded) {
+          alert("Espera a que cargue el reto.");
+          return;
+        }
+        const exp = window.__dailyChallenge.expected;
+        if (!exp) {
+          alert("Este reto no trae respuesta esperada. Recarga la página.");
+          return;
+        }
+
+        appendUserBubble(t);
+        if (input) input.value = "";
+
+        const sendBtn = document.getElementById("send-reply");
+        if (sendBtn) sendBtn.disabled = true;
+
+        const toast = document.getElementById("toast-line");
+        let res;
+        try {
+          res = await fetch(apiUrl("/submit-daily-challenge/" + auth.userId), {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + auth.token,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ answer: t, respuesta_esperada: exp }),
+          });
+        } catch (e) {
+          if (sendBtn) sendBtn.disabled = false;
+          appendFeedbackBubble("Error de red al enviar.", false);
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (sendBtn) sendBtn.disabled = false;
+          const d = data.detail;
+          appendFeedbackBubble(typeof d === "string" ? d : "Error al enviar.", false);
+          return;
+        }
+
+        const ok = !!data.correcto;
+        appendFeedbackBubble(data.feedback || (ok ? "¡Bien!" : "Sigue practicando."), ok);
+
+        if (data.gamification) {
+          applyGamification(data.gamification);
+          if (ok) {
+            flashStreak();
+            if (toast && data.gamification.celebration_message) {
+              toast.textContent = data.gamification.celebration_message;
+              toast.classList.remove("hidden");
+            }
+          }
+        }
+
+        if (sendBtn) sendBtn.disabled = false;
+      }
+
+      document.getElementById("send-reply")?.addEventListener("click", () => void submitReply());
+      document.getElementById("user-reply")?.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          void submitReply();
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", () => void loadChallenge());
+    })();
+  </script>
+</body>
+</html>

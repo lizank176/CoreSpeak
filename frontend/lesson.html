@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreSpeak - Lesson</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="dashboard-header">
+            <div class="container-fluid">
+                <nav class="dashboard-nav d-flex">
+                    <div class="col-md-1 col-lg-3">
+                        <a href="dashboard.html" class="text-decoration-none"><img src="img/logo.png" alt="CoreSpeak Logo" class="dashboard-logo"></a>
+                    </div>
+                    <div class="col-md-9 col-lg-8">
+                        <ul class="dashboard-nav-list d-flex justify-content-end align-items-center h-100">
+                            <li class="dashboard-nav-item">
+                                <a href="dashboard.html" class="dashboard-nav-link" id="lesson-back-link" data-i18n="back">Volver</a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <h3 id="lesson-title">Lesson</h3>
+        <p class="text-muted" id="lesson-meta-line"></p>
+
+        <div class="row g-4 mt-2" id="lesson-skills-list"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

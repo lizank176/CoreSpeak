@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlmodel
+PyMySQL
+python-dotenv
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+email-validator
+jinja2
+httpx
+stripe
+

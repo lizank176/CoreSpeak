@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreSpeak - Practice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="cursos.css">
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="dashboard-header">
+            <div class="container-fluid">
+                <nav class="dashboard-nav d-flex">
+                    <div class="col-md-1 col-lg-3 ">
+                        <a href="dashboard.html" class="text-decoration-none"><img src="img/logo.png" alt="CoreSpeak Logo" class="dashboard-logo"></a>
+                    </div>
+                    <div class="col-md-9 col-lg-8 ">
+                        <ul class="dashboard-nav-list d-flex justify-content-end align-items-center h-100">
+                            <li class="dashboard-nav-item">
+                                <a href="dashboard.html" class="dashboard-nav-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                                    </svg>
+                                    <span data-i18n="practice.backDash">Volver</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="container main-content text-center mt-4">
+        <div class="row mb-3">
+            <div class="col-12">
+                <h3 class="mb-2" data-i18n="practice.title">Practice con IA</h3>
+                <div class="text-muted">
+                    <span data-i18n="practice.skillPrefix">Skill:</span> <span id="practice-skill">-</span>
+                </div>
+                <div id="chat-settings" class="mt-2" style="display:none;">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <select id="chat-lang" class="form-select" style="max-width:160px;">
+                            <option value="en" selected>English</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="uk">Українська</option>
+                        </select>
+                        <select id="chat-level" class="form-select" style="max-width:120px;">
+                            <option value="A1">A1</option>
+                            <option value="A2">A2</option>
+                            <option value="B1" selected>B1</option>
+                            <option value="B2">B2</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card question-card mx-auto mb-4 grammar-practice-card" style="max-width: 800px;">
+            <div class="card-body p-4 p-md-5 text-start" style="max-height: 85vh; overflow-y: auto;">
+                <div id="practice-audio-wrap" class="mb-3" style="display:none;">
+                    <div class="text-muted small mb-2" data-i18n="practice.audioListening">Audio (listening)</div>
+                    <audio id="practice-audio" controls></audio>
+                </div>
+
+                <div id="practice-chat-wrap" class="mb-3" style="display:none;">
+                    <div id="chat-container" class="chat-container"></div>
+                </div>
+
+                <h4 id="practice-question" class="mb-3" style="white-space: pre-line;" data-i18n="practice.loading">Cargando...</h4>
+
+                <div id="answer-wrap" class="mb-3"></div>
+
+                <div id="feedback-box" class="text-muted mb-3" style="min-height: 24px;"></div>
+
+                <div class="d-flex gap-2">
+                    <button id="submit-practice-btn" class="btn btn-check-answer w-100" type="button" data-i18n="practice.send">
+                        Enviar respuesta
+                    </button>
+                    <button id="generate-practice-btn" class="btn btn-primary w-100" type="button" data-i18n="practice.generateAnother">
+                        Generar otro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .chat-container {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 14px;
+            padding: 12px;
+            min-height: 140px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .chat-row {
+            display: flex;
+            margin: 8px 0;
+        }
+        .chat-row.ai {
+            justify-content: flex-start;
+        }
+        .chat-row.user {
+            justify-content: flex-end;
+        }
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            max-width: 85%;
+            white-space: pre-line;
+            line-height: 1.25;
+            font-size: 14px;
+        }
+        .chat-bubble.ai {
+            background: #f1f3f5;
+            color: #111;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .chat-bubble.user {
+            background: #0d6efd;
+            color: #fff;
+            border: 1px solid rgba(13,110,253,0.35);
+        }
+        .chat-bubble.placeholder {
+            background: #ffffff;
+            color: #6c757d;
+            border: 1px dashed rgba(0,0,0,0.18);
+        }
+        .chat-meta {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 0 6px 2px 6px;
+        }
+        .grammar-gap-select {
+            max-width: 7.5rem;
+            vertical-align: middle;
+        }
+        .grammar-dialogue-list li {
+            line-height: 1.6;
+        }
+        .grammar-practice-card .grammar-gap-lines li,
+        .grammar-practice-card .grammar-conversation {
+            line-height: 1.65;
+        }
+    </style>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

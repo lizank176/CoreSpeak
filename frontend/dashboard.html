@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icon-css@3.5.0/css/flag-icon.min.css"/>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="dashboard-header">
+            <div class="container-fluid">
+                <nav class="  dashboard-nav d-flex  "> 
+                    
+                    <!-- Logo a la izquierda -->
+                    <div class="col-md-1 col-lg-3 ">
+                        <!-- Asegúrate de que la ruta de tu imagen sea correcta -->
+                        <a href="dashboard.html" class="text-decoration-none"><img src="img/logo.png" alt="CoreSpeak Logo" class="dashboard-logo"></a>
+                    </div>
+
+                    <!-- Menú a la derecha -->
+                    <div class="col-md-9 col-lg-8 ">
+                        <ul class="dashboard-nav-list d-flex justify-content-end align-items-center h-100">
+                            <li class="dashboard-nav-item d-none" id="admin-nav-wrap">
+                                <a href="admin.html" class="dashboard-nav-link text-warning">
+                                    <span aria-hidden="true">⚙</span> Admin
+                                </a>
+                            </li>
+                            <li class="dashboard-nav-item">
+                                <button id="dashboard-nav-premium-btn" type="button" class="dashboard-nav-link btn btn-link text-decoration-none p-0">
+                                    Premium
+                                </button>
+                            </li>
+                            <li class="dashboard-nav-item">
+                                <a href="configuracion.html" class="dashboard-nav-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                                        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+                                        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+                                    </svg>
+                                    <span data-i18n="nav.settings">Configuración</span>
+                                </a>
+                            </li>
+                            <li class="dashboard-nav-item">
+                                <a href="#" class="dashboard-nav-link corespeak-logout" role="button">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>
+                                    </svg>
+                                    <span data-i18n="nav.logout">Cerrar sesión</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <div class=" dashboard-content row p-4">
+            <!-- Sección de saludo -->
+            <div class="mb-4 saludo-section">
+                <h1><span data-i18n="dashboard.greetingHi">¡Hola,</span> <span id="user-name">Usuario</span>!</h1>
+                <p data-i18n="dashboard.journey">Continúa tu viaje de aprendizaje</p>
+            </div>
+            <div id="dashboard-premium-cta" class="alert alert-warning d-none mb-4" role="region" aria-live="polite">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h5 class="mb-1">Hazte Premium</h5>
+                        <p class="mb-0">Desbloquea idiomas ilimitados, feedback avanzado y contenido exclusivo.</p>
+                    </div>
+                    <div class="d-flex flex-column align-items-stretch align-items-md-end gap-2">
+                        <button id="dashboard-premium-btn" type="button" class="btn btn-primary">Obtener Premium</button>
+                        <small id="dashboard-premium-msg" class="text-danger d-none"></small>
+                    </div>
+                </div>
+            </div>
+            <!-- Sección de Tarjetas (Grid) -->
+            <div class=" row g-4 config-card"> <!-- g-4 añade espacio entre las tarjetas -->    
+                <!-- Tarjeta 1: Reto diario -->
+                <div class="col-md-4">
+                    <a href="index.html">
+                    <div class="card stat-card p-3">
+                       
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-blue">
+                                <!-- Icono Trofeo -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" class="bi bi-trophy" viewBox="0 0 16 16">
+                                <path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935M3.504 1q.01.775.056 1.469c.13 2.028.457 3.546.87 4.667C5.294 9.48 6.484 10 7 10a.5.5 0 0 1 .5.5v2.61a1 1 0 0 1-.757.97l-1.426.356a.5.5 0 0 0-.179.085L4.5 15h7l-.638-.479a.5.5 0 0 0-.18-.085l-1.425-.356a1 1 0 0 1-.757-.97V10.5A.5.5 0 0 1 9 10c.516 0 1.706-.52 2.57-2.864.413-1.12.74-2.64.87-4.667q.045-.694.056-1.469z"/>
+                                </svg>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-0 fw-bold" data-i18n="dashboard.dailyTitle">Reto diario</h5>
+                                <small class="text-secondary" data-i18n="dashboard.dailySub">Completa tu desafío hoy</small>
+                            </div>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+
+                <!-- Tarjeta 2: Racha -->
+                <div class="col-md-4">
+                    <div class="card stat-card p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-orange">
+                                <!-- Icono Calendario -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16">
+                                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                                    <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                </svg>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-0 fw-bold" data-i18n="dashboard.streakTitle">Racha</h5>
+                                <small class="text-secondary" id="stat-streak">0 dias consecutivos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: Agenda (vocabulario) -->
+                <div class="col-md-4">
+                    <a href="agenda.html">
+                    <div class="card stat-card p-3 agenda-card-teaser">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-agenda">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M5 10.5A.5.5 0 0 1 5.5 10h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.5a.5.5 0 0 1-.5-.5v-1zm0-2.5A.5.5 0 0 1 5.5 8h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.5a.5.5 0 0 1-.5-.5v-1zm0-2.5A.5.5 0 0 1 5.5 5.5h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.5a.5.5 0 0 1-.5-.5v-1zm0-2.5A.5.5 0 0 1 5.5 3h.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.5a.5.5 0 0 1-.5-.5v-1z"/>
+                                    <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+                                    <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
+                                </svg>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-0 fw-bold text-dark" data-i18n="dashboard.agendaTitle">Agenda</h5>
+                                <small class="text-secondary" data-i18n="dashboard.agendaSub">Palabras y significados</small>
+                            </div>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+               
+            </div>
+
+        <h3 class="mb-2" data-i18n="dashboard.myCourses">Mis cursos</h3>
+        <p class="text-muted mb-3" id="courses-mis-subtitle">Solo los idiomas que marcaste como objetivo al registrarte.</p>
+        <div id="courses-mis-row" class="row g-4 mb-5"></div>
+
+        <div id="courses-otros-section">
+            <h3 class="mb-2" data-i18n="dashboard.otherCourses">Otros cursos</h3>
+            <p class="text-muted mb-3" id="courses-otros-intro">
+                Estos idiomas no forman parte de tu selección actual; igual puedes abrirlos cuando te apetezca ampliar horizontes.
+            </p>
+            <div id="courses-otros-row" class="row g-4"></div>
+        </div>
+
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    
+</body>
+</html>
