@@ -167,7 +167,8 @@ function injectLanguageSelectors(currentLang) {
   document.querySelectorAll("ul.dashboard-nav-list").forEach((ul) => {
     if (ul.querySelector(".corespeak-ui-lang-select")) return;
     const li = document.createElement("li");
-    li.className = "dashboard-nav-item align-self-center me-2 me-md-3";
+    li.className =
+      "dashboard-nav-item align-self-center me-2 me-md-3 d-none d-lg-flex align-items-center";
     const label = document.createElement("label");
     label.className = "dashboard-nav-link mb-0 d-flex align-items-center gap-2";
     const sp = document.createElement("span");
@@ -182,7 +183,7 @@ function injectLanguageSelectors(currentLang) {
   const nav = document.querySelector("nav.dashboard-nav");
   if (nav && !document.querySelector(".corespeak-ui-lang-select")) {
     const wrap = document.createElement("div");
-    wrap.className = "ms-auto d-flex align-items-center pe-2 pe-md-3";
+    wrap.className = "ms-auto d-none d-lg-flex align-items-center pe-2 pe-md-3";
     const label = document.createElement("label");
     label.className = "d-flex align-items-center gap-2 mb-0 small";
     const sp = document.createElement("span");
@@ -196,7 +197,7 @@ function injectLanguageSelectors(currentLang) {
 
   if (!document.querySelector(".corespeak-ui-lang-select") && document.body) {
     const bar = document.createElement("div");
-    bar.className = "position-fixed top-0 end-0 p-2 p-md-3";
+    bar.className = "position-fixed top-0 end-0 p-2 p-md-3 d-none d-lg-block";
     bar.style.zIndex = "1080";
     const label = document.createElement("label");
     label.className = "d-flex align-items-center gap-2 mb-0 small bg-white shadow-sm rounded px-2 py-1 border";
@@ -2020,9 +2021,14 @@ async function loadMyProgress() {
     const n = profile && profile.nombre != null ? String(profile.nombre).trim() : "";
     if (n) displayName = n;
   }
+  const isAdmin = !!(profile && profile.is_admin);
   const adminNav = document.getElementById("admin-nav-wrap");
   if (adminNav) {
-    adminNav.classList.toggle("d-none", !(profile && profile.is_admin));
+    adminNav.classList.toggle("d-none", !isAdmin);
+  }
+  const adminMobileLi = document.getElementById("admin-nav-mobile-li");
+  if (adminMobileLi) {
+    adminMobileLi.classList.toggle("d-none", !isAdmin);
   }
 
   const res = await fetch(apiUrl("/api/users/" + auth.userId + "/progress"), { headers });

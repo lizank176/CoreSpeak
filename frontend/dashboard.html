@@ -23,7 +23,7 @@
                     <!-- Menú a la derecha -->
                     <div class="col-md-9 col-lg-8 flex-grow-1 min-w-0">
                         <ul class="dashboard-nav-list d-flex flex-wrap justify-content-md-end justify-content-start align-items-center h-100 gap-1 gap-md-2">
-                            <li class="dashboard-nav-item d-none" id="admin-nav-wrap">
+                            <li class="dashboard-nav-item d-none d-lg-block" id="admin-nav-wrap">
                                 <a href="admin.html" class="dashboard-nav-link text-warning">
                                     <span aria-hidden="true">⚙</span> Admin
                                 </a>
@@ -45,7 +45,19 @@
                                     </span>
                                 </button>
                             </li>
-                            <li class="dashboard-nav-item">
+                            <li class="dashboard-nav-item dropdown d-lg-none ms-auto align-self-center">
+                                <button class="btn btn-light border dashboard-nav-more-btn rounded-3" type="button" id="dashboard-nav-more" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" aria-label="Menú">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                                    </svg>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dashboard-nav-more">
+                                    <li id="admin-nav-mobile-li" class="d-none"><a class="dropdown-item text-warning fw-medium" href="admin.html"><span aria-hidden="true">⚙</span> Admin</a></li>
+                                    <li><a class="dropdown-item" href="configuracion.html"><span data-i18n="nav.settings">Configuración</span></a></li>
+                                    <li><a class="dropdown-item corespeak-logout" href="#" role="button"><span data-i18n="nav.logout">Cerrar sesión</span></a></li>
+                                </ul>
+                            </li>
+                            <li class="dashboard-nav-item d-none d-lg-block">
                                 <a href="configuracion.html" class="dashboard-nav-link">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
                                         <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
@@ -54,7 +66,7 @@
                                     <span data-i18n="nav.settings">Configuración</span>
                                 </a>
                             </li>
-                            <li class="dashboard-nav-item">
+                            <li class="dashboard-nav-item d-none d-lg-block">
                                 <a href="#" class="dashboard-nav-link corespeak-logout" role="button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
                                         <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>

@@ -54,6 +54,24 @@ body {
     color: #000; /* Color al pasar el mouse */
 }
 
+/* Menú hamburguesa (móvil): legible sobre fondo claro del dropdown */
+.dashboard-nav-list .dropdown-menu {
+    min-width: 12rem;
+    border-radius: 0.75rem;
+}
+.dashboard-nav-list .dropdown-menu .dropdown-item {
+    color: #1e293b;
+}
+.dashboard-nav-list .dropdown-menu .dropdown-item:hover,
+.dashboard-nav-list .dropdown-menu .dropdown-item:focus {
+    color: #0f172a;
+    background-color: #f1f5f9;
+}
+.dashboard-nav-more-btn {
+    line-height: 1;
+    padding: 0.45rem 0.55rem;
+}
+
 /* Espacio entre el icono y el texto */
 .dashboard-nav-link svg {
     margin-right: 8px; 
