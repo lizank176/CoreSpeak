@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoreSpeak - Completa tu perfil</title>
+    <title>CoreSpeak - Tu perfil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,11 +15,28 @@
                     <div class="text-center mb-3 logo">
                         <img src="img/logo.png" alt="CoreSpeak" class="logo-img">
                     </div>
-                    <h3 class="text-center mb-2">Completa tu perfil de aprendizaje</h3>
-                    <p class="text-center text-muted mb-4">Guardaremos esta información para personalizar los retos diarios.</p>
+                    <h3 class="text-center mb-2">Personaliza tu experiencia</h3>
+                    <p class="text-center text-muted mb-2 small">
+                        Todos aprenden <strong>inglés</strong> en CoreSpeak. Con <strong>Premium</strong> podrás añadir
+                        más idiomas desde Ajustes cuando quieras.
+                    </p>
+                    <p class="text-center text-muted small mb-3">
+                        El <strong>nivel de inglés</strong> que elijas se usa para el <strong>reto diario</strong> y el contenido a tu medida.
+                    </p>
                     <div id="profile-setup-error" class="alert alert-danger py-2 px-3 small mb-3 d-none" role="alert"></div>
 
                     <form id="profile-setup-form">
+                        <div class="mb-3">
+                            <label class="form-label" for="setup-english-level">Tu nivel de inglés (MCER / CEFR)</label>
+                            <select id="setup-english-level" class="form-select" required>
+                                <option value="A1">A1 — principiante</option>
+                                <option value="A2">A2 — básico</option>
+                                <option value="B1">B1 — intermedio bajo</option>
+                                <option value="B2">B2 — intermedio alto</option>
+                                <option value="C1">C1 — avanzado</option>
+                                <option value="C2">C2 — competente / nativo</option>
+                            </select>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label" for="setup-idioma-ui">Idioma de la interfaz</label>
                             <select id="setup-idioma-ui" class="form-select">
@@ -30,36 +47,25 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label" for="setup-idioma-nativo">Idioma nativo</label>
-                            <select id="setup-idioma-nativo" class="form-select">
-                                <option value="es">Español</option>
-                                <option value="en">Inglés</option>
-                                <option value="uk">Ucraniano</option>
-                                <option value="fr">Francés</option>
-                                <option value="de">Alemán</option>
-                            </select>
+                            <label class="form-label d-block mb-2">Centros de interés</label>
+                            <div id="setup-interests-grid" class="row g-2" role="group" aria-label="Intereses"></div>
+                            <p class="text-muted small mt-2 mb-0" id="setup-interests-msg" role="status"></p>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="setup-idioma-objetivo">Idioma objetivo</label>
-                            <select id="setup-idioma-objetivo" class="form-select">
-                                <option value="en">Inglés</option>
-                                <option value="uk">Ucraniano</option>
-                                <option value="fr">Francés</option>
-                                <option value="es">Español</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="setup-intereses">Intereses (separados por coma)</label>
-                            <input id="setup-intereses" type="text" class="form-control" placeholder="Viajes, tecnología, cine...">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="setup-ocupacion">¿Dónde trabajas? (opcional)</label>
-                            <input id="setup-ocupacion" type="text" class="form-control" placeholder="Ej: Marketing, Docencia, Salud...">
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="setup-wants-premium">
+                            <label class="form-check-label" for="setup-wants-premium">
+                                Quiero hacerme <strong>Premium</strong> (te llevaremos a los planes; el pago es aparte)
+                            </label>
                         </div>
                         <button id="profile-setup-btn" type="button" class="btn btn-primary w-100 login-btn">
                             Guardar y continuar
                         </button>
                     </form>
+
+                    <p class="text-center small mt-3 mb-0 text-muted">
+                        ¿Problemas para guardar o vienes de otro dispositivo?
+                        <a href="inicio_session.html" class="register-link d-inline">Iniciar sesión</a>
+                    </p>
                 </div>
             </div>
         </div>

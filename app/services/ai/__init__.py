@@ -1,6 +1,1 @@
-"""AI service adapters."""
-
-"""
-Submódulo de IA (motores locales gratuitos / generadores).
-"""
-
+"""Adaptadores de servicios de IA (Groq, etc.)."""

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from pathlib import Path
 
 from sqlalchemy import inspect as sa_inspect, text
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -8,9 +9,20 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from app.config import settings
 from app.models import CourseLevel, LanguageCourse
 
-_is_sqlite = settings.database_url.startswith("sqlite")
+
+def _resolved_database_url() -> str:
+    if settings.use_sqlite:
+        root = Path(__file__).resolve().parents[1]
+        db_path = root / "data" / "corespeak.db"
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        return f"sqlite:///{db_path.as_posix()}"
+    return settings.database_url
+
+
+_db_url = _resolved_database_url()
+_is_sqlite = _db_url.startswith("sqlite")
 engine = create_engine(
-    settings.database_url,
+    _db_url,
     echo=False,
     pool_pre_ping=True,
     connect_args={"check_same_thread": False} if _is_sqlite else {},
@@ -24,6 +36,7 @@ def init_db() -> None:
     SQLModel.metadata.create_all(engine)
     ensure_user_subscription_status_column()
     ensure_user_ui_language_column()
+    ensure_user_interested_in_premium_column()
     seed_default_courses()
     seed_default_levels()
 
@@ -66,12 +79,31 @@ def ensure_user_ui_language_column() -> None:
         pass
 
 
+def ensure_user_interested_in_premium_column() -> None:
+    try:
+        inspector = sa_inspect(engine)
+        if "users" not in inspector.get_table_names():
+            return
+        cols = {c.get("name") for c in inspector.get_columns("users")}
+        if "interested_in_premium" in cols:
+            return
+        is_sql = engine.dialect.name == "sqlite"
+        with engine.connect() as conn:
+            if is_sql:
+                conn.execute(text("ALTER TABLE users ADD COLUMN interested_in_premium INTEGER NOT NULL DEFAULT 0"))
+            else:
+                conn.execute(text("ALTER TABLE users ADD COLUMN interested_in_premium TINYINT(1) NOT NULL DEFAULT 0"))
+            conn.commit()
+    except Exception:
+        pass
+
+
 def seed_default_courses() -> None:
     default_courses = [
-        ("en", "Ingles"),
+        ("en", "Inglés"),
         ("uk", "Ucraniano"),
-        ("fr", "Frances"),
-        ("es", "Espanol"),
+        ("fr", "Francés"),
+        ("es", "Español"),
     ]
     with Session(engine) as session:
         existing_courses = session.exec(select(LanguageCourse)).all()

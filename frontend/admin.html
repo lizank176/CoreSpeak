@@ -3,10 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoreSpeak — Administración de contenido</title>
+  <title>CoreSpeak | Admin Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icon-css@3.5.0/css/flag-icon.min.css"/>
+  <style>
+    .admin-page-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .tree-level {
+      margin-left: 1rem;
+      border-left: 2px solid #e9ecef;
+      padding-left: .9rem;
+    }
+    .tree-lesson {
+      font-size: .9rem;
+      color: #5c6570;
+    }
+    .selected-node {
+      border-color: #7c3aed !important;
+      background: #f3e8ff !important;
+    }
+    .exercise-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }
+    .preview-media {
+      max-height: 220px;
+      border-radius: 10px;
+      border: 1px solid #dee2e6;
+      background: #fff;
+    }
+  </style>
 </head>
 <body data-corespeak-float-chat="off">
   <div class="container-fluid p-0">
@@ -29,7 +59,7 @@
                     <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
                     <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
                   </svg>
-                  <span data-i18n="nav.settings">Configuración</span>
+                  <span>Configuración</span>
                 </a>
               </li>
               <li class="dashboard-nav-item">
@@ -37,7 +67,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>
                   </svg>
-                  <span data-i18n="nav.logout">Cerrar sesión</span>
+                  <span>Cerrar sesión</span>
                 </a>
               </li>
             </ul>
@@ -46,1163 +76,690 @@
       </div>
     </div>
   </div>
-
-  <div class="container py-4" id="admin-root">
+  <div class="dashboard-content row p-4">
+    <div class="admin-page-wrap">
     <div id="admin-gate" class="d-none">
-      <div class="alert alert-danger">No tienes permisos de administrador. Si debe ser así, configura <code>CORESPEAK_ADMIN_EMAILS</code> con tu correo y vuelve a iniciar sesión, o marca <code>is_admin</code> en la base de datos.</div>
-      <a href="dashboard.html" class="btn btn-primary">Volver al panel</a>
+      <div class="alert alert-danger mb-3">No tienes permisos de administrador para acceder a este módulo.</div>
+      <a class="btn btn-primary" href="dashboard.html">Volver al Dashboard</a>
     </div>
 
     <div id="admin-panel" class="d-none">
-      <h1 class="h3 mb-1">Administración</h1>
-      <p class="text-muted small mb-3">Crea un <strong>curso</strong> o usa uno ya creado: selecciónalo a la izquierda. Cada <strong>lección</strong> pertenece a ese curso; los <strong>ejercicios</strong> van dentro de la lección (texto, test, tarjeta y foto opcional por ejercicio).</p>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <h1 class="h3 mb-1">Admin Dashboard</h1>
+          <p class="text-muted small mb-0">Control total de cursos, niveles, lecciones, multimedia y ejercicios.</p>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="dashboard.html">Ir al panel usuario</a>
+      </div>
+
+      <section class="card stat-card p-3 mb-4">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Dashboard principal</h2>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <div class="p-3 rounded bg-light">
+                <div class="small text-muted">Usuarios activos</div>
+                <div class="h3 mb-0" id="stat-users-active">-</div>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="p-3 rounded bg-light">
+                <div class="small text-muted">Lecciones creadas</div>
+                <div class="h3 mb-0" id="stat-lessons-total">-</div>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="p-3 rounded bg-light">
+                <div class="small text-muted">Idiomas con más alumnos</div>
+                <div class="small fw-semibold" id="stat-top-languages">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div class="row g-4">
-          <div class="col-lg-4">
-            <div class="card shadow-sm">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="fw-semibold">Cursos</span>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="cat-btn-new-course">Nuevo</button>
+        <div class="col-12 col-lg-4">
+          <section class="card stat-card p-3 h-100">
+            <div class="card-body pt-0">
+              <h2 class="h5 mb-1">Selector de curso</h2>
+              <p class="text-muted small mb-3">Primero elige idioma y luego el nivel para crear ejercicios.</p>
+              <div class="mb-3">
+                <label class="form-label">Idioma</label>
+                <select id="select-language" class="form-select">
+                  <option value="">Selecciona un idioma</option>
+                </select>
               </div>
-              <div class="card-body p-0" style="max-height: 360px; overflow-y: auto;">
-                <table class="table table-hover table-sm mb-0">
-                  <thead class="table-light sticky-top"><tr><th>Título</th><th>Idioma</th><th>Premium</th><th class="text-end" style="min-width:7rem">Acciones</th></tr></thead>
-                  <tbody id="cat-course-list"></tbody>
-                </table>
+              <div class="mb-2">
+                <label class="form-label">Nivel</label>
+                <select id="select-level" class="form-select" disabled>
+                  <option value="">Primero selecciona un idioma</option>
+                </select>
               </div>
-            </div>
-            <div class="card shadow-sm mt-3">
-              <div class="card-header fw-semibold">Editar curso</div>
-              <div class="card-body small">
-                <input type="hidden" id="cat-course-id" value="">
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Código idioma</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-course-lang" placeholder="en, fr, uk…">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Título</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-course-title">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Descripción</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-course-desc">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Nivel MCER</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-course-cefr" placeholder="A1–C2" value="B1">
-                </div>
-                <div class="mb-2 form-check">
-                  <input type="checkbox" class="form-check-input" id="cat-course-premium">
-                  <label class="form-check-label" for="cat-course-premium">Curso Premium</label>
-                </div>
-                <div class="mb-2 form-check">
-                  <input type="checkbox" class="form-check-input" id="cat-course-published" checked>
-                  <label class="form-check-label" for="cat-course-published">Publicado</label>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Orden</label>
-                  <input type="number" class="form-control form-control-sm" id="cat-course-order" value="0">
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                  <button type="button" class="btn btn-primary btn-sm" id="cat-btn-save-course">Guardar cambios</button>
-                  <button type="button" class="btn btn-outline-danger btn-sm d-none" id="cat-btn-del-course">Borrar curso</button>
-                </div>
-                <p class="text-muted small mt-2 mb-0" id="cat-course-msg"></p>
+              <hr>
+              <div class="small">
+                <div class="fw-semibold mb-1">Selección actual</div>
+                <div id="selection-summary" class="text-muted">Sin selección</div>
               </div>
             </div>
-          </div>
-          <div class="col-lg-8">
-            <div class="card shadow-sm">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="fw-semibold">Lecciones del curso</span>
-                <button type="button" class="btn btn-sm btn-outline-primary d-none" id="cat-btn-new-lesson">Nueva lección</button>
+          </section>
+        </div>
+
+        <div class="col-12 col-lg-8">
+          <section class="card stat-card p-3">
+            <div class="card-body pt-0">
+              <h2 class="h5 mb-3">Lesson Builder</h2>
+              <div class="row g-3">
+                <div class="col-12 col-md-8">
+                  <label class="form-label">Título de la lección</label>
+                  <input id="lesson-title" class="form-control" placeholder="Ej: Vocabulario de trabajo y oficina">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label">Lección premium</label>
+                  <div class="form-check mt-2">
+                    <input id="lesson-premium" class="form-check-input" type="checkbox">
+                    <label class="form-check-label" for="lesson-premium">Sí, solo premium</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Descripción</label>
+                  <textarea id="lesson-description" class="form-control" rows="3" placeholder="Descripción para el alumno"></textarea>
+                </div>
               </div>
-              <div class="card-body p-0" style="max-height: 220px; overflow-y: auto;">
-                <table class="table table-hover table-sm mb-0">
-                  <thead class="table-light sticky-top"><tr><th>Título</th><th>Premium</th><th>Medios</th><th>YT</th><th>Audio</th><th class="text-end" style="min-width:7rem">Acciones</th></tr></thead>
-                  <tbody id="cat-lesson-list"></tbody>
-                </table>
+
+              <hr>
+              <h3 class="h6 mb-3">Módulo multimedia</h3>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Vídeo (YouTube/Vimeo URL)</label>
+                  <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
+                  <div class="small text-muted mt-1">Se guarda como URL en base de datos.</div>
+                  <div id="video-preview-wrap" class="mt-2 d-none">
+                    <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Video preview"></iframe>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Imagen (subir o pegar link)</label>
+                  <div class="input-group">
+                    <input id="media-image-url" class="form-control" placeholder="https://.../imagen.jpg">
+                    <input id="media-image-file" type="file" class="form-control" accept="image/*">
+                  </div>
+                  <div class="small text-muted mt-1">Para persistir en MySQL usa URL. El archivo local se usa como previsualización temporal.</div>
+                  <img id="image-preview" class="preview-media mt-2 d-none w-100" alt="Previsualización imagen">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Audio (subir o pegar link)</label>
+                  <div class="input-group">
+                    <input id="media-audio-url" class="form-control" placeholder="https://.../audio.mp3">
+                    <input id="media-audio-file" type="file" class="form-control" accept="audio/*">
+                  </div>
+                  <div class="small text-muted mt-1">Para persistir usa URL. El archivo local solo se previsualiza.</div>
+                  <audio id="audio-preview" class="mt-2 d-none w-100" controls></audio>
+                </div>
               </div>
+
+              <hr>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="h6 mb-0">Constructor de ejercicios</h3>
+                <button id="btn-add-exercise" class="btn btn-sm btn-primary" type="button">+ Añadir ejercicio</button>
+              </div>
+              <div id="exercise-list" class="d-flex flex-column gap-3"></div>
+              <div class="mt-3">
+                <h4 class="h6 mb-2">Preguntas creadas (vista previa)</h4>
+                <div id="exercise-preview-list" class="d-flex flex-column gap-2"></div>
+              </div>
+
+              <div class="mt-4 d-flex flex-wrap gap-2">
+                <button id="btn-validate" type="button" class="btn btn-outline-secondary">Validar</button>
+                <button id="btn-save-lesson" type="button" class="btn btn-success">Guardar lección</button>
+              </div>
+              <p id="lesson-msg" class="small mt-2 mb-0 text-muted"></p>
             </div>
-            <div class="card shadow-sm mt-3">
-              <div class="card-header fw-semibold">Editar lección y ejercicios</div>
-              <div class="card-body small">
-                <input type="hidden" id="cat-lesson-id" value="">
-                <input type="file" class="d-none" id="cat-upload-cover-input" accept="image/jpeg,image/png,image/webp,image/gif">
-                <input type="file" class="d-none" id="cat-upload-gallery-input" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm">
-                <input type="file" class="d-none" id="cat-upload-exercise-image-input" accept="image/jpeg,image/png,image/webp,image/gif">
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Título</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-lesson-title">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Descripción</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-lesson-desc">
-                </div>
-                <p class="small fw-semibold text-uppercase text-muted mt-3 mb-2" style="font-size:0.7rem;letter-spacing:0.04em">Imagen y galería</p>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Imagen de portada</label>
-                  <div class="input-group input-group-sm">
-                    <input type="text" class="form-control" id="cat-lesson-cover" placeholder="Se rellena al subir una imagen">
-                    <button type="button" class="btn btn-outline-secondary" id="cat-btn-upload-cover" title="Subir imagen">Subir</button>
-                  </div>
-                  <p class="text-muted small mb-0">JPG, PNG, WebP o GIF. Pulsa Subir y se asignará sola.</p>
-                  <div class="mt-2 d-none" id="cat-lesson-cover-preview-wrap">
-                    <img id="cat-lesson-cover-preview" class="img-fluid rounded border" style="max-height:160px;object-fit:cover" alt="Vista previa portada">
-                  </div>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Galería y vídeos extra</label>
-                  <div class="d-flex flex-wrap gap-2 mb-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cat-btn-upload-gallery">Subir imagen o vídeo</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cat-btn-gallery-add-video">Añadir vídeo por enlace</button>
-                  </div>
-                  <div id="cat-lesson-gallery-list" class="border rounded bg-light p-2 mb-1" style="min-height:2.5rem"></div>
-                  <p class="text-muted small mb-0">Las fotos y vídeos aparecen abajo; puedes quitar cada uno con el botón correspondiente.</p>
-                  <textarea class="d-none" id="cat-lesson-gallery-json" aria-hidden="true"></textarea>
-                </div>
-                <p class="small fw-semibold text-uppercase text-muted mt-3 mb-2" style="font-size:0.7rem;letter-spacing:0.04em">Vídeo principal y audio</p>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">URL YouTube principal (opcional)</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-lesson-yt" placeholder="https://www.youtube.com/watch?v=…">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Audio de la lección (opcional)</label>
-                  <input type="text" class="form-control form-control-sm" id="cat-lesson-audio" placeholder="Ruta si ya tienes un archivo en el servidor">
-                </div>
-                <div class="mb-2 form-check">
-                  <input type="checkbox" class="form-check-input" id="cat-lesson-premium">
-                  <label class="form-check-label" for="cat-lesson-premium">Lección Premium (aunque el curso sea gratis)</label>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Orden</label>
-                  <input type="number" class="form-control form-control-sm" id="cat-lesson-order" value="0">
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small mb-0">Ejercicios para el alumno</label>
-                  <p class="text-muted small mb-2">Añade bloques con los botones. Cada ejercicio puede llevar una <strong>foto</strong>; en la página del alumno se muestra <strong>redonda</strong>.</p>
-                  <div class="d-flex flex-wrap gap-2 mb-3">
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="cat-ex-add-quiz">+ Pregunta tipo test</button>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="cat-ex-add-flash">+ Tarjeta de memoria</button>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="cat-ex-add-short">+ Pregunta con respuesta corta</button>
-                  </div>
-                  <div id="cat-exercises-builder" class="d-flex flex-column gap-3"></div>
-                  <textarea class="d-none" id="cat-lesson-exercises" aria-hidden="true"></textarea>
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                  <button type="button" class="btn btn-primary btn-sm" id="cat-btn-save-lesson">Guardar lección</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" id="cat-btn-validate-ex">Comprobar ejercicios</button>
-                  <button type="button" class="btn btn-outline-danger btn-sm d-none" id="cat-btn-del-lesson">Borrar lección</button>
-                </div>
-                <p class="text-muted small mt-2 mb-0" id="cat-lesson-msg"></p>
-              </div>
-            </div>
-          </div>
+          </section>
+        </div>
       </div>
     </div>
   </div>
+  </div>
+
+  <template id="exercise-template">
+    <article class="exercise-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="fw-semibold exercise-title">Ejercicio</div>
+        <button type="button" class="btn btn-sm btn-outline-danger btn-remove">Eliminar</button>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Tipo</label>
+        <select class="form-select exercise-type">
+          <option value="multiple_choice">Opción múltiple</option>
+          <option value="single_choice">Opción única</option>
+          <option value="fill_in_the_blank">Rellenar huecos</option>
+        </select>
+      </div>
+      <div class="exercise-body"></div>
+    </article>
+  </template>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="app.js"></script>
   <script>
-(function () {
-  function el(id) { return document.getElementById(id); }
-
-  async function gate() {
-    const auth = typeof requireAuth === "function" ? requireAuth() : null;
-    if (!auth) {
-      window.location.href = "inicio_session.html";
-      return false;
-    }
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/users/me/profile"), { headers: h });
-    if (!res.ok) {
-      el("admin-gate").classList.remove("d-none");
-      return false;
-    }
-    const p = await res.json();
-    if (!p.is_admin) {
-      el("admin-gate").classList.remove("d-none");
-      return false;
-    }
-    el("admin-panel").classList.remove("d-none");
-    return true;
-  }
-
-  function catSetMsg(which, t, ok) {
-    const id = which === "course" ? "cat-course-msg" : "cat-lesson-msg";
-    const m = el(id);
-    if (!m) return;
-    m.textContent = t || "";
-    m.className = "small mt-2 mb-0 " + (ok ? "text-success" : "text-danger");
-  }
-
-  let catSelectedCourseId = null;
-  let catSelectedLessonId = null;
-
-  async function catDeleteCourseById(courseId) {
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/admin/catalog/courses/" + courseId), { method: "DELETE", headers: h });
-    if (!res.ok) {
-      catSetMsg("course", "No se pudo borrar el curso.", false);
-      return;
-    }
-    if (catSelectedCourseId != null && Number(catSelectedCourseId) === Number(courseId)) {
-      catResetCourseForm();
-    }
-    await catLoadCourses();
-    catSetMsg("course", "Curso borrado.", true);
-  }
-
-  async function catDeleteLessonById(lessonId) {
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/admin/catalog/lessons/" + lessonId), { method: "DELETE", headers: h });
-    if (!res.ok) {
-      catSetMsg("lesson", "No se pudo borrar la lección.", false);
-      return;
-    }
-    const courseId = el("cat-course-id").value.trim();
-    if (el("cat-lesson-id").value.trim() === String(lessonId)) {
-      catResetLessonForm();
-    }
-    if (courseId) await catLoadLessons(parseInt(courseId, 10));
-    catSetMsg("lesson", "Lección borrada.", true);
-  }
-
-  function catResetCourseForm() {
-    catSelectedCourseId = null;
-    el("cat-course-id").value = "";
-    el("cat-course-lang").value = "";
-    el("cat-course-title").value = "";
-    el("cat-course-desc").value = "";
-    el("cat-course-cefr").value = "B1";
-    el("cat-course-premium").checked = false;
-    el("cat-course-published").checked = true;
-    el("cat-course-order").value = "0";
-    el("cat-btn-del-course").classList.add("d-none");
-    el("cat-btn-new-lesson").classList.add("d-none");
-    el("cat-lesson-list").innerHTML = "";
-    catResetLessonForm();
-    catSetMsg("course", "", true);
-  }
-
-  function catAuthHeadersUpload() {
-    const token = localStorage.getItem("corespeak_token");
-    if (!token) return null;
-    return { Authorization: "Bearer " + token };
-  }
-
-  async function catUploadFile(file) {
-    const h = catAuthHeadersUpload();
-    if (!h) {
-      catSetMsg("lesson", "No hay sesión.", false);
-      return null;
-    }
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch(apiUrl("/api/admin/catalog/media/upload"), {
-      method: "POST",
-      headers: h,
-      body: fd,
-    });
-    const data = await res.json().catch(function () {
-      return {};
-    });
-    if (!res.ok) {
-      catSetMsg("lesson", (data.detail && String(data.detail)) || "Error al subir", false);
-      return null;
-    }
-    return data.path;
-  }
-
-  function catUpdateCoverPreview() {
-    const path = el("cat-lesson-cover").value.trim();
-    const wrap = el("cat-lesson-cover-preview-wrap");
-    const img = el("cat-lesson-cover-preview");
-    if (!wrap || !img) return;
-    if (!path) {
-      wrap.classList.add("d-none");
-      return;
-    }
-    wrap.classList.remove("d-none");
-    const u =
-      typeof staticUrl === "function"
-        ? staticUrl("/static/" + path.replace(/^\/+/, ""))
-        : path;
-    img.src = u;
-  }
-
-  function catParseGalleryObj() {
-    try {
-      const o = JSON.parse(el("cat-lesson-gallery-json").value || "{}");
-      if (!o || typeof o !== "object") return { images: [], videos: [] };
-      if (!Array.isArray(o.images)) o.images = [];
-      if (!Array.isArray(o.videos)) o.videos = [];
-      return o;
-    } catch (e) {
-      return { images: [], videos: [] };
-    }
-  }
-
-  function catRefreshGalleryUI() {
-    const o = catParseGalleryObj();
-    const box = el("cat-lesson-gallery-list");
-    if (!box) return;
-    box.innerHTML = "";
-    function staticPath(p) {
-      const path = String(p || "").replace(/^\/+/, "");
-      if (typeof staticUrl === "function") return staticUrl("/static/" + path);
-      return "/static/" + path;
-    }
-    if (o.images.length === 0 && o.videos.length === 0) {
-      const hint = document.createElement("p");
-      hint.className = "text-muted small mb-0";
-      hint.textContent = "No hay elementos. Sube una imagen o vídeo, o añade un enlace.";
-      box.appendChild(hint);
-    }
-    o.images.forEach(function (path) {
-      const row = document.createElement("div");
-      row.className = "d-flex align-items-center gap-2 flex-wrap py-1 border-bottom";
-      const thumb = document.createElement("img");
-      thumb.src = staticPath(path);
-      thumb.alt = "";
-      thumb.className = "rounded";
-      thumb.style.cssText = "width:52px;height:52px;object-fit:cover";
-      const span = document.createElement("span");
-      span.className = "small text-break flex-grow-1";
-      span.textContent = path;
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-sm btn-outline-danger";
-      btn.textContent = "Quitar";
-      btn.addEventListener("click", function () {
-        const cur = catParseGalleryObj();
-        const j = cur.images.indexOf(path);
-        if (j >= 0) cur.images.splice(j, 1);
-        catStringifyGalleryObj(cur);
-      });
-      row.appendChild(thumb);
-      row.appendChild(span);
-      row.appendChild(btn);
-      box.appendChild(row);
-    });
-    o.videos.forEach(function (v) {
-      const url = v && v.url != null ? String(v.url) : "";
-      const cap = v && v.caption != null ? String(v.caption) : "";
-      const row = document.createElement("div");
-      row.className = "d-flex align-items-center gap-2 flex-wrap py-1 border-bottom";
-      const link = document.createElement("a");
-      link.href = /^https?:\/\//i.test(url) ? url : staticPath(url);
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.className = "small flex-grow-1 text-break";
-      link.textContent = cap || url || "Vídeo";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-sm btn-outline-danger";
-      btn.textContent = "Quitar";
-      btn.addEventListener("click", function () {
-        const cur = catParseGalleryObj();
-        const ix = cur.videos.findIndex(function (x) {
-          return String(x.url || "") === url && String(x.caption || "") === cap;
+    (function () {
+      function el(id) { return document.getElementById(id); }
+      function setMsg(text, ok) {
+        const msg = el("lesson-msg");
+        msg.textContent = text || "";
+        msg.className = "small mt-2 mb-0 " + (ok ? "text-success" : "text-danger");
+      }
+      function escapeHtml(str) {
+        return String(str || "").replace(/[&<>"']/g, function (ch) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[ch];
         });
-        if (ix >= 0) cur.videos.splice(ix, 1);
-        catStringifyGalleryObj(cur);
-      });
-      row.appendChild(link);
-      row.appendChild(btn);
-      box.appendChild(row);
-    });
-  }
-
-  function catStringifyGalleryObj(o) {
-    el("cat-lesson-gallery-json").value = JSON.stringify(o, null, 2);
-    catRefreshGalleryUI();
-  }
-
-  let catExerciseBlocks = [];
-  let catPendingExerciseImageIdx = null;
-
-  function catReadBlocksFromTextarea() {
-    try {
-      const data = JSON.parse(el("cat-lesson-exercises").value || "{}");
-      return Array.isArray(data.blocks) ? JSON.parse(JSON.stringify(data.blocks)) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function catSyncExercisesHidden() {
-    el("cat-lesson-exercises").value = JSON.stringify({ blocks: catExerciseBlocks }, null, 2);
-  }
-
-  function catExRemoveAt(idx) {
-    catExerciseBlocks.splice(idx, 1);
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-  }
-
-  function catExMove(fromIdx, delta) {
-    const toIdx = fromIdx + delta;
-    if (toIdx < 0 || toIdx >= catExerciseBlocks.length) return;
-    const tmp = catExerciseBlocks[fromIdx];
-    catExerciseBlocks[fromIdx] = catExerciseBlocks[toIdx];
-    catExerciseBlocks[toIdx] = tmp;
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-  }
-
-  function catRenderExerciseBuilder() {
-    const root = el("cat-exercises-builder");
-    if (!root) return;
-    root.innerHTML = "";
-    if (catExerciseBlocks.length === 0) {
-      const hint = document.createElement("p");
-      hint.className = "text-muted small mb-0 fst-italic";
-      hint.textContent = "Todavía no hay ejercicios. Usa los botones de arriba para añadir el primero.";
-      root.appendChild(hint);
-      return;
-    }
-    const simpleTypes = ["quiz", "test", "multiple_choice", "flashcards", "flashcard", "fill_blank", "translation"];
-    catExerciseBlocks.forEach(function (b, idx) {
-      const t = (b && b.type) ? String(b.type).toLowerCase() : "";
-      const editable = simpleTypes.indexOf(t) >= 0;
-      const wrap = document.createElement("div");
-      wrap.className = "card shadow-sm";
-      const body = document.createElement("div");
-      body.className = "card-body small pe-3 pb-3";
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "btn btn-sm btn-outline-danger";
-      del.textContent = "Borrar ejercicio";
-      del.title = "Quitar este ejercicio de la lección (guarda la lección para aplicar)";
-      del.addEventListener("click", function () {
-        if (!confirm("¿Quitar este ejercicio de la lista?")) return;
-        catExRemoveAt(idx);
-      });
-
-      function addHead(title) {
-        const head = document.createElement("div");
-        head.className = "d-flex justify-content-between align-items-start gap-2 mb-2 flex-wrap";
-        const ht = document.createElement("div");
-        ht.className = "fw-semibold";
-        ht.textContent = title;
-        const actions = document.createElement("div");
-        actions.className = "d-flex flex-wrap align-items-center gap-1 flex-shrink-0";
-        const btnUp = document.createElement("button");
-        btnUp.type = "button";
-        btnUp.className = "btn btn-sm btn-outline-secondary";
-        btnUp.textContent = "↑";
-        btnUp.title = "Mover arriba";
-        btnUp.disabled = idx === 0;
-        btnUp.addEventListener("click", function () {
-          catExMove(idx, -1);
-        });
-        const btnDn = document.createElement("button");
-        btnDn.type = "button";
-        btnDn.className = "btn btn-sm btn-outline-secondary";
-        btnDn.textContent = "↓";
-        btnDn.title = "Mover abajo";
-        btnDn.disabled = idx >= catExerciseBlocks.length - 1;
-        btnDn.addEventListener("click", function () {
-          catExMove(idx, 1);
-        });
-        actions.appendChild(btnUp);
-        actions.appendChild(btnDn);
-        actions.appendChild(del);
-        head.appendChild(ht);
-        head.appendChild(actions);
-        body.appendChild(head);
+      }
+      function safeJsonParse(raw, fallback) {
+        try { return JSON.parse(raw); } catch (_) { return fallback; }
       }
 
-      if (!editable) {
-        addHead("Bloque especial");
-        const p = document.createElement("p");
-        p.className = "mb-0 text-muted";
-        p.textContent =
-          "Tipo «" +
-          (t || "sin tipo") +
-          "». Se mantiene al guardar; para editarlo en detalle hace falta otra herramienta.";
-        body.appendChild(p);
-        wrap.appendChild(body);
-        root.appendChild(wrap);
-        return;
+      let selectedCourseId = null;
+      let selectedLevelId = null;
+      let selectedCourseName = "";
+      let selectedLevelName = "";
+      let exerciseState = [];
+      let courseTreeData = [];
+
+      function updateSelectionLabels() {
+        const summary = selectedCourseName && selectedLevelName
+          ? (selectedCourseName + " / " + selectedLevelName)
+          : "Sin selección";
+        el("selection-summary").textContent = summary;
       }
 
-      if (t === "flashcards" || t === "flashcard") {
-        addHead("Tarjeta de memoria");
-        catAppendBlockImageControls(body, idx);
-        const labF = document.createElement("label");
-        labF.className = "form-label small mb-0";
-        labF.textContent = "Frente";
-        body.appendChild(labF);
-        const iF = document.createElement("input");
-        iF.className = "form-control form-control-sm mb-2";
-        iF.value = (b.term != null ? b.term : b.frente) || "";
-        iF.addEventListener("input", function () {
-          catExerciseBlocks[idx].type = "flashcards";
-          catExerciseBlocks[idx].term = iF.value;
-          catExerciseBlocks[idx].frente = iF.value;
-          catSyncExercisesHidden();
-        });
-        body.appendChild(iF);
-        const labB = document.createElement("label");
-        labB.className = "form-label small mb-0";
-        labB.textContent = "Reverso";
-        body.appendChild(labB);
-        const iB = document.createElement("input");
-        iB.className = "form-control form-control-sm";
-        iB.value = (b.definition != null ? b.definition : b.reverso) || "";
-        iB.addEventListener("input", function () {
-          catExerciseBlocks[idx].type = "flashcards";
-          catExerciseBlocks[idx].definition = iB.value;
-          catExerciseBlocks[idx].reverso = iB.value;
-          catSyncExercisesHidden();
-        });
-        body.appendChild(iB);
-        wrap.appendChild(body);
-        root.appendChild(wrap);
-        return;
+      function normalizeLanguageName(code, fallbackName) {
+        const key = String(code || "").toLowerCase();
+        const map = {
+          en: "Inglés",
+          es: "Español",
+          fr: "Francés",
+          uk: "Ucraniano",
+          it: "Italiano",
+          pt: "Portugués"
+        };
+        return map[key] || (fallbackName || "Idioma");
       }
 
-      if (t === "quiz" || t === "test" || t === "multiple_choice") {
-        addHead("Pregunta tipo test");
-        catAppendBlockImageControls(body, idx);
-        const labQ = document.createElement("label");
-        labQ.className = "form-label small mb-0";
-        labQ.textContent = "Enunciado";
-        body.appendChild(labQ);
-        const iQ = document.createElement("input");
-        iQ.className = "form-control form-control-sm mb-2";
-        iQ.value = b.pregunta || b.prompt || "";
-        const optsWrap = document.createElement("div");
-        optsWrap.className = "mb-2";
-        const labO = document.createElement("div");
-        labO.className = "small fw-semibold mb-1";
-        labO.textContent = "Opciones (al menos dos con texto)";
-        optsWrap.appendChild(labO);
-        let opArr = Array.isArray(b.opciones)
-          ? b.opciones.map(String)
-          : Array.isArray(b.options)
-            ? b.options.map(String)
-            : ["", "", "", ""];
-        while (opArr.length < 4) opArr.push("");
-        const inpOpts = [];
-        for (let j = 0; j < 4; j++) {
-          const io = document.createElement("input");
-          io.className = "form-control form-control-sm mb-1";
-          io.placeholder = "Opción " + (j + 1);
-          io.value = opArr[j] || "";
-          inpOpts.push(io);
-          optsWrap.appendChild(io);
-        }
-        const labSel = document.createElement("label");
-        labSel.className = "form-label small mb-0";
-        labSel.textContent = "Respuesta correcta";
-        const sel = document.createElement("select");
-        sel.className = "form-select form-select-sm";
-        function syncQuiz() {
-          const q = catExerciseBlocks[idx];
-          q.type = "quiz";
-          q.pregunta = iQ.value.trim();
-          const ops = inpOpts
-            .map(function (x) {
-              return x.value.trim();
-            })
-            .filter(Boolean);
-          q.opciones = ops.length >= 2 ? ops : ["Opción A", "Opción B"];
-          const prev = Array.isArray(q.respuestas_validas) && q.respuestas_validas[0] ? String(q.respuestas_validas[0]) : "";
-          let correct = q.opciones.indexOf(prev) >= 0 ? prev : q.opciones[0];
-          const curSel = sel.value;
-          if (q.opciones.indexOf(curSel) >= 0) correct = curSel;
-          q.respuestas_validas = [correct];
-          q.respuesta_correcta = correct;
-          const keep = sel.value;
-          sel.innerHTML = "";
-          q.opciones.forEach(function (op) {
-            const opt = document.createElement("option");
-            opt.value = op;
-            opt.textContent = op;
-            sel.appendChild(opt);
-          });
-          sel.value = q.opciones.indexOf(keep) >= 0 ? keep : correct;
-          if (sel.value !== keep) {
-            q.respuestas_validas = [sel.value];
-            q.respuesta_correcta = sel.value;
+      function normalizeVideoEmbed(url) {
+        const v = String(url || "").trim();
+        if (!v) return "";
+        const yt = v.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/i);
+        if (yt && yt[1]) return "https://www.youtube.com/embed/" + yt[1];
+        const vm = v.match(/vimeo\.com\/(\d+)/i);
+        if (vm && vm[1]) return "https://player.vimeo.com/video/" + vm[1];
+        return "";
+      }
+
+      function bindMediaPreviews() {
+        function drawVideo() {
+          const embed = normalizeVideoEmbed(el("media-video-url").value);
+          const wrap = el("video-preview-wrap");
+          const frame = el("video-preview");
+          if (!embed) {
+            frame.removeAttribute("src");
+            wrap.classList.add("d-none");
+            return;
           }
-          catSyncExercisesHidden();
+          frame.src = embed;
+          wrap.classList.remove("d-none");
         }
-        iQ.addEventListener("input", syncQuiz);
-        inpOpts.forEach(function (io) {
-          io.addEventListener("input", syncQuiz);
+        function drawImagePreviewFromUrl() {
+          const v = el("media-image-url").value.trim();
+          const img = el("image-preview");
+          if (!v) { img.classList.add("d-none"); img.removeAttribute("src"); return; }
+          img.src = v;
+          img.classList.remove("d-none");
+        }
+        function drawImagePreviewFromFile(file) {
+          const img = el("image-preview");
+          if (!file) return;
+          img.src = URL.createObjectURL(file);
+          img.classList.remove("d-none");
+        }
+        function drawAudioPreviewFromUrl() {
+          const v = el("media-audio-url").value.trim();
+          const audio = el("audio-preview");
+          if (!v) { audio.classList.add("d-none"); audio.removeAttribute("src"); return; }
+          audio.src = v;
+          audio.classList.remove("d-none");
+        }
+        function drawAudioPreviewFromFile(file) {
+          const audio = el("audio-preview");
+          if (!file) return;
+          audio.src = URL.createObjectURL(file);
+          audio.classList.remove("d-none");
+        }
+
+        el("media-video-url").addEventListener("input", drawVideo);
+        el("media-image-url").addEventListener("input", drawImagePreviewFromUrl);
+        el("media-audio-url").addEventListener("input", drawAudioPreviewFromUrl);
+        el("media-image-file").addEventListener("change", function (ev) {
+          drawImagePreviewFromFile(ev.target.files && ev.target.files[0]);
         });
-        sel.addEventListener("change", function () {
-          catExerciseBlocks[idx].respuestas_validas = [sel.value];
-          catExerciseBlocks[idx].respuesta_correcta = sel.value;
-          catSyncExercisesHidden();
+        el("media-audio-file").addEventListener("change", function (ev) {
+          drawAudioPreviewFromFile(ev.target.files && ev.target.files[0]);
         });
-        body.appendChild(iQ);
-        body.appendChild(optsWrap);
-        body.appendChild(labSel);
-        body.appendChild(sel);
-        syncQuiz();
-        wrap.appendChild(body);
-        root.appendChild(wrap);
-        return;
       }
 
-      addHead(t === "translation" ? "Traducción / frase" : "Pregunta de respuesta corta");
-      catAppendBlockImageControls(body, idx);
-      const labQ = document.createElement("label");
-      labQ.className = "form-label small mb-0";
-      labQ.textContent = "Enunciado";
-      body.appendChild(labQ);
-      const iQ = document.createElement("input");
-      iQ.className = "form-control form-control-sm mb-2";
-      iQ.value = b.pregunta || b.prompt || b.question || "";
-      const labA = document.createElement("label");
-      labA.className = "form-label small mb-0";
-      labA.textContent = "Respuestas aceptables (separadas por comas)";
-      const iA = document.createElement("input");
-      iA.className = "form-control form-control-sm";
-      iA.placeholder = "ej.: Madrid, en Madrid";
-      const vals = Array.isArray(b.respuestas_validas)
-        ? b.respuestas_validas.join(", ")
-        : b.respuesta_correcta != null
-          ? String(b.respuesta_correcta)
-          : b.answer != null
-            ? String(b.answer)
+      function exerciseDefault(type) {
+        if (type === "fill_in_the_blank") {
+          return { exercise_type: type, prompt: "", sentence: "", hidden_word: "", correct_answer: "", points: 10 };
+        }
+        return {
+          exercise_type: type === "single_choice" ? "single_choice" : "multiple_choice",
+          prompt: "",
+          options: [
+            { text: "", is_correct: false },
+            { text: "", is_correct: false },
+            { text: "", is_correct: false },
+            { text: "", is_correct: false }
+          ],
+          points: 10
+        };
+      }
+
+      function renderExerciseBody(state, idx) {
+        if (state.exercise_type === "fill_in_the_blank") {
+          const sentence = escapeHtml(state.sentence || "");
+          const hidden = escapeHtml(state.hidden_word || "");
+          const preview = sentence && hidden
+            ? sentence.replace(new RegExp(hidden, "i"), "_____")
             : "";
-      iA.value = vals;
-      function syncShort() {
-        const q = catExerciseBlocks[idx];
-        q.type = t === "translation" ? "translation" : "fill_blank";
-        q.pregunta = iQ.value.trim();
-        const parts = iA.value.split(",").map(function (x) {
-          return x.trim();
-        }).filter(Boolean);
-        q.respuestas_validas = parts.length ? parts : [""];
-        catSyncExercisesHidden();
+          return (
+            "<div class='mb-2'>" +
+              "<label class='form-label'>Frase completa</label>" +
+              "<input class='form-control ex-sentence' value='" + sentence + "' placeholder='I ___ to school every day'>" +
+            "</div>" +
+            "<div class='mb-2'>" +
+              "<label class='form-label'>Palabra a ocultar</label>" +
+              "<input class='form-control ex-hidden-word' value='" + hidden + "' placeholder='go'>" +
+            "</div>" +
+            "<div class='mb-2'>" +
+              "<label class='form-label'>Respuesta exacta</label>" +
+              "<input class='form-control ex-correct-answer' value='" + escapeHtml(state.correct_answer || "") + "' placeholder='go'>" +
+            "</div>" +
+            "<div class='small text-muted'>" + (preview ? ("Vista previa: " + escapeHtml(preview)) : "Vista previa pendiente") + "</div>"
+          );
+        }
+        const options = state.options || [];
+        let optionsHtml = "";
+        for (let i = 0; i < 4; i += 1) {
+          const op = options[i] || { text: "", is_correct: false };
+          optionsHtml += (
+            "<div class='input-group mb-1'>" +
+              "<span class='input-group-text'>" +
+                "<input class='form-check-input mt-0 ex-option-correct' type='radio' name='correct-" + idx + "' data-option-index='" + i + "' " + (op.is_correct ? "checked" : "") + ">" +
+              "</span>" +
+              "<input class='form-control ex-option-text' data-option-index='" + i + "' value='" + escapeHtml(op.text || "") + "' placeholder='Opción " + (i + 1) + "'>" +
+            "</div>"
+          );
+        }
+        return (
+          "<div class='mb-2'>" +
+            "<label class='form-label'>Pregunta</label>" +
+            "<textarea class='form-control ex-prompt' rows='2' placeholder='¿Cuál es la forma correcta?'>" + escapeHtml(state.prompt || "") + "</textarea>" +
+          "</div>" +
+          "<div class='mb-2'>" +
+            "<label class='form-label'>Opciones (marca una correcta)</label>" +
+            optionsHtml +
+          "</div>"
+        );
       }
-      iQ.addEventListener("input", syncShort);
-      iA.addEventListener("input", syncShort);
-      body.appendChild(iQ);
-      body.appendChild(labA);
-      body.appendChild(iA);
-      wrap.appendChild(body);
-      root.appendChild(wrap);
-    });
-  }
 
-  function catAppendBlockImageControls(body, idx) {
-    if (!catExerciseBlocks[idx]) return;
-    const lab = document.createElement("label");
-    lab.className = "form-label small mb-0 mt-1";
-    lab.textContent = "Foto del ejercicio (circular en la página del alumno)";
-    body.appendChild(lab);
-    const row = document.createElement("div");
-    row.className = "d-flex flex-wrap align-items-center gap-2 mb-2";
-    const thumb = document.createElement("img");
-    thumb.className = "rounded-circle border flex-shrink-0";
-    thumb.style.width = "48px";
-    thumb.style.height = "48px";
-    thumb.style.objectFit = "cover";
-    const path = String(catExerciseBlocks[idx].image || catExerciseBlocks[idx].image_path || "").trim();
-    if (path) {
-      thumb.src =
-        typeof staticUrl === "function"
-          ? staticUrl("/static/" + path.replace(/^\/+/, ""))
-          : "/static/" + path.replace(/^\/+/, "");
-      thumb.alt = "";
-    } else {
-      thumb.classList.add("d-none");
-    }
-    const btnUp = document.createElement("button");
-    btnUp.type = "button";
-    btnUp.className = "btn btn-sm btn-outline-secondary";
-    btnUp.textContent = "Subir foto";
-    btnUp.addEventListener("click", function () {
-      catPendingExerciseImageIdx = idx;
-      el("cat-upload-exercise-image-input").click();
-    });
-    const btnClr = document.createElement("button");
-    btnClr.type = "button";
-    btnClr.className = "btn btn-sm btn-outline-danger";
-    btnClr.textContent = "Quitar foto";
-    if (!path) btnClr.classList.add("d-none");
-    btnClr.addEventListener("click", function () {
-      delete catExerciseBlocks[idx].image;
-      delete catExerciseBlocks[idx].image_path;
-      catSyncExercisesHidden();
-      catRenderExerciseBuilder();
-    });
-    row.appendChild(thumb);
-    row.appendChild(btnUp);
-    row.appendChild(btnClr);
-    body.appendChild(row);
-  }
+      function bindExerciseEvents(card, idx) {
+        const typeSelect = card.querySelector(".exercise-type");
+        const removeBtn = card.querySelector(".btn-remove");
+        const body = card.querySelector(".exercise-body");
+        typeSelect.addEventListener("change", function () {
+          exerciseState[idx] = exerciseDefault(typeSelect.value);
+          renderExercises();
+        });
+        removeBtn.addEventListener("click", function () {
+          exerciseState.splice(idx, 1);
+          renderExercises();
+        });
 
-  function catResetLessonForm() {
-    catSelectedLessonId = null;
-    el("cat-lesson-id").value = "";
-    el("cat-lesson-title").value = "";
-    el("cat-lesson-desc").value = "";
-    el("cat-lesson-cover").value = "";
-    catStringifyGalleryObj({ images: [], videos: [] });
-    const wrap = el("cat-lesson-cover-preview-wrap");
-    if (wrap) wrap.classList.add("d-none");
-    el("cat-lesson-yt").value = "";
-    el("cat-lesson-audio").value = "";
-    el("cat-lesson-premium").checked = false;
-    el("cat-lesson-order").value = "0";
-    catExerciseBlocks = [];
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-    el("cat-btn-del-lesson").classList.add("d-none");
-    catSetMsg("lesson", "", true);
-  }
+        function updateFromCard() {
+          const state = exerciseState[idx];
+          if (!state) return;
+          state.exercise_type = typeSelect.value;
+          const points = 10;
+          state.points = points;
 
-  function catRenderCourseRows(rows) {
-    const tb = el("cat-course-list");
-    tb.innerHTML = "";
-    const selected = catSelectedCourseId;
-    rows.forEach(function (r) {
-      const tr = document.createElement("tr");
-      if (selected != null && Number(r.id) === Number(selected)) {
-        tr.classList.add("table-active");
+          if (state.exercise_type === "fill_in_the_blank") {
+            const sentence = card.querySelector(".ex-sentence");
+            const hidden = card.querySelector(".ex-hidden-word");
+            const correct = card.querySelector(".ex-correct-answer");
+            state.sentence = sentence ? sentence.value.trim() : "";
+            state.hidden_word = hidden ? hidden.value.trim() : "";
+            state.correct_answer = correct ? correct.value.trim() : "";
+            state.prompt = state.sentence || "Completa el hueco";
+            return;
+          }
+          const prompt = card.querySelector(".ex-prompt");
+          state.prompt = prompt ? prompt.value.trim() : "";
+          const textInputs = card.querySelectorAll(".ex-option-text");
+          const radios = card.querySelectorAll(".ex-option-correct");
+          const options = [];
+          textInputs.forEach(function (input) {
+            options.push({ text: input.value.trim(), is_correct: false });
+          });
+          radios.forEach(function (radio) {
+            if (radio.checked) {
+              const i = Number(radio.getAttribute("data-option-index"));
+              if (options[i]) options[i].is_correct = true;
+            }
+          });
+          state.options = options;
+        }
+        body.addEventListener("input", updateFromCard);
+        body.addEventListener("change", updateFromCard);
       }
-      tr.style.cursor = "pointer";
-      const td1 = document.createElement("td");
-      td1.textContent = r.title || "—";
-      const td2 = document.createElement("td");
-      const code = document.createElement("code");
-      code.textContent = r.lang_code || "";
-      td2.appendChild(code);
-      const td3 = document.createElement("td");
-      td3.textContent = r.is_premium ? "Sí" : "No";
-      const tdAct = document.createElement("td");
-      tdAct.className = "text-end text-nowrap";
-      tdAct.addEventListener("click", function (e) {
-        e.stopPropagation();
-      });
-      const btnEdit = document.createElement("button");
-      btnEdit.type = "button";
-      btnEdit.className = "btn btn-link btn-sm py-0 px-1";
-      btnEdit.textContent = "Editar";
-      btnEdit.setAttribute("aria-label", "Editar curso");
-      btnEdit.addEventListener("click", function (e) {
-        e.stopPropagation();
-        catSelectCourse(r.id);
-      });
-      const btnDel = document.createElement("button");
-      btnDel.type = "button";
-      btnDel.className = "btn btn-link btn-sm text-danger py-0 px-1";
-      btnDel.textContent = "Borrar";
-      btnDel.setAttribute("aria-label", "Borrar curso");
-      btnDel.addEventListener("click", function (e) {
-        e.stopPropagation();
-        if (!confirm("¿Borrar el curso «" + (r.title || "") + "» y todas sus lecciones?")) return;
-        void catDeleteCourseById(r.id);
-      });
-      tdAct.appendChild(btnEdit);
-      tdAct.appendChild(document.createTextNode(" "));
-      tdAct.appendChild(btnDel);
-      tr.appendChild(td1);
-      tr.appendChild(td2);
-      tr.appendChild(td3);
-      tr.appendChild(tdAct);
-      tr.addEventListener("click", function () {
-        catSelectCourse(r.id);
-      });
-      tb.appendChild(tr);
-    });
-  }
 
-  async function catLoadCourses() {
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/admin/catalog/courses"), { headers: h });
-    if (!res.ok) return;
-    const rows = await res.json();
-    catRenderCourseRows(rows);
-  }
-
-  async function catSelectCourse(id) {
-    catSelectedCourseId = id;
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/admin/catalog/courses"), { headers: h });
-    if (!res.ok) return;
-    const rows = await res.json();
-    const r = rows.find(function (x) {
-      return x.id === id;
-    });
-    if (!r) return;
-    el("cat-course-id").value = String(r.id);
-    el("cat-course-lang").value = r.lang_code || "";
-    el("cat-course-title").value = r.title || "";
-    el("cat-course-desc").value = r.description || "";
-    el("cat-course-cefr").value = r.cefr_level || "B1";
-    el("cat-course-premium").checked = !!r.is_premium;
-    el("cat-course-published").checked = !!r.is_published;
-    el("cat-course-order").value = String(r.sort_order != null ? r.sort_order : 0);
-    el("cat-btn-del-course").classList.remove("d-none");
-    el("cat-btn-new-lesson").classList.remove("d-none");
-    catRenderCourseRows(rows);
-    await catLoadLessons(id);
-    catResetLessonForm();
-    catSetMsg("course", "", true);
-  }
-
-  async function catLoadLessons(courseId) {
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/admin/catalog/courses/" + courseId + "/lessons"), { headers: h });
-    if (!res.ok) return;
-    const rows = await res.json();
-    const tb = el("cat-lesson-list");
-    tb.innerHTML = "";
-    const selectedLes = catSelectedLessonId;
-    rows.forEach(function (r) {
-      const tr = document.createElement("tr");
-      if (selectedLes != null && Number(r.id) === Number(selectedLes)) {
-        tr.classList.add("table-active");
+      function renderExercises() {
+        const list = el("exercise-list");
+        list.innerHTML = "";
+        if (exerciseState.length === 0) {
+          list.innerHTML = "<p class='text-muted small mb-0'>No hay ejercicios todavía. Añade el primero con el botón superior.</p>";
+          renderExercisePreview();
+          return;
+        }
+        const tpl = el("exercise-template");
+        exerciseState.forEach(function (state, idx) {
+          const node = tpl.content.firstElementChild.cloneNode(true);
+          node.querySelector(".exercise-title").textContent = "Ejercicio " + (idx + 1);
+          const typeSelect = node.querySelector(".exercise-type");
+          typeSelect.value = state.exercise_type;
+          node.querySelector(".exercise-body").innerHTML = renderExerciseBody(state, idx);
+          list.appendChild(node);
+          bindExerciseEvents(node, idx);
+        });
+        renderExercisePreview();
       }
-      tr.style.cursor = "pointer";
-      let g = {};
-      try {
-        g = JSON.parse(r.gallery_json || "{}");
-      } catch (e) {
-        g = {};
+
+      function renderExercisePreview() {
+        const root = el("exercise-preview-list");
+        if (!root) return;
+        root.innerHTML = "";
+        if (exerciseState.length === 0) {
+          root.innerHTML = "<p class='small text-muted mb-0'>Aquí verás las preguntas que vayas creando.</p>";
+          return;
+        }
+        exerciseState.forEach(function (ex, idx) {
+          const card = document.createElement("div");
+          card.className = "border rounded p-2 bg-white";
+          const title = document.createElement("div");
+          title.className = "fw-semibold small mb-1";
+          title.textContent = "Pregunta " + (idx + 1);
+          const prompt = document.createElement("div");
+          prompt.className = "small mb-1";
+          prompt.textContent = ex.prompt || "(sin enunciado)";
+          card.appendChild(title);
+          card.appendChild(prompt);
+
+          if (ex.exercise_type === "fill_in_the_blank") {
+            const ans = document.createElement("div");
+            ans.className = "small text-muted";
+            ans.textContent = "Respuesta: " + (ex.correct_answer || "(sin respuesta)");
+            card.appendChild(ans);
+          } else {
+            const ul = document.createElement("ul");
+            ul.className = "small mb-0 ps-3";
+            (ex.options || []).filter(function (o) { return o.text && o.text.trim(); }).forEach(function (op) {
+              const li = document.createElement("li");
+              li.textContent = op.text + (op.is_correct ? "  (correcta)" : "");
+              ul.appendChild(li);
+            });
+            card.appendChild(ul);
+          }
+          root.appendChild(card);
+        });
       }
-      const nImg = Array.isArray(g.images) ? g.images.length : 0;
-      const nVid = Array.isArray(g.videos) ? g.videos.length : 0;
-      const hasCover = !!(r.cover_image_path && String(r.cover_image_path).trim());
-      const mediaCell = hasCover || nImg || nVid ? "✓" : "—";
-      const td1 = document.createElement("td");
-      td1.textContent = r.title || "—";
-      const td2 = document.createElement("td");
-      td2.textContent = r.is_premium ? "Sí" : "No";
-      const td3 = document.createElement("td");
-      td3.textContent = mediaCell;
-      const td4 = document.createElement("td");
-      td4.textContent = r.youtube_url ? "✓" : "—";
-      const td5 = document.createElement("td");
-      td5.textContent = r.audio_static_path ? "✓" : "—";
-      const tdAct = document.createElement("td");
-      tdAct.className = "text-end text-nowrap";
-      tdAct.addEventListener("click", function (e) {
-        e.stopPropagation();
+
+      function validateExercises() {
+        const issues = [];
+        if (exerciseState.length === 0) {
+          issues.push("Añade al menos un ejercicio.");
+          return issues;
+        }
+        exerciseState.forEach(function (ex, idx) {
+          const label = "Ejercicio " + (idx + 1);
+          if (!ex.prompt || ex.prompt.length < 3) {
+            issues.push(label + ": la pregunta/enunciado es obligatorio.");
+          }
+          if (ex.exercise_type === "multiple_choice" || ex.exercise_type === "single_choice") {
+            const validOptions = (ex.options || []).filter(function (o) { return o.text && o.text.trim(); });
+            if (validOptions.length < 2) issues.push(label + ": escribe mínimo 2 opciones.");
+            const correctCount = (ex.options || []).filter(function (o) { return !!o.is_correct; }).length;
+            if (correctCount !== 1) issues.push(label + ": marca una única opción correcta.");
+          }
+          if (ex.exercise_type === "fill_in_the_blank") {
+            if (!ex.hidden_word) issues.push(label + ": define la palabra oculta.");
+            if (!ex.correct_answer) issues.push(label + ": la respuesta exacta es obligatoria.");
+          }
+        });
+        return issues;
+      }
+
+      function buildLessonPayload() {
+        const exercises = exerciseState.map(function (ex) {
+          if (ex.exercise_type === "multiple_choice" || ex.exercise_type === "single_choice") {
+            const options = (ex.options || []).filter(function (o) { return o.text && o.text.trim(); });
+            const correct = options.find(function (o) { return !!o.is_correct; });
+            return {
+              exercise_type: "multiple_choice",
+              prompt: ex.prompt,
+              options_json: {
+                mode: "single_choice",
+                options: options.map(function (o) { return o.text.trim(); })
+              },
+              correct_answer: correct ? correct.text.trim() : null,
+              model_answer: null,
+              points: 10
+            };
+          }
+          if (ex.exercise_type === "fill_in_the_blank") {
+            return {
+              exercise_type: "fill_in_the_blank",
+              prompt: ex.prompt,
+              options_json: {
+                sentence: ex.sentence || ex.prompt,
+                hidden_word: ex.hidden_word || ""
+              },
+              correct_answer: ex.correct_answer || null,
+              model_answer: null,
+              points: 10
+            };
+          }
+          return {
+            exercise_type: "fill_in_the_blank",
+            prompt: ex.prompt,
+            options_json: {
+              sentence: ex.sentence || ex.prompt || "",
+              hidden_word: ex.hidden_word || ""
+            },
+            correct_answer: ex.correct_answer || null,
+            model_answer: null,
+            points: 10
+          };
+        });
+
+        return {
+          course_id: selectedCourseId,
+          level_id: selectedLevelId,
+          title: el("lesson-title").value.trim(),
+          description: el("lesson-description").value.trim() || null,
+          is_premium: el("lesson-premium").checked,
+          is_published: true,
+          video_url: el("media-video-url").value.trim() || null,
+          image_url: el("media-image-url").value.trim() || null,
+          audio_url: el("media-audio-url").value.trim() || null,
+          exercises: exercises
+        };
+      }
+
+      async function saveLesson() {
+        const issues = validateExercises();
+        if (!selectedCourseId || !selectedLevelId) {
+          issues.unshift("Selecciona idioma y nivel en los selectores.");
+        }
+        if (!el("lesson-title").value.trim()) {
+          issues.unshift("El título de la lección es obligatorio.");
+        }
+        if (issues.length > 0) {
+          setMsg("No se puede guardar: " + issues.join(" "), false);
+          return;
+        }
+        const payload = buildLessonPayload();
+        const res = await fetch(apiUrl("/api/admin/lessons"), {
+          method: "POST",
+          headers: apiHeaders(),
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          setMsg(data.detail || "Error al guardar la lección.", false);
+          return;
+        }
+        setMsg("Lección guardada correctamente. ID: " + (data.lesson_id || "-"), true);
+      }
+
+      function renderCourseSelectors(treeRows) {
+        courseTreeData = Array.isArray(treeRows) ? treeRows : [];
+        const langSelect = el("select-language");
+        const levelSelect = el("select-level");
+        langSelect.innerHTML = "<option value=''>Selecciona un idioma</option>";
+        levelSelect.innerHTML = "<option value=''>Primero selecciona un idioma</option>";
+        levelSelect.disabled = true;
+
+        courseTreeData.forEach(function (course) {
+          const code = String(course.code || "").toLowerCase();
+          if (code === "de") return;
+          const op = document.createElement("option");
+          op.value = String(course.id);
+          op.textContent = normalizeLanguageName(course.code, course.name) + " (" + code + ")";
+          langSelect.appendChild(op);
+        });
+
+        selectedCourseId = null;
+        selectedLevelId = null;
+        selectedCourseName = "";
+        selectedLevelName = "";
+        updateSelectionLabels();
+      }
+
+      async function loadDashboardAndTree() {
+        const [statsRes, treeRes] = await Promise.all([
+          fetch(apiUrl("/api/admin/dashboard"), { headers: apiHeaders() }),
+          fetch(apiUrl("/api/admin/course-tree"), { headers: apiHeaders() })
+        ]);
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          el("stat-users-active").textContent = String(stats.users_total || 0);
+          el("stat-lessons-total").textContent = String(stats.lessons_total || 0);
+          el("stat-top-languages").textContent = (stats.top_languages || []).join(", ") || "Sin datos";
+        }
+        if (treeRes.ok) {
+          renderCourseSelectors(await treeRes.json());
+        }
+      }
+
+      async function gate() {
+        const auth = typeof requireAuth === "function" ? requireAuth() : null;
+        if (!auth) {
+          window.location.href = "inicio_session.html";
+          return false;
+        }
+        const res = await fetch(apiUrl("/api/users/me/profile"), { headers: apiHeaders() });
+        if (!res.ok) return false;
+        const profile = await res.json();
+        return !!profile.is_admin;
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const ok = await gate();
+        if (!ok) {
+          el("admin-gate").classList.remove("d-none");
+          return;
+        }
+        el("admin-panel").classList.remove("d-none");
+        bindMediaPreviews();
+        exerciseState = [exerciseDefault("multiple_choice")];
+        renderExercises();
+        updateSelectionLabels();
+        await loadDashboardAndTree();
+        el("select-language").addEventListener("change", function () {
+          const courseId = Number(el("select-language").value || 0);
+          const levelSelect = el("select-level");
+          levelSelect.innerHTML = "";
+          selectedCourseId = null;
+          selectedLevelId = null;
+          selectedLevelName = "";
+
+          if (!courseId) {
+            selectedCourseName = "";
+            levelSelect.disabled = true;
+            levelSelect.innerHTML = "<option value=''>Primero selecciona un idioma</option>";
+            updateSelectionLabels();
+            return;
+          }
+
+          const course = courseTreeData.find(function (c) { return Number(c.id) === courseId; });
+          if (!course) return;
+          selectedCourseId = course.id;
+          selectedCourseName = normalizeLanguageName(course.code, course.name) + " (" + String(course.code || "").toLowerCase() + ")";
+          levelSelect.disabled = false;
+          levelSelect.innerHTML = "<option value=''>Selecciona un nivel</option>";
+          (course.levels || []).forEach(function (lvl) {
+            const op = document.createElement("option");
+            op.value = String(lvl.id);
+            op.textContent = (lvl.code || "") + " · " + (lvl.title || "Nivel");
+            levelSelect.appendChild(op);
+          });
+          updateSelectionLabels();
+          setMsg("Idioma seleccionado. Ahora elige un nivel.", true);
+        });
+
+        el("select-level").addEventListener("change", function () {
+          const levelId = Number(el("select-level").value || 0);
+          if (!selectedCourseId || !levelId) {
+            selectedLevelId = null;
+            selectedLevelName = "";
+            updateSelectionLabels();
+            return;
+          }
+          const course = courseTreeData.find(function (c) { return Number(c.id) === Number(selectedCourseId); });
+          const lvl = course && (course.levels || []).find(function (x) { return Number(x.id) === levelId; });
+          if (!lvl) return;
+          selectedLevelId = lvl.id;
+          selectedLevelName = (lvl.code || "") + " · " + (lvl.title || "Nivel");
+          updateSelectionLabels();
+          setMsg("Nivel seleccionado: " + selectedLevelName, true);
+        });
+
+        el("btn-add-exercise").addEventListener("click", function () {
+          exerciseState.push(exerciseDefault("multiple_choice"));
+          renderExercises();
+        });
+        el("btn-validate").addEventListener("click", function () {
+          const issues = validateExercises();
+          if (issues.length) {
+            setMsg("Validación fallida: " + issues.join(" "), false);
+            return;
+          }
+          setMsg("Validación OK. Todo listo para guardar.", true);
+        });
+        el("btn-save-lesson").addEventListener("click", saveLesson);
       });
-      const btnEdit = document.createElement("button");
-      btnEdit.type = "button";
-      btnEdit.className = "btn btn-link btn-sm py-0 px-1";
-      btnEdit.textContent = "Editar";
-      btnEdit.setAttribute("aria-label", "Editar lección");
-      btnEdit.addEventListener("click", function (e) {
-        e.stopPropagation();
-        void catLoadLessonDetail(r.id);
-      });
-      const btnDel = document.createElement("button");
-      btnDel.type = "button";
-      btnDel.className = "btn btn-link btn-sm text-danger py-0 px-1";
-      btnDel.textContent = "Borrar";
-      btnDel.setAttribute("aria-label", "Borrar lección");
-      btnDel.addEventListener("click", function (e) {
-        e.stopPropagation();
-        if (!confirm("¿Borrar la lección «" + (r.title || "") + "»?")) return;
-        void catDeleteLessonById(r.id);
-      });
-      tdAct.appendChild(btnEdit);
-      tdAct.appendChild(document.createTextNode(" "));
-      tdAct.appendChild(btnDel);
-      tr.appendChild(td1);
-      tr.appendChild(td2);
-      tr.appendChild(td3);
-      tr.appendChild(td4);
-      tr.appendChild(td5);
-      tr.appendChild(tdAct);
-      tr.addEventListener("click", function () {
-        void catLoadLessonDetail(r.id);
-      });
-      tb.appendChild(tr);
-    });
-  }
-
-  async function catLoadLessonDetail(lessonId) {
-    const h = apiHeaders();
-    const res = await fetch(apiUrl("/api/admin/catalog/lessons/" + lessonId), { headers: h });
-    if (!res.ok) {
-      catSetMsg("lesson", "No se pudo cargar la lección", false);
-      return;
-    }
-    const r = await res.json();
-    catSelectedLessonId = lessonId;
-    el("cat-lesson-id").value = String(r.id);
-    el("cat-lesson-title").value = r.title || "";
-    el("cat-lesson-desc").value = r.description || "";
-    el("cat-lesson-cover").value = r.cover_image_path || "";
-    catUpdateCoverPreview();
-    try {
-      const parsed = JSON.parse(r.gallery_json || "{}");
-      catStringifyGalleryObj(parsed);
-    } catch (e) {
-      catStringifyGalleryObj({ images: [], videos: [] });
-    }
-    el("cat-lesson-yt").value = r.youtube_url || "";
-    el("cat-lesson-audio").value = r.audio_static_path || "";
-    el("cat-lesson-premium").checked = !!r.is_premium;
-    el("cat-lesson-order").value = String(r.sort_order != null ? r.sort_order : 0);
-    try {
-      const parsed = JSON.parse(r.exercises_json || "{}");
-      el("cat-lesson-exercises").value = JSON.stringify(parsed, null, 2);
-    } catch (e) {
-      el("cat-lesson-exercises").value = "{}";
-    }
-    catExerciseBlocks = catReadBlocksFromTextarea();
-    catRenderExerciseBuilder();
-    el("cat-btn-del-lesson").classList.remove("d-none");
-    const cid = el("cat-course-id").value.trim();
-    if (cid) await catLoadLessons(parseInt(cid, 10));
-    catSetMsg("lesson", "", true);
-  }
-
-  el("cat-btn-new-course").addEventListener("click", function () {
-    catResetCourseForm();
-    catSetMsg("course", "Nuevo curso: rellena y guarda.", true);
-  });
-
-  el("cat-btn-save-course").addEventListener("click", async function () {
-    const h = apiHeaders();
-    const id = el("cat-course-id").value.trim();
-    const payload = {
-      lang_code: el("cat-course-lang").value.trim(),
-      title: el("cat-course-title").value.trim(),
-      description: el("cat-course-desc").value.trim() || null,
-      cefr_level: el("cat-course-cefr").value.trim() || "B1",
-      is_premium: el("cat-course-premium").checked,
-      is_published: el("cat-course-published").checked,
-      sort_order: parseInt(el("cat-course-order").value, 10) || 0,
-    };
-    if (!payload.lang_code || !payload.title) {
-      catSetMsg("course", "Idioma y título son obligatorios.", false);
-      return;
-    }
-    let res;
-    if (id) {
-      res = await fetch(apiUrl("/api/admin/catalog/courses/" + id), {
-        method: "PUT",
-        headers: h,
-        body: JSON.stringify(payload),
-      });
-    } else {
-      res = await fetch(apiUrl("/api/admin/catalog/courses"), {
-        method: "POST",
-        headers: h,
-        body: JSON.stringify(payload),
-      });
-    }
-    const data = await res.json().catch(function () {
-      return {};
-    });
-    if (!res.ok) {
-      catSetMsg("course", data.detail || "Error al guardar", false);
-      return;
-    }
-    catSetMsg("course", "Curso guardado.", true);
-    await catLoadCourses();
-    if (data.id) await catSelectCourse(data.id);
-  });
-
-  el("cat-btn-del-course").addEventListener("click", async function () {
-    const id = el("cat-course-id").value.trim();
-    if (!id) return;
-    if (!confirm("¿Borrar este curso y todas sus lecciones?")) return;
-    await catDeleteCourseById(parseInt(id, 10));
-  });
-
-  el("cat-btn-new-lesson").addEventListener("click", function () {
-    if (!catSelectedCourseId) return;
-    catResetLessonForm();
-    const cid = el("cat-course-id").value.trim();
-    if (cid) void catLoadLessons(parseInt(cid, 10));
-    catSetMsg("lesson", "Nueva lección: rellena y guarda.", true);
-  });
-
-  el("cat-ex-add-quiz").addEventListener("click", function () {
-    catExerciseBlocks.push({
-      type: "quiz",
-      pregunta: "",
-      opciones: ["Opción A", "Opción B"],
-      respuestas_validas: ["Opción A"],
-      respuesta_correcta: "Opción A",
-    });
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-  });
-
-  el("cat-ex-add-flash").addEventListener("click", function () {
-    catExerciseBlocks.push({ type: "flashcards", term: "", definition: "" });
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-  });
-
-  el("cat-ex-add-short").addEventListener("click", function () {
-    catExerciseBlocks.push({ type: "fill_blank", pregunta: "", respuestas_validas: [""] });
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-  });
-
-  el("cat-btn-validate-ex").addEventListener("click", function () {
-    catSyncExercisesHidden();
-    try {
-      JSON.parse(el("cat-lesson-exercises").value || "{}");
-      catSetMsg("lesson", "Ejercicios correctos.", true);
-    } catch (e) {
-      catSetMsg("lesson", "Revisa los ejercicios: hay datos inconsistentes.", false);
-    }
-  });
-
-  el("cat-btn-save-lesson").addEventListener("click", async function () {
-    const courseId = el("cat-course-id").value.trim();
-    if (!courseId) {
-      catSetMsg("lesson", "Selecciona o crea un curso primero.", false);
-      return;
-    }
-    catSyncExercisesHidden();
-    let exStr = el("cat-lesson-exercises").value || "";
-    try {
-      if (exStr.trim()) JSON.parse(exStr);
-      else exStr = "{}";
-    } catch (e) {
-      catSetMsg("lesson", "No se pudo guardar: revisa los ejercicios.", false);
-      return;
-    }
-    let galStr = el("cat-lesson-gallery-json").value || "{}";
-    try {
-      if (galStr.trim()) JSON.parse(galStr);
-      else galStr = "{}";
-    } catch (e) {
-      catSetMsg("lesson", "No se pudo guardar: revisa la galería.", false);
-      return;
-    }
-    const h = apiHeaders();
-    const lid = el("cat-lesson-id").value.trim();
-    const payload = {
-      title: el("cat-lesson-title").value.trim(),
-      description: el("cat-lesson-desc").value.trim() || null,
-      is_premium: el("cat-lesson-premium").checked,
-      sort_order: parseInt(el("cat-lesson-order").value, 10) || 0,
-      youtube_url: el("cat-lesson-yt").value.trim() || null,
-      audio_static_path: el("cat-lesson-audio").value.trim() || null,
-      cover_image_path: el("cat-lesson-cover").value.trim() || null,
-      gallery_json: galStr,
-      exercises_json: exStr,
-    };
-    if (!payload.title) {
-      catSetMsg("lesson", "El título es obligatorio.", false);
-      return;
-    }
-    let res;
-    if (lid) {
-      res = await fetch(apiUrl("/api/admin/catalog/lessons/" + lid), {
-        method: "PUT",
-        headers: h,
-        body: JSON.stringify(payload),
-      });
-    } else {
-      res = await fetch(apiUrl("/api/admin/catalog/courses/" + courseId + "/lessons"), {
-        method: "POST",
-        headers: h,
-        body: JSON.stringify(payload),
-      });
-    }
-    const data = await res.json().catch(function () {
-      return {};
-    });
-    if (!res.ok) {
-      catSetMsg("lesson", data.detail || "Error al guardar", false);
-      return;
-    }
-    catSetMsg("lesson", "Lección guardada.", true);
-    await catLoadLessons(parseInt(courseId, 10));
-    if (data.id) await catLoadLessonDetail(data.id);
-  });
-
-  el("cat-lesson-cover").addEventListener("input", catUpdateCoverPreview);
-
-  el("cat-btn-upload-cover").addEventListener("click", function () {
-    el("cat-upload-cover-input").click();
-  });
-  el("cat-upload-cover-input").addEventListener("change", async function (ev) {
-    const f = ev.target.files && ev.target.files[0];
-    ev.target.value = "";
-    if (!f) return;
-    const path = await catUploadFile(f);
-    if (path) {
-      el("cat-lesson-cover").value = path;
-      catUpdateCoverPreview();
-      catSetMsg("lesson", "Portada subida.", true);
-    }
-  });
-
-  el("cat-btn-upload-gallery").addEventListener("click", function () {
-    el("cat-upload-gallery-input").click();
-  });
-  el("cat-upload-gallery-input").addEventListener("change", async function (ev) {
-    const f = ev.target.files && ev.target.files[0];
-    ev.target.value = "";
-    if (!f) return;
-    const path = await catUploadFile(f);
-    if (!path) return;
-    const o = catParseGalleryObj();
-    const lower = f.name.toLowerCase();
-    if (lower.endsWith(".mp4") || lower.endsWith(".webm")) {
-      o.videos.push({ url: path, caption: f.name.replace(/\.[^.]+$/, "") });
-    } else {
-      o.images.push(path);
-    }
-    catStringifyGalleryObj(o);
-    catSetMsg("lesson", "Archivo añadido a la galería.", true);
-  });
-
-  el("cat-btn-gallery-add-video").addEventListener("click", function () {
-    const url = window.prompt("URL del vídeo (YouTube, Vimeo o .mp4/.webm):");
-    if (!url || !String(url).trim()) return;
-    const o = catParseGalleryObj();
-    o.videos.push({ url: String(url).trim(), caption: "" });
-    catStringifyGalleryObj(o);
-    catSetMsg("lesson", "Vídeo añadido a la galería.", true);
-  });
-
-  el("cat-upload-exercise-image-input").addEventListener("change", async function (ev) {
-    const f = ev.target.files && ev.target.files[0];
-    ev.target.value = "";
-    const idx = catPendingExerciseImageIdx;
-    catPendingExerciseImageIdx = null;
-    if (!f || idx == null || catExerciseBlocks[idx] == null) return;
-    const path = await catUploadFile(f);
-    if (!path) return;
-    catExerciseBlocks[idx].image = path;
-    delete catExerciseBlocks[idx].image_path;
-    catSyncExercisesHidden();
-    catRenderExerciseBuilder();
-    catSetMsg("lesson", "Foto del ejercicio asignada.", true);
-  });
-
-  el("cat-btn-del-lesson").addEventListener("click", async function () {
-    const lid = el("cat-lesson-id").value.trim();
-    if (!lid) return;
-    if (!confirm("¿Borrar esta lección?")) return;
-    await catDeleteLessonById(parseInt(lid, 10));
-  });
-
-  document.addEventListener("DOMContentLoaded", async function () {
-    const ok = await gate();
-    if (ok) {
-      await catLoadCourses();
-      catRenderExerciseBuilder();
-      catRefreshGalleryUI();
-    }
-  });
-})();
+    })();
   </script>
 </body>
 </html>

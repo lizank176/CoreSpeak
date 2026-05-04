@@ -4,6 +4,19 @@ const TOKEN_KEY = "corespeak_token";
 const USER_ID_KEY = "corespeak_user_id";
 const UI_LANG_STORAGE_KEY = "corespeak_ui_lang";
 
+function getStoredToken() {
+  return (localStorage.getItem(TOKEN_KEY) || "").trim();
+}
+
+function setStoredToken(raw) {
+  const t = String(raw == null ? "" : raw).trim();
+  if (t) {
+    localStorage.setItem(TOKEN_KEY, t);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
 /**
  * Origen del backend (vacío = mismo host que la página).
  * Si la UI está en otro puerto (Live Server, etc.), se usa :8000 en localhost.
@@ -46,8 +59,10 @@ function staticUrl(path) {
 }
 
 function apiHeaders() {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) return null;
+  const token = getStoredToken();
+  if (!token) {
+    return null;
+  }
   return {
     Authorization: "Bearer " + token,
     "Content-Type": "application/json",
@@ -240,7 +255,7 @@ async function corespeakLangSelectChange(ev) {
 }
 
 async function initCoreSpeakUiLanguage() {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getStoredToken();
   const userId = localStorage.getItem(USER_ID_KEY);
   const auth =
     token && isValidStoredUserId(userId) ? { token, userId } : null;
@@ -480,7 +495,13 @@ function uiLessonCoursePack(uiLang) {
 /** Textos de navegación y páginas (data-i18n) por idioma de interfaz. */
 const CORESPEAK_PAGE_I18N = {
   es: {
-    nav: { uiLang: "Idioma", settings: "Configuración", logout: "Cerrar sesión" },
+    nav: {
+      uiLang: "Idioma",
+      settings: "Configuración",
+      logout: "Cerrar sesión",
+      premiumCta: "Hazte Premium",
+      premiumHint: "Idiomas · IA · contenido exclusivo",
+    },
     dashboard: {
       greetingHi: "¡Hola,",
       userFallback: "Usuario",
@@ -568,7 +589,6 @@ const CORESPEAK_PAGE_I18N = {
         "Tu agenda está vacía. Pulsa <strong>Nueva palabra</strong> y empieza a coleccionar palabras.",
       rowWordPh: "Palabra o expresión",
       rowMeanPh: "Traducción o definición",
-      saveRowTitle: "Guardar cambios",
       deleteRowTitle: "Eliminar fila",
       confirmDelete: "¿Eliminar esta palabra de la agenda?",
     },
@@ -630,7 +650,13 @@ const CORESPEAK_PAGE_I18N = {
     },
   },
   en: {
-    nav: { uiLang: "Language", settings: "Settings", logout: "Log out" },
+    nav: {
+      uiLang: "Language",
+      settings: "Settings",
+      logout: "Log out",
+      premiumCta: "Go Premium",
+      premiumHint: "Languages · AI · full access",
+    },
     dashboard: {
       greetingHi: "Hello,",
       userFallback: "User",
@@ -718,7 +744,6 @@ const CORESPEAK_PAGE_I18N = {
         "Your notebook is empty. Tap <strong>New word</strong> and start collecting words.",
       rowWordPh: "Word or phrase",
       rowMeanPh: "Translation or definition",
-      saveRowTitle: "Save changes",
       deleteRowTitle: "Delete row",
       confirmDelete: "Delete this word from your notebook?",
     },
@@ -780,7 +805,13 @@ const CORESPEAK_PAGE_I18N = {
     },
   },
   fr: {
-    nav: { uiLang: "Langue", settings: "Réglages", logout: "Déconnexion" },
+    nav: {
+      uiLang: "Langue",
+      settings: "Réglages",
+      logout: "Déconnexion",
+      premiumCta: "Passez au Premium",
+      premiumHint: "Langues · IA · contenu exclusif",
+    },
     dashboard: {
       greetingHi: "Bonjour,",
       userFallback: "Utilisateur",
@@ -867,7 +898,6 @@ const CORESPEAK_PAGE_I18N = {
         "Votre carnet est vide. Appuyez sur <strong>Nouveau mot</strong> pour commencer.",
       rowWordPh: "Mot ou expression",
       rowMeanPh: "Traduction ou définition",
-      saveRowTitle: "Enregistrer",
       deleteRowTitle: "Supprimer la ligne",
       confirmDelete: "Supprimer ce mot ?",
     },
@@ -929,7 +959,13 @@ const CORESPEAK_PAGE_I18N = {
     },
   },
   de: {
-    nav: { uiLang: "Sprache", settings: "Einstellungen", logout: "Abmelden" },
+    nav: {
+      uiLang: "Sprache",
+      settings: "Einstellungen",
+      logout: "Abmelden",
+      premiumCta: "Premium werden",
+      premiumHint: "Sprachen · KI · Exklusivinhalt",
+    },
     dashboard: {
       greetingHi: "Hallo,",
       userFallback: "Nutzer",
@@ -1015,7 +1051,6 @@ const CORESPEAK_PAGE_I18N = {
         "Dein Notizbuch ist leer. Tippe auf <strong>Neues Wort</strong>, um Vokabeln zu sammeln.",
       rowWordPh: "Wort oder Ausdruck",
       rowMeanPh: "Übersetzung oder Definition",
-      saveRowTitle: "Speichern",
       deleteRowTitle: "Zeile löschen",
       confirmDelete: "Dieses Wort aus dem Notizbuch löschen?",
     },
@@ -1077,7 +1112,13 @@ const CORESPEAK_PAGE_I18N = {
     },
   },
   uk: {
-    nav: { uiLang: "Мова", settings: "Налаштування", logout: "Вийти" },
+    nav: {
+      uiLang: "Мова",
+      settings: "Налаштування",
+      logout: "Вийти",
+      premiumCta: "Стань Premium",
+      premiumHint: "Мови · ШІ · ексклюзив",
+    },
     dashboard: {
       greetingHi: "Привіт,",
       userFallback: "Користувач",
@@ -1163,7 +1204,6 @@ const CORESPEAK_PAGE_I18N = {
         "Ваш щоденник порожній. Натисніть <strong>Нове слово</strong>, щоб зібрати слова.",
       rowWordPh: "Слово або вираз",
       rowMeanPh: "Переклад або визначення",
-      saveRowTitle: "Зберегти зміни",
       deleteRowTitle: "Видалити рядок",
       confirmDelete: "Видалити це слово з щоденника?",
     },
@@ -1255,7 +1295,7 @@ document.addEventListener("click", (e) => {
 });
 
 function requireAuth() {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getStoredToken();
   const userId = localStorage.getItem(USER_ID_KEY);
   if (!token || !isValidStoredUserId(userId)) {
     clearAuthStorage();
@@ -1267,9 +1307,11 @@ function requireAuth() {
 
 /** Si ya hay sesión guardada, no mostrar de nuevo el login (volver al panel). */
 async function redirectIfAlreadyLoggedIn() {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getStoredToken();
   const userId = localStorage.getItem(USER_ID_KEY);
-  if (!token || !isValidStoredUserId(userId)) return;
+  if (!token || !isValidStoredUserId(userId)) {
+    return;
+  }
 
   const res = await fetch(apiUrl("/api/users/me/profile"), {
     headers: { Authorization: "Bearer " + token },
@@ -1406,7 +1448,7 @@ async function login() {
   }
 
   setLoginFormError("");
-  localStorage.setItem(TOKEN_KEY, data.access_token);
+  setStoredToken(data.access_token);
   localStorage.setItem(USER_ID_KEY, String(uid));
   window.location.href = "dashboard.html";
 }
@@ -1444,19 +1486,20 @@ async function register() {
       full_name: [nombre, apellido].filter(Boolean).join(" "),
       email,
       password,
-      ui_language: getCurrentUiLangSync(),
-      native_language: "es",
-      target_languages: ["en"],
-      current_levels: { en: "A1" },
-      interests: [],
-      occupation: null,
       accepted_terms: consentAccepted,
     }),
   });
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    setRegisterFormError(formatApiErrorDetail(data) || data.detail || "Error al crear la cuenta");
+    if (res.status === 409) {
+      setRegisterFormError(
+        formatApiErrorDetail(data) ||
+          "Este correo ya está registrado. Inicia sesión o usa otro email."
+      );
+    } else {
+      setRegisterFormError(formatApiErrorDetail(data) || data.detail || "Error al crear la cuenta");
+    }
     return;
   }
 
@@ -1466,15 +1509,22 @@ async function register() {
     return;
   }
 
-  localStorage.setItem(TOKEN_KEY, data.access_token);
+  setStoredToken(data.access_token);
+  if (data.user_id != null) {
+    localStorage.setItem(USER_ID_KEY, String(data.user_id));
+  }
   try {
     const meRes = await fetch(apiUrl("/api/auth/me"), {
-      headers: { Authorization: "Bearer " + data.access_token },
+      headers: { Authorization: "Bearer " + getStoredToken() },
     });
     if (meRes.ok) {
       const me = await meRes.json().catch(() => ({}));
-      if (me && me.id != null) localStorage.setItem(USER_ID_KEY, String(me.id));
-      if (me && me.ui_language) localStorage.setItem(UI_LANG_STORAGE_KEY, normalizeUiLang(me.ui_language));
+      if (me && me.id != null) {
+        localStorage.setItem(USER_ID_KEY, String(me.id));
+      }
+      if (me && me.ui_language) {
+        localStorage.setItem(UI_LANG_STORAGE_KEY, normalizeUiLang(me.ui_language));
+      }
     }
   } catch (e) {
     console.warn("register: me lookup error", e);
@@ -1482,6 +1532,129 @@ async function register() {
 
   setRegisterFormError("");
   window.location.href = "profile_setup.html";
+}
+
+function setInlineAuthAlert(el, message, variant) {
+  if (!el) return;
+  const t = String(message || "").trim();
+  el.textContent = t;
+  el.className =
+    "alert py-2 px-3 small mb-3 " +
+    (variant === "ok" ? "alert-success" : variant === "err" ? "alert-danger" : "alert-info");
+  el.classList.toggle("d-none", !t);
+}
+
+async function submitForgotPassword() {
+  const msgEl = document.getElementById("forgot-msg");
+  const email = document.getElementById("forgot-email")?.value?.trim() || "";
+  const btn = document.getElementById("forgot-submit-btn");
+  if (!email) {
+    setInlineAuthAlert(msgEl, "Escribe tu correo.", "err");
+    return;
+  }
+  if (btn) btn.disabled = true;
+  setInlineAuthAlert(msgEl, "", "");
+  try {
+    const res = await fetch(apiUrl("/api/auth/forgot-password"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setInlineAuthAlert(
+        msgEl,
+        formatApiErrorDetail(data) || data.detail || "No se pudo enviar la solicitud.",
+        "err"
+      );
+    } else {
+      const baseMsg =
+        data.message ||
+        "Si el correo existe en CoreSpeak, se ha intentado enviar el enlace.";
+      setInlineAuthAlert(
+        msgEl,
+        baseMsg +
+          " Revisa spam. Si tienes cuenta registrada y sigue sin llegar, mira la terminal del servidor ([password-reset]) o prueba: python scripts/sendgrid_smoke.py tu@correo.com",
+        "ok"
+      );
+    }
+  } catch (e) {
+    setInlineAuthAlert(msgEl, "Error de red.", "err");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function initResetPasswordTokenFromUrl() {
+  const hidden = document.getElementById("reset-token");
+  if (!hidden) return;
+  const params = new URLSearchParams(window.location.search);
+  const token = (params.get("token") || "").trim();
+  hidden.value = token;
+  const msgEl = document.getElementById("reset-msg");
+  const submitBtn = document.getElementById("reset-submit-btn");
+  if (!token) {
+    setInlineAuthAlert(
+      msgEl,
+      "Falta el enlace de recuperación. Abre el enlace del correo o solicita uno nuevo.",
+      "err"
+    );
+    if (submitBtn) submitBtn.disabled = true;
+  }
+}
+
+async function submitResetPassword() {
+  const msgEl = document.getElementById("reset-msg");
+  const token =
+    (document.getElementById("reset-token") && document.getElementById("reset-token").value.trim()) ||
+    new URLSearchParams(window.location.search).get("token")?.trim() ||
+    "";
+  const p1 = document.getElementById("reset-password")?.value || "";
+  const p2 = document.getElementById("reset-password2")?.value || "";
+  const btn = document.getElementById("reset-submit-btn");
+
+  if (!token) {
+    setInlineAuthAlert(msgEl, "Enlace no válido. Solicita un correo nuevo.", "err");
+    return;
+  }
+  if (p1 !== p2) {
+    setInlineAuthAlert(msgEl, "Las contraseñas no coinciden.", "err");
+    return;
+  }
+  if (!/(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}/.test(p1)) {
+    setInlineAuthAlert(
+      msgEl,
+      "La contraseña debe tener mínimo 8 caracteres, al menos un número y un símbolo.",
+      "err"
+    );
+    return;
+  }
+  if (btn) btn.disabled = true;
+  setInlineAuthAlert(msgEl, "", "");
+  try {
+    const res = await fetch(apiUrl("/api/auth/reset-password"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password: p1 }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setInlineAuthAlert(
+        msgEl,
+        formatApiErrorDetail(data) || data.detail || "No se pudo cambiar la contraseña.",
+        "err"
+      );
+      if (btn) btn.disabled = false;
+    } else {
+      setInlineAuthAlert(msgEl, data.message || "Contraseña actualizada. Redirigiendo…", "ok");
+      setTimeout(function () {
+        window.location.href = "inicio_session.html";
+      }, 1800);
+    }
+  } catch (e) {
+    setInlineAuthAlert(msgEl, "Error de red.", "err");
+    if (btn) btn.disabled = false;
+  }
 }
 
 function setProfileSetupError(message) {
@@ -1497,6 +1670,152 @@ function setProfileSetupError(message) {
   el.classList.remove("d-none");
 }
 
+const CEFR_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
+
+const MAX_PROFILE_INTERESTS = 10;
+let profileInterestCatalog = [];
+
+function getProfileInterestUiLang() {
+  return normalizeUiLang(document.getElementById("setup-idioma-ui")?.value || "es");
+}
+
+function getSelectedInterestIds() {
+  return Array.from(document.querySelectorAll("input.setup-interest-cb:checked"))
+    .map((cb) => String(cb.value || "").trim())
+    .filter(Boolean);
+}
+
+function interestOptionLabel(opt, langCode) {
+  if (!opt) return "";
+  const lc = String(langCode || "es").trim().toLowerCase();
+  const short = lc.split("-")[0];
+  const lbls = opt.labels && typeof opt.labels === "object" ? opt.labels : {};
+  return (
+    lbls[lc] ||
+    lbls[short] ||
+    lbls.es ||
+    lbls.en ||
+    (typeof opt.en === "string" && opt.en) ||
+    opt.id ||
+    ""
+  );
+}
+
+function renderSetupInterestGrid(catalog, selectedIds) {
+  const grid = document.getElementById("setup-interests-grid");
+  const msg = document.getElementById("setup-interests-msg");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+  const uiLang = getProfileInterestUiLang();
+  const sel = new Set((selectedIds || []).map(String));
+
+  const list = Array.isArray(catalog) ? catalog : [];
+  list.forEach((opt) => {
+    if (!opt || !opt.id) return;
+    const col = document.createElement("div");
+    col.className = "col-12 col-sm-6";
+    const wrap = document.createElement("div");
+    wrap.className = "form-check";
+    const inp = document.createElement("input");
+    inp.type = "checkbox";
+    inp.className = "form-check-input setup-interest-cb";
+    inp.value = String(opt.id);
+    inp.id = "setup-int-" + String(opt.id).replace(/[^\w.-]/g, "_");
+    inp.checked = sel.has(String(opt.id));
+    const lab = document.createElement("label");
+    lab.className = "form-check-label small";
+    lab.setAttribute("for", inp.id);
+    lab.textContent = interestOptionLabel(opt, uiLang);
+
+    inp.addEventListener("change", function () {
+      enforceProfileInterestCap(this);
+    });
+
+    wrap.appendChild(inp);
+    wrap.appendChild(lab);
+    col.appendChild(wrap);
+    grid.appendChild(col);
+  });
+
+  enforceProfileInterestCap(null);
+}
+
+function enforceProfileInterestCap(elChanged) {
+  const msg = document.getElementById("setup-interests-msg");
+  const picked = Array.from(document.querySelectorAll("input.setup-interest-cb:checked"));
+  if (
+    picked.length > MAX_PROFILE_INTERESTS &&
+    elChanged &&
+    elChanged.checked
+  ) {
+    elChanged.checked = false;
+  }
+  const n = document.querySelectorAll("input.setup-interest-cb:checked").length;
+  if (msg) {
+    msg.textContent =
+      n >= MAX_PROFILE_INTERESTS
+        ? "Has alcanzado el máximo (" + MAX_PROFILE_INTERESTS + ")."
+        : "Marca hasta " + MAX_PROFILE_INTERESTS + " temas · " + n + " elegidos";
+  }
+}
+
+function normalizeCefrLevelInput(raw) {
+  const u = String(raw || "A1")
+    .trim()
+    .toUpperCase();
+  return CEFR_LEVELS.has(u) ? u : "A1";
+}
+
+/** Rellena el formulario de perfil con datos de /api/auth/me si el usuario vuelve a esta página. */
+async function initProfileSetupForm() {
+  const levelSel = document.getElementById("setup-english-level");
+  const uiSel = document.getElementById("setup-idioma-ui");
+  const grid = document.getElementById("setup-interests-grid");
+  const wantPrem = document.getElementById("setup-wants-premium");
+  if (uiSel) uiSel.value = getCurrentUiLangSync();
+
+  profileInterestCatalog = [];
+  try {
+    const catRes = await fetch(apiUrl("/api/catalog/interest-options"));
+    if (catRes.ok) profileInterestCatalog = await catRes.json();
+  } catch (_) {
+    /* catálogo vacío si falla la red */
+  }
+
+  const auth = requireAuth();
+  if (!auth) return;
+  let interestIds = [];
+  try {
+    const res = await fetch(apiUrl("/api/auth/me"), {
+      headers: { Authorization: "Bearer " + auth.token },
+    });
+    if (res.ok) {
+      const me = await res.json();
+      if (uiSel && me.ui_language) uiSel.value = normalizeUiLang(me.ui_language);
+      if (me.ui_language) localStorage.setItem(UI_LANG_STORAGE_KEY, normalizeUiLang(me.ui_language));
+      const levels = me.current_levels_json && typeof me.current_levels_json === "object" ? me.current_levels_json : {};
+      const en = levels.en || levels.EN;
+      if (levelSel) levelSel.value = normalizeCefrLevelInput(en);
+      if (Array.isArray(me.interests_json)) {
+        interestIds = me.interests_json.map((x) => String(x)).filter(Boolean);
+      }
+      if (wantPrem) wantPrem.checked = !!me.interested_in_premium;
+    }
+  } catch (e) {
+    console.warn("initProfileSetupForm", e);
+  }
+
+  if (grid) renderSetupInterestGrid(profileInterestCatalog, interestIds);
+
+  if (uiSel && !uiSel.dataset.corespeakInterestLangBound) {
+    uiSel.dataset.corespeakInterestLangBound = "1";
+    uiSel.addEventListener("change", function () {
+      renderSetupInterestGrid(profileInterestCatalog, getSelectedInterestIds());
+    });
+  }
+}
+
 async function saveProfileSetup() {
   setProfileSetupError("");
   const auth = requireAuth();
@@ -1506,11 +1825,9 @@ async function saveProfileSetup() {
   }
 
   const uiLanguage = normalizeUiLang(document.getElementById("setup-idioma-ui")?.value || "es");
-  const nativeLanguage = String(document.getElementById("setup-idioma-nativo")?.value || "es").trim();
-  const targetLanguage = String(document.getElementById("setup-idioma-objetivo")?.value || "en").trim();
-  const interestsRaw = document.getElementById("setup-intereses")?.value?.trim() || "";
-  const occupation = document.getElementById("setup-ocupacion")?.value?.trim() || null;
-  const interests = interestsRaw.split(",").map((x) => x.trim()).filter(Boolean);
+  const englishLevel = normalizeCefrLevelInput(document.getElementById("setup-english-level")?.value);
+  const wantsPremium = !!document.getElementById("setup-wants-premium")?.checked;
+  const interests = getSelectedInterestIds().slice(0, MAX_PROFILE_INTERESTS);
   const btn = document.getElementById("profile-setup-btn");
   if (btn) btn.disabled = true;
 
@@ -1520,19 +1837,27 @@ async function saveProfileSetup() {
       headers: { Authorization: "Bearer " + auth.token, "Content-Type": "application/json" },
       body: JSON.stringify({
         ui_language: uiLanguage,
-        native_language: nativeLanguage,
-        target_languages: [targetLanguage],
-        current_levels: { [targetLanguage]: "A1" },
+        english_level: englishLevel,
         interests,
-        occupation,
+        interested_in_premium: wantsPremium,
       }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (res.status === 401) {
+        setProfileSetupError(
+          "No hemos podido guardar. Recarga la página o inicia sesión con tu correo y contraseña e inténtalo otra vez."
+        );
+        return;
+      }
       setProfileSetupError(formatApiErrorDetail(data) || data.detail || "No se pudo guardar tu perfil");
       return;
     }
     localStorage.setItem(UI_LANG_STORAGE_KEY, uiLanguage);
+    if (wantsPremium) {
+      window.location.href = "pricing.html";
+      return;
+    }
     window.location.href = "dashboard.html";
   } catch (e) {
     setProfileSetupError("No se pudo guardar tu perfil. Revisa tu conexión e inténtalo de nuevo.");
@@ -1653,13 +1978,17 @@ async function initDashboardPremiumCta() {
     console.warn("dashboard premium cta profile error", e);
   }
 
+  const navPremiumLi = navBtn ? navBtn.closest("li") : null;
+
   if (isPremium) {
     cta.classList.add("d-none");
     if (navBtn) navBtn.classList.add("d-none");
+    if (navPremiumLi) navPremiumLi.classList.add("d-none");
     return;
   }
 
   cta.classList.remove("d-none");
+  if (navPremiumLi) navPremiumLi.classList.remove("d-none");
   if (navBtn) {
     navBtn.classList.remove("d-none");
     navBtn.addEventListener("click", function () {
@@ -1669,6 +1998,12 @@ async function initDashboardPremiumCta() {
   btn.addEventListener("click", function () {
     void startPremiumCheckoutGeneric(msg, btn);
   });
+}
+
+function _coerceCount(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : null;
 }
 
 async function loadMyProgress() {
@@ -1700,20 +2035,36 @@ async function loadMyProgress() {
     }
   }
 
+  let meAuth = null;
+  const meRes = await fetch(apiUrl("/api/auth/me"), { headers });
+  if (meRes.ok) {
+    meAuth = await meRes.json().catch(() => null);
+    if (meAuth && meAuth.full_name != null) {
+      const fn = String(meAuth.full_name).trim();
+      if (fn && !displayName) displayName = fn;
+    }
+  }
+
   const u = getUiPack(getCurrentUiLangSync());
   const nameEl = document.getElementById("user-name");
   if (nameEl) nameEl.textContent = displayName || (u.dashboard && u.dashboard.userFallback) || "Usuario";
 
-  if (!p) return;
+  const streakFromProgress = p != null ? _coerceCount(p.racha_actual) : null;
+  const streakFromMe = meAuth != null ? _coerceCount(meAuth.streak_days) : null;
+  const streakNum = streakFromProgress != null ? streakFromProgress : streakFromMe != null ? streakFromMe : 0;
+
+  const xpFromProgress = p != null ? _coerceCount(p.total_xp) : null;
+  const xpFromMe = meAuth != null ? _coerceCount(meAuth.xp_total) : null;
+  const xpNum = xpFromProgress != null ? xpFromProgress : xpFromMe != null ? xpFromMe : 0;
 
   const streakEl = document.getElementById("stat-streak");
-  if (streakEl && typeof p.racha_actual === "number") {
+  if (streakEl) {
     const tpl = (u.dashboard && u.dashboard.streakDays) || "{n} días consecutivos";
-    streakEl.textContent = tpl.replace("{n}", String(p.racha_actual));
+    streakEl.textContent = tpl.replace("{n}", String(streakNum));
   }
   const xpEl = document.getElementById("stat-xp");
-  if (xpEl && typeof p.total_xp === "number") {
-    xpEl.textContent = String(p.total_xp);
+  if (xpEl) {
+    xpEl.textContent = String(xpNum);
   }
 }
 
@@ -1953,6 +2304,9 @@ async function loadDashboardCourses() {
 }
 
 function initOnboardingPanel() {
+  if (!document.querySelector(".onb-lang")) {
+    return;
+  }
   const cards = document.querySelectorAll(".onb-lang-card");
   const sync = () => {
     document.querySelectorAll(".onb-level-row").forEach((row) => {
@@ -1976,24 +2330,275 @@ function initOnboardingPanel() {
   sync();
 }
 
+let _configDisplayNameOriginal = { first: "", last: "" };
+
+function _splitDisplayName(full) {
+  const s = String(full || "").trim();
+  if (!s) return { first: "", last: "" };
+  const parts = s.split(/\s+/);
+  if (parts.length === 1) return { first: parts[0], last: "" };
+  return { first: parts[0], last: parts.slice(1).join(" ") };
+}
+
+async function initConfigPersonalName() {
+  const form = document.getElementById("config-personal-form");
+  const firstEl = document.getElementById("config-first-name");
+  const lastEl = document.getElementById("config-last-name");
+  const msg = document.getElementById("config-personal-msg");
+  const cancelBtn = document.getElementById("config-personal-cancel");
+  if (!form || !firstEl || !lastEl) return;
+
+  const auth = requireAuth();
+  if (!auth) return;
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    msg.textContent = text || "";
+    msg.className =
+      "alert py-2 px-3 small " +
+      (kind === "ok" ? "alert-success" : kind === "err" ? "alert-danger" : "alert-info");
+    msg.classList.toggle("d-none", !text);
+  }
+
+  function applyFields(first, last) {
+    firstEl.value = first;
+    lastEl.value = last;
+    _configDisplayNameOriginal = { first, last };
+  }
+
+  try {
+    const res = await fetch(apiUrl("/api/users/me/profile"), {
+      headers: { Authorization: "Bearer " + auth.token },
+    });
+    if (!res.ok) {
+      showMsg("No se pudieron cargar tus datos. Recarga la página.", "err");
+      return;
+    }
+    const p = await res.json();
+    const sp = _splitDisplayName(p.nombre);
+    applyFields(sp.first, sp.last);
+  } catch (e) {
+    console.warn("initConfigPersonalName", e);
+    showMsg("Error de red al cargar el perfil.", "err");
+    return;
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", function () {
+      applyFields(_configDisplayNameOriginal.first, _configDisplayNameOriginal.last);
+      showMsg("", "");
+    });
+  }
+
+  form.addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    const fn = firstEl.value.trim();
+    const ln = lastEl.value.trim();
+    const combined = [fn, ln].filter(Boolean).join(" ");
+    if (combined.length < 2) {
+      showMsg("Escribe al menos tu nombre o apellidos (mínimo 2 caracteres en total).", "err");
+      return;
+    }
+    showMsg("");
+    const auth2 = requireAuth();
+    if (!auth2) return;
+    const saveBtn = document.getElementById("config-personal-save");
+    if (saveBtn) saveBtn.disabled = true;
+    try {
+      const res2 = await fetch(apiUrl("/api/users/me/display-name"), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + auth2.token,
+        },
+        body: JSON.stringify({ first_name: fn, last_name: ln }),
+      });
+      const data = await res2.json().catch(function () {
+        return {};
+      });
+      if (!res2.ok) {
+        showMsg(formatApiErrorDetail(data) || data.detail || "No se pudo guardar", "err");
+        return;
+      }
+      const sp2 = _splitDisplayName(data.nombre);
+      applyFields(sp2.first, sp2.last);
+      showMsg("Cambios guardados.", "ok");
+      if (typeof applyPageI18n === "function") {
+        applyPageI18n(getCurrentUiLangSync());
+      }
+    } catch (e) {
+      showMsg("No se pudo conectar con el servidor.", "err");
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+}
+
+async function initConfigEnglishLevel() {
+  const sel = document.getElementById("config-english-level");
+  const msg = document.getElementById("config-difficulty-msg");
+  if (!sel) return;
+  const token = getStoredToken();
+  if (!token) return;
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    msg.textContent = text || "";
+    msg.className =
+      "alert py-2 px-3 small " +
+      (kind === "ok" ? "alert-success" : kind === "err" ? "alert-danger" : "alert-info");
+    msg.classList.toggle("d-none", !text);
+  }
+
+  try {
+    const res = await fetch(apiUrl("/api/users/me/profile"), {
+      headers: { Authorization: "Bearer " + token },
+    });
+    let raw = "A1";
+    if (res.ok) {
+      const p = await res.json();
+      raw = p && p.english_level ? p.english_level : "A1";
+    } else if (res.status === 401) {
+      showMsg("Sesión caducada. Vuelve a iniciar sesión.", "err");
+      return;
+    } else {
+      const res2 = await fetch(apiUrl("/api/auth/me"), {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!res2.ok) {
+        showMsg("No se pudo cargar tu nivel MCER.", "err");
+        return;
+      }
+      const me = await res2.json();
+      const lv = me.current_levels_json && typeof me.current_levels_json === "object" ? me.current_levels_json : {};
+      raw = lv.en || lv.EN || "A1";
+    }
+    sel.value = normalizeCefrLevelInput(raw);
+  } catch (e) {
+    console.warn("initConfigEnglishLevel load", e);
+    showMsg("Error de red al cargar el nivel.", "err");
+    return;
+  }
+
+  let busy = false;
+  sel.addEventListener("change", async function () {
+    if (busy) return;
+    busy = true;
+    const level = normalizeCefrLevelInput(sel.value);
+    try {
+      const res2 = await fetch(apiUrl("/api/users/me/english-level"), {
+        method: "PATCH",
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ english_level: level }),
+      });
+      const data = await res2.json().catch(function () {
+        return {};
+      });
+      if (!res2.ok) {
+        showMsg(formatApiErrorDetail(data) || data.detail || "No se pudo guardar el nivel.", "err");
+      } else {
+        showMsg(
+          "Nivel guardado. El reto de hoy no cambia; el siguiente reto se generará con este MCER.",
+          "ok"
+        );
+      }
+    } catch (e) {
+      showMsg("No se pudo conectar con el servidor.", "err");
+    } finally {
+      busy = false;
+    }
+  });
+}
+
+async function initConfigExtraLanguages() {
+  const card = document.getElementById("config-premium-languages-card");
+  const saveBtn = document.getElementById("config-extra-langs-save");
+  if (!card || !saveBtn) {
+    return;
+  }
+  const msg = document.getElementById("config-extra-lang-msg");
+  const auth = requireAuth();
+  if (!auth) {
+    return;
+  }
+  try {
+    const res = await fetch(apiUrl("/api/auth/me"), { headers: { Authorization: "Bearer " + auth.token } });
+    if (!res.ok) {
+      return;
+    }
+    const me = await res.json();
+    if (!me || !me.is_premium) {
+      return;
+    }
+    card.classList.remove("d-none");
+    const list = (me.target_languages_json && me.target_languages_json.languages) || [];
+    document.querySelectorAll(".config-extra-lang-cb").forEach(function (cb) {
+      cb.checked = list.indexOf(cb.value) >= 0;
+    });
+  } catch (e) {
+    console.warn("initConfigExtraLanguages", e);
+  }
+
+  saveBtn.addEventListener("click", async function () {
+    if (msg) {
+      msg.className = "alert py-2 px-3 small d-none";
+      msg.textContent = "";
+    }
+    const auth2 = requireAuth();
+    if (!auth2) {
+      if (msg) {
+        msg.className = "alert alert-warning py-2 px-3 small";
+        msg.textContent = "Inicia sesión de nuevo.";
+        msg.classList.remove("d-none");
+      }
+      return;
+    }
+    const extra = Array.from(document.querySelectorAll(".config-extra-lang-cb:checked")).map((c) => c.value);
+    const res2 = await fetch(apiUrl("/api/users/me/extra-languages"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + auth2.token,
+      },
+      body: JSON.stringify({ language_codes: extra }),
+    });
+    const data = await res2.json().catch(function () {
+      return {};
+    });
+    if (!res2.ok) {
+      if (msg) {
+        msg.className = "alert alert-danger py-2 px-3 small";
+        msg.textContent = formatApiErrorDetail(data) || data.detail || "No se pudo guardar";
+        msg.classList.remove("d-none");
+      }
+      return;
+    }
+    if (msg) {
+      msg.className = "alert alert-success py-2 px-3 small";
+      msg.textContent = "Idiomas actualizados.";
+      msg.classList.remove("d-none");
+    }
+  });
+}
+
 async function saveOnboarding() {
   const auth = requireAuth();
   if (!auth) return;
 
   const ocupacion = document.getElementById("onb-ocupacion")?.value?.trim() || "";
-  const langChecks = Array.from(document.querySelectorAll(".onb-lang:checked"));
-  const idiomas_objetivo = langChecks.map((el) => el.value);
-
   const niveles_actuales = {};
-  ["en", "es", "fr", "de", "uk"].forEach((k) => {
-    const v = document.getElementById("lvl-" + k)?.value;
-    if (v) niveles_actuales[k] = v;
-  });
+  const enLvl = document.getElementById("lvl-en")?.value;
+  if (enLvl) {
+    niveles_actuales.en = enLvl;
+  }
 
   const res = await fetch(apiUrl("/api/users/me/onboarding"), {
     method: "POST",
     headers: apiHeaders() || { "Content-Type": "application/json" },
-    body: JSON.stringify({ ocupacion, idiomas_objetivo, niveles_actuales }),
+    body: JSON.stringify({ ocupacion, niveles_actuales }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -2576,19 +3181,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     void redirectIfAlreadyLoggedIn();
     document.getElementById("login-btn").addEventListener("click", login);
   }
+  if (document.getElementById("forgot-submit-btn")) {
+    document.getElementById("forgot-submit-btn").addEventListener("click", submitForgotPassword);
+  }
+  if (document.getElementById("reset-submit-btn")) {
+    initResetPasswordTokenFromUrl();
+    document.getElementById("reset-submit-btn").addEventListener("click", submitResetPassword);
+  }
   if (document.getElementById("register-btn")) {
     document.getElementById("register-btn").addEventListener("click", register);
   }
-  const setupUiInit = document.getElementById("setup-idioma-ui");
-  if (setupUiInit) setupUiInit.value = getCurrentUiLangSync();
   if (document.getElementById("profile-setup-btn")) {
+    void initProfileSetupForm();
     document.getElementById("profile-setup-btn").addEventListener("click", saveProfileSetup);
   }
   // Detecta automaticamente la pagina dashboard si existen elementos de estadisticas.
   if (document.getElementById("stat-streak")) {
-    loadMyProgress();
+    void loadMyProgress();
     loadDashboardCourses();
     initDashboardPremiumCta();
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") void loadMyProgress();
+    });
+    window.addEventListener("pageshow", function (ev) {
+      if (ev.persisted) void loadMyProgress();
+    });
   }
 
   // Si es practice.html, carga automaticamente y conecta botones.
@@ -2628,6 +3245,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (document.getElementById("onboarding-save-btn")) {
     initOnboardingPanel();
     document.getElementById("onboarding-save-btn").addEventListener("click", saveOnboarding);
+  }
+  if (document.getElementById("config-personal-form")) {
+    void initConfigPersonalName();
+  }
+  if (document.getElementById("config-english-level")) {
+    void initConfigEnglishLevel();
+  }
+  if (document.getElementById("config-extra-langs-save")) {
+    void initConfigExtraLanguages();
   }
 
   if (document.getElementById("agenda-root")) {
@@ -2736,19 +3362,12 @@ function buildAgendaRowTr(item) {
 
   const tdAct = document.createElement("td");
   tdAct.className = "text-end agenda-col-actions";
-  const btnSave = document.createElement("button");
-  btnSave.type = "button";
-  btnSave.className = "agenda-btn-icon agenda-btn-save me-1";
-  btnSave.title = ag.saveRowTitle || "";
-  btnSave.innerHTML =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4.414a1 1 0 0 0-.293-.707l-1.414-1.414A1 1 0 0 0 12.586 2H2m0 1h10v3H2zm0 4h10v7H2z"/></svg>';
   const btnDel = document.createElement("button");
   btnDel.type = "button";
-  btnDel.className = "agenda-btn-icon";
+  btnDel.className = "agenda-btn-icon agenda-btn-delete";
   btnDel.title = ag.deleteRowTitle || "";
   btnDel.innerHTML =
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>';
-  tdAct.appendChild(btnSave);
   tdAct.appendChild(btnDel);
 
   tr.appendChild(tdWord);
@@ -2757,12 +3376,11 @@ function buildAgendaRowTr(item) {
 
   const id = item.id;
 
-  btnSave.addEventListener("click", async () => {
-    const ok = await saveAgendaRow(id, inpWord.value.trim(), inpMean.value.trim());
-    if (ok) {
-      btnSave.animate([{ transform: "scale(1)" }, { transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 280 });
-    }
-  });
+  async function persistAgendaRowEdits() {
+    await saveAgendaRow(id, inpWord.value.trim(), inpMean.value.trim());
+  }
+  inpWord.addEventListener("blur", () => void persistAgendaRowEdits());
+  inpMean.addEventListener("blur", () => void persistAgendaRowEdits());
 
   btnDel.addEventListener("click", async () => {
     if (!confirm(ag.confirmDelete || "")) return;

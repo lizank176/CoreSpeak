@@ -59,6 +59,149 @@ body {
     margin-right: 8px; 
 }
 
+/* CTA Premium — 1ª versión: gradiente aurora + cristal suave + icono destello */
+.nav-premium-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    background: transparent;
+    color: #fff;
+    font-family: inherit;
+    border-radius: 999px;
+    isolation: isolate;
+    overflow: hidden;
+    box-shadow:
+        0 2px 16px rgba(124, 58, 237, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.nav-premium-btn:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow:
+        0 6px 24px rgba(124, 58, 237, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.nav-premium-btn:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.nav-premium-btn:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 3px;
+}
+
+.nav-premium-btn__aurora {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        125deg,
+        #7c3aed 0%,
+        #a855f7 25%,
+        #ec4899 55%,
+        #f97316 85%,
+        #eab308 100%
+    );
+    background-size: 200% 200%;
+    animation: nav-premium-shimmer 8s ease infinite;
+}
+
+.nav-premium-btn:hover .nav-premium-btn__aurora {
+    animation-duration: 4s;
+}
+
+@keyframes nav-premium-shimmer {
+    0%,
+    100% {
+        background-position: 0% 40%;
+    }
+    50% {
+        background-position: 100% 60%;
+    }
+}
+
+.nav-premium-btn__inner {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.95rem 0.45rem 0.75rem;
+    border-radius: inherit;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.06) 100%
+    );
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.nav-premium-btn__star {
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.nav-premium-btn__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+    text-align: left;
+}
+
+.nav-premium-btn__title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.nav-premium-btn__tag {
+    font-size: 0.62rem;
+    font-weight: 500;
+    opacity: 0.92;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 0.1rem;
+}
+
+.nav-premium-btn__arrow {
+    flex-shrink: 0;
+    opacity: 0.9;
+    margin-left: 0.15rem;
+}
+
+@media (max-width: 576px) {
+    .nav-premium-btn__inner {
+        padding: 0.4rem 0.7rem 0.4rem 0.6rem;
+        gap: 0.35rem;
+    }
+
+    .nav-premium-btn__title {
+        font-size: 0.72rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-premium-btn__aurora {
+        animation: none;
+    }
+
+    .nav-premium-btn,
+    .nav-premium-btn:hover,
+    .nav-premium-btn:active {
+        transition: none;
+        transform: none;
+    }
+}
+
 .saludo-section {
     margin-top: 20px;
 }

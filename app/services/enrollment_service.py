@@ -2,15 +2,24 @@ from __future__ import annotations
 
 from sqlmodel import Session, select
 
+from app.constants import PRIMARY_COURSE_CODE
 from app.models import AppUser, Enrollment, LanguageCourse
 
 
 def sync_user_enrollments(session: Session, user: AppUser) -> None:
-    requested_codes = [
+    raw = [
         str(code).strip().lower()
         for code in user.target_languages_json.get("languages", [])
         if str(code).strip()
     ]
+    if PRIMARY_COURSE_CODE not in raw:
+        raw.insert(0, PRIMARY_COURSE_CODE)
+    seen: set[str] = set()
+    requested_codes: list[str] = []
+    for c in raw:
+        if c not in seen:
+            seen.add(c)
+            requested_codes.append(c)
     if not requested_codes:
         return
 

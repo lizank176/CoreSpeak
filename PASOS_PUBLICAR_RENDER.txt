@@ -1,0 +1,64 @@
+================================================================================
+Publicar CoreSpeak en internet (plan GRATUITO) — Render.com
+================================================================================
+No necesitas dominio propio al principio: la URL será así:
+    https://TU-NOMBRE-SERVICIO.onrender.com
+
+La UI será, por ejemplo:
+    https://TU-NOMBRE-SERVICIO.onrender.com/ui/inicio_session.html
+
+
+1) PREPARAR EL CÓDIGO EN GITHUB
+   - Crea un repositorio en https://github.com (gratis si usas cuenta normal).
+   - Sube ESTE proyecto (git add / commit / push). No incluyas .env con secretos
+     (añade .gitignore y ya tienes .env ignorado).
+
+
+2) CREAR CUENTA EN RENDER
+   - https://render.com → registrarse (puede pedir GitHub).
+
+
+3) NUEVO “WEB SERVICE”
+   - Dashboard → New + → Web Service
+   - Connect repository → elige tu repo CoreSpeak.
+   - Nombre del servicio: ej. corespeak-api (eso forma parte del subdominio).
+   - Region: Europa si te deja elegir.
+   - Branch: main o master según tu repo.
+   - Runtime: Docker (usa el Dockerfile de la raíz).
+   - Plan: Free.
+
+
+4) VARIABLES DE ENTORNO (Render → Environment → Add)
+   Obligatorias recomendadas:
+   - APP_BASE_URL = https://TU-NOMBRE-SERVICIO.onrender.com
+     (cópiala EXACTA desde el panel después del primer deploy, o pon el nombre que elegiste.)
+   - JWT_SECRET_KEY = (cadena larga aleatoria; NO uses change-me en producción)
+   - USE_SQLITE = true
+   Según uso (si tu app lo necesita para usuarios):
+   - GROQ_API_KEY = ...
+   Opcionales Stripe / correo SendGrid igual que en tu .env local.
+
+
+SI EL BUILD FALLA ("Exited with status 1"):
+   Abre los logs COMPLETOS del deploy y busca líneas antes del fallo (suele ser
+   pip install / gcc / cryptography / bcrypt). Con el Dockerfile actual se instalan
+   gcc y libs para compilación en Python slim.
+
+5) DESPLEGAR
+   - Save / Deploy y espera a que construya la imagen Docker (varios minutos la primera vez).
+   - Cuando salga “Live”, prueba en el navegador:
+       https://TU-NOMBRE-SERVICIO.onrender.com/
+       https://TU-NOMBRE-SERVICIO.onrender.com/api/health
+
+
+6) USUARIOS NUEVOS EN INTERNET
+   - En modo Free el servicio se “duerme” si no hay tráfico → el primer clic puede tardar ~1 minuto.
+   - La base SQLite en plan gratuito puede NO persistir para siempre (redeploy puede borrarla);
+     sirve para demostrar; para datos serios después conviene Postgres gratis (Neon, etc.).
+
+
+Stripe / webhooks: cuando tengas la URL definitiva (onrender.com o dominio propio),
+   configura STRIPE_WEBHOOK o URLs de éxito/cancelación en el panel Stripe.
+
+================================================================================
+No puedes “desplegar” sin estos pasos: alguien con acceso a TU cuenta debe conectar GitHub→Render.

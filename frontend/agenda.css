@@ -261,24 +261,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(241, 245, 249, 0.9);
-  color: #475569;
   transition: background 0.2s, color 0.2s;
 }
 
-.agenda-btn-icon:hover {
-  background: #fee2e2;
-  color: #b91c1c;
+/* Borrar: rojo suave, no chillón */
+.agenda-btn-icon.agenda-btn-delete {
+  background: rgba(254, 226, 226, 0.75);
+  color: #c45c5c;
 }
 
-.agenda-btn-save {
-  background: rgba(224, 231, 255, 0.9);
-  color: #4338ca;
-}
-
-.agenda-btn-save:hover {
-  background: #c7d2fe;
-  color: #312e81;
+.agenda-btn-icon.agenda-btn-delete:hover {
+  background: rgba(252, 201, 201, 0.9);
+  color: #a63f40;
 }
 
 .agenda-fab-add {

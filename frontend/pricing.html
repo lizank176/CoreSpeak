@@ -3,99 +3,261 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoreSpeak - Premium</title>
+  <title>CoreSpeak - Planes</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="pricing.css">
 </head>
-<body class="bg-light">
-  <div class="container py-5">
-    <h1 class="h3 mb-4">Planes CoreSpeak</h1>
-    <div class="row g-4">
-      <div class="col-md-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <h2 class="h5">Gratis</h2>
-            <ul>
-              <li>1 idioma activo</li>
-              <li>2 lecciones por día</li>
-              <li>Feedback básico</li>
+<body class="pricing-page m-0">
+  <div class="container-fluid p-0">
+    <div class="dashboard-header">
+      <div class="container-fluid">
+        <nav class="dashboard-nav d-flex align-items-center flex-wrap">
+          <div class="col-12 col-md-4 col-lg-3 d-flex align-items-center pricing-header-logo">
+            <a href="dashboard.html" class="text-decoration-none">
+              <img src="img/logo.png" alt="CoreSpeak" class="dashboard-logo" width="200" height="60">
+            </a>
+          </div>
+          <div class="col-12 col-md-8 col-lg-9 d-flex align-items-center justify-content-md-end">
+            <ul class="dashboard-nav-list d-flex flex-wrap justify-content-end align-items-center ms-auto my-2 my-md-0">
+              <li class="dashboard-nav-item">
+                <a href="dashboard.html" class="dashboard-nav-link">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="d-none d-sm-inline" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4H2.5z"/>
+                  </svg>
+                  <span>Panel</span>
+                </a>
+              </li>
+              <li class="dashboard-nav-item">
+                <a href="configuracion.html" class="dashboard-nav-link">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+                  </svg>
+                  <span data-i18n="nav.settings">Configuración</span>
+                </a>
+              </li>
+              <li class="dashboard-nav-item">
+                <a href="#" class="dashboard-nav-link corespeak-logout" role="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>
+                  </svg>
+                  <span data-i18n="nav.logout">Cerrar sesión</span>
+                </a>
+              </li>
             </ul>
           </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="card h-100 border-primary">
-          <div class="card-body">
-            <h2 class="h5 text-primary">Premium - 5 EUR/mes</h2>
-            <ul>
-              <li>Lecciones y retos avanzados ilimitados</li>
-              <li>Feedback IA detallado</li>
-              <li>Vidas ilimitadas y protección de racha</li>
-            </ul>
-            <button id="btn-premium" class="btn btn-primary w-100">Obtener Premium</button>
-            <p class="small text-muted mt-2 mb-0">
-              Cancelación sencilla desde tu perfil. Si falla el pago, tienes 24h de gracia.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="pricing-login-note" class="alert alert-info mt-3 d-none">
-      Puedes ver los planes sin iniciar sesión. Para completar el pago, primero inicia sesión.
-      <a href="inicio_session.html" class="ms-1">Ir a iniciar sesión</a>
-    </div>
-
-    <div class="card mt-4">
-      <div class="card-body">
-        <h3 class="h6">Historial de facturación</h3>
-        <div class="table-responsive">
-          <table class="table table-sm">
-            <thead><tr><th>Proveedor</th><th>Importe</th><th>Estado</th><th>Pagado</th><th>Vence</th></tr></thead>
-            <tbody id="billing-body"></tbody>
-          </table>
-        </div>
+        </nav>
       </div>
     </div>
   </div>
 
+  <main class="container py-4 py-md-5 px-3">
+    <div class="pricing-hero">
+      <span class="pricing-hero-badge">CoreSpeak</span>
+      <h1>Planes y precios</h1>
+      <p class="pricing-hero-lead">
+        Aprende inglés con nuestro plan gratuito o desbloquea todo el potencial con Premium. Puedes cambiar o cancelar cuando quieras.
+      </p>
+    </div>
+
+    <div id="pricing-login-note" class="alert py-3 px-4 d-none" role="status">
+      Para contratar o ver tu facturación, inicia sesión.
+      <a href="inicio_session.html" class="register-link fw-semibold">Ir a iniciar sesión</a>
+    </div>
+
+    <div class="pricing-grid">
+      <article class="pricing-card pricing-card--free">
+        <h2 class="pricing-card-title">Gratis</h2>
+        <p class="pricing-card-tagline">Ideal para empezar con constancia</p>
+        <ul class="pricing-feature-list">
+          <li>
+            <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+            <span>1 idioma de estudio (inglés)</span>
+          </li>
+          <li>
+            <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+            <span>Hasta 2 lecciones al día</span>
+          </li>
+          <li>
+            <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+            <span>Retos y feedback básico</span>
+          </li>
+        </ul>
+        <p class="pricing-footnote mb-0">Siempre sin tarjeta</p>
+      </article>
+
+      <article class="pricing-card pricing-card--featured position-relative">
+        <span class="pricing-ribbon">Recomendado</span>
+        <h2 class="pricing-card-title">Premium</h2>
+        <p class="pricing-card-price">5<small> €/mes</small></p>
+        <p class="pricing-card-tagline">Más idiomas, práctica ilimitada y feedback con IA</p>
+        <ul class="pricing-feature-list">
+          <li>
+            <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+            <span>Idiomas adicionales (además de inglés)</span>
+          </li>
+          <li>
+            <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+            <span>Lecciones y retos avanzados ilimitados</span>
+          </li>
+          <li>
+            <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+            <span>Feedback con IA en detalle</span>
+          </li>
+        </ul>
+        <div id="pricing-checkout-msg" class="small text-danger text-center" aria-live="polite"></div>
+        <button type="button" id="btn-premium" class="btn pricing-btn-gradient mt-1">Obtener Premium</button>
+        <p class="pricing-footnote">
+          Cancela cuando quieras desde tu perfil. Si un cargo falla, activamos un periodo de gracia de 24 h.
+        </p>
+      </article>
+    </div>
+
+    <section class="pricing-section-history" aria-labelledby="history-heading">
+      <div class="pricing-history-card">
+        <h2 id="history-heading" class="pricing-history-title">Historial de facturación</h2>
+        <p class="pricing-history-sub">Pagos procesados con Stripe. Solo tú puedes ver esta información.</p>
+        <div class="pricing-table-wrap table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Proveedor</th>
+                <th>Importe</th>
+                <th>Estado</th>
+                <th>Pagado</th>
+                <th>Vence / periodo</th>
+              </tr>
+            </thead>
+            <tbody id="billing-body">
+              <tr>
+                <td colspan="5" class="text-muted text-center py-4">Cargando…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
   <script src="app.js"></script>
   <script>
-    (async function () {
-      const auth = typeof requireAuth === "function" ? requireAuth() : null;
-      const headers = auth ? apiHeaders() : null;
+    (function () {
       const tbody = document.getElementById("billing-body");
-      if (auth) {
-        const hRes = await fetch(apiUrl("/api/payments/billing/history"), { headers });
-        if (hRes.ok) {
-          const rows = await hRes.json();
-          tbody.innerHTML = rows.map(function (r) {
-            return "<tr><td>" + (r.provider || "stripe") + "</td><td>" + ((r.amount_cents || 0) / 100).toFixed(2) + " " + (r.currency || "eur").toUpperCase() + "</td><td>" + (r.status || "-") + "</td><td>" + (r.paid_at || "-") + "</td><td>" + (r.period_end || "-") + "</td></tr>";
-          }).join("");
-        }
-      } else {
-        document.getElementById("pricing-login-note").classList.remove("d-none");
-        tbody.innerHTML = "<tr><td colspan='5' class='text-muted'>Inicia sesión para ver tu historial de facturación.</td></tr>";
-      }
-      document.getElementById("btn-premium").addEventListener("click", async function () {
+      const loginNote = document.getElementById("pricing-login-note");
+      const btn = document.getElementById("btn-premium");
+      const msg = document.getElementById("pricing-checkout-msg");
+
+      // No usar requireAuth() aquí: redirige al login y los invitados deben poder ver los planes.
+      const token = typeof getStoredToken === "function" ? getStoredToken() : "";
+      const userId = localStorage.getItem("corespeak_user_id");
+      const hasSession = !!(token && /^\d+$/.test(String(userId || "")));
+      const auth = hasSession ? { token: token, userId: userId } : null;
+      const headers =
+        auth && typeof apiHeaders === "function" ? apiHeaders() : hasSession
+          ? { Authorization: "Bearer " + token, "Content-Type": "application/json" }
+          : null;
+
+      if (loginNote) {
         if (!auth) {
-          window.location.href = "inicio_session.html";
-          return;
+          loginNote.classList.remove("d-none");
+        } else {
+          loginNote.classList.add("d-none");
         }
-        const payload = {
-          success_url: window.location.origin + "/ui/checkout_success.html?session_id={CHECKOUT_SESSION_ID}",
-          cancel_url: window.location.origin + "/ui/checkout_cancel.html"
-        };
-        const res = await fetch(apiUrl("/api/payments/stripe/checkout"), {
-          method: "POST",
-          headers,
-          body: JSON.stringify(payload)
+      }
+
+      if (auth && headers && typeof apiUrl === "function") {
+        void fetch(apiUrl("/api/billing/history"), { headers })
+          .then(function (res) {
+            if (res.status === 401) {
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>Sesión no válida. <a class=\"register-link\" href='inicio_session.html'>Iniciar sesión</a></td></tr>";
+              return;
+            }
+            if (res.status === 402) {
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>El historial detallado está disponible para suscriptores Premium. Después de contratar, verás aquí tus facturas.</td></tr>";
+              return;
+            }
+            if (!res.ok) {
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>No se pudo cargar el historial. Inténtalo más tarde.</td></tr>";
+              return;
+            }
+            return res.json();
+          })
+          .then(function (rows) {
+            if (!rows || !Array.isArray(rows)) {
+              return;
+            }
+            if (rows.length === 0) {
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>Aún no hay facturas. Cuando tengas un pago, aparecerá aquí.</td></tr>";
+              return;
+            }
+            tbody.innerHTML = rows
+              .map(function (r) {
+                const amt = ((r.amount_cents || 0) / 100).toFixed(2);
+                const cur = (r.currency || "eur").toUpperCase();
+                const paid = r.paid_at || "—";
+                const end = r.expires_at || "—";
+                return (
+                  "<tr><td>" +
+                  (r.provider || "stripe") +
+                  "</td><td>" +
+                  amt +
+                  " " +
+                  cur +
+                  "</td><td>" +
+                  (r.status || "—") +
+                  "</td><td>" +
+                  paid +
+                  "</td><td>" +
+                  end +
+                  "</td></tr>"
+                );
+              })
+              .join("");
+          })
+          .catch(function () {
+            if (tbody) {
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>Error de conexión.</td></tr>";
+            }
+          });
+      } else if (tbody) {
+        tbody.innerHTML =
+          "<tr><td colspan='5' class='text-muted text-center py-4'>Inicia sesión para ver el historial de facturación.</td></tr>";
+      }
+
+      if (btn) {
+        btn.addEventListener("click", function () {
+          if (typeof startPremiumCheckoutGeneric === "function") {
+            void startPremiumCheckoutGeneric(msg, btn);
+          } else {
+            const h = auth && headers;
+            if (!h) {
+              window.location.href = "inicio_session.html";
+              return;
+            }
+            void fetch(
+              (typeof apiUrl === "function" ? apiUrl("/api/billing/checkout") : "/api/billing/checkout"),
+              { method: "POST", headers: h, body: JSON.stringify({ provider: "stripe" }) }
+            )
+              .then(function (r) {
+                return r.json().then(function (d) {
+                  return { r: r, d: d };
+                });
+              })
+              .then(function (o) {
+                if (!o.r.ok || !o.d.checkout_url) {
+                  if (msg) {
+                    msg.textContent = o.d.detail || "No se pudo iniciar el pago";
+                    msg.className = "small text-danger text-center";
+                  }
+                  return;
+                }
+                window.location.href = o.d.checkout_url;
+              });
+          }
         });
-        const data = await res.json().catch(function () { return {}; });
-        if (!res.ok || !data.checkout_url) {
-          alert(data.detail || "No se pudo iniciar el pago");
-          return;
-        }
-        window.location.href = data.checkout_url;
-      });
+      }
     })();
   </script>
 </body>

@@ -48,6 +48,16 @@ body {
     transition: color 0.3s;
 }
 
+.dashboard-nav-link:hover {
+    color: #000;
+}
+
+/* Misma separación icono–texto que en dashboard.css (páginas con cursos.css se veían más “pegadas”). */
+.dashboard-nav-link svg {
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
 /* --- Estilos Generales del Contenido --- */
 .main-content {
     max-width: 900px; /* Ancho máximo similar al diseño */

@@ -19,14 +19,30 @@ def get_current_user(
 ) -> AppUser:
     if credentials is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing auth token")
+    raw = (credentials.credentials or "").strip()
+    if not raw:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing auth token")
     try:
-        payload = decode_access_token(credentials.credentials)
+        payload = decode_access_token(raw)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
-    user_id = payload.get("uid")
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-    user = session.exec(select(AppUser).where(AppUser.id == int(user_id))).first()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sesion no valida. Vuelve a iniciar sesion.",
+        ) from exc
+
+    user: AppUser | None = None
+    uid = payload.get("uid")
+    if uid is not None:
+        try:
+            user = session.exec(select(AppUser).where(AppUser.id == int(uid))).first()
+        except (TypeError, ValueError):
+            user = None
+    if user is None:
+        # Tokens antiguos u otros clientes: solo llevaban `sub` (email)
+        sub = str(payload.get("sub") or "").strip().lower()
+        if not sub:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        user = session.exec(select(AppUser).where(AppUser.email == sub)).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user

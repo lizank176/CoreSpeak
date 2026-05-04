@@ -42,6 +42,7 @@ class AppUser(SQLModel, table=True):
     current_levels_json: dict = Field(default_factory=dict, sa_column=Column(JSON))
     interests_json: list = Field(default_factory=list, sa_column=Column(JSON))
     occupation: Optional[str] = Field(default=None, max_length=120)
+    interested_in_premium: bool = Field(default=False, index=True)
 
     is_premium: bool = Field(default=False, index=True)
     subscription_id: Optional[str] = Field(default=None, max_length=255, index=True)
@@ -168,9 +169,9 @@ class DailyChallenge(SQLModel, table=True):
     grammar_error_key: Optional[str] = Field(default=None, max_length=120)
 
     time_limit_seconds: int = Field(default=300)
-    xp_awarded: int = Field(default=20)
+    xp_awarded: int = Field(default=100)
     status: ChallengeStatus = Field(default=ChallengeStatus.PENDING, max_length=24)
-    source_model: str = Field(default="deepseek-chat", max_length=60)
+    source_model: str = Field(default="groq", max_length=60)
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -202,4 +203,17 @@ class StripeWebhookEvent(SQLModel, table=True):
     event_id: str = Field(index=True, unique=True, max_length=255)
     event_type: str = Field(max_length=80, index=True)
     processed_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+
+
+class AgendaWord(SQLModel, table=True):
+    """Vocabulario guardado por el usuario (bitácora / agenda)."""
+
+    __tablename__ = "agenda_words"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    word: str = Field(default="", max_length=500)
+    meaning: str = Field(default="", max_length=4000)
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 

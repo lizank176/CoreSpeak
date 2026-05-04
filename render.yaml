@@ -1,0 +1,16 @@
+# Blueprint opcional Render.com (plan gratis). Registra cuenta, conecta GitHub,
+# escoge este repo y añade en el dashboard las variables JWT_SECRET_KEY, GROQ_API_KEY, etc.
+# APP_BASE_URL = https://<nombre-del-servicio>.onrender.com
+
+services:
+  - type: web
+    name: corespeak-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: USE_SQLITE
+        value: "true"
+      - key: APP_ENV
+        value: production

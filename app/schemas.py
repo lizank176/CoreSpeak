@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.cefr import normalize_cefr_level
+from app.interest_catalog import coerce_interests_list
 from app.models import ExerciseType
 
 
@@ -10,12 +12,6 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=120)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    ui_language: str = Field(default="es", min_length=2, max_length=12)
-    native_language: str = Field(min_length=2, max_length=12)
-    target_languages: list[str] = Field(min_length=1)
-    current_levels: dict[str, str] = Field(default_factory=dict)
-    interests: list[str] = Field(default_factory=list)
-    occupation: str | None = Field(default=None, max_length=120)
     accepted_terms: bool = True
 
     @field_validator("password")
@@ -33,10 +29,29 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=4096)
+    password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        has_digit = any(ch.isdigit() for ch in value)
+        has_symbol = any(not ch.isalnum() for ch in value)
+        if not (has_digit and has_symbol):
+            raise ValueError("Password debe incluir al menos un numero y un simbolo")
+        return value
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in_minutes: int
+    user_id: int | None = None
 
 
 class UserProfileResponse(BaseModel):
@@ -51,6 +66,7 @@ class UserProfileResponse(BaseModel):
     current_levels_json: dict
     interests_json: list
     occupation: str | None
+    interested_in_premium: bool
     is_premium: bool
     expiry_date: datetime | None
     streak_days: int
@@ -60,11 +76,55 @@ class UserProfileResponse(BaseModel):
 
 class ProfileSetupRequest(BaseModel):
     ui_language: str = Field(default="es", min_length=2, max_length=12)
-    native_language: str = Field(min_length=2, max_length=12)
-    target_languages: list[str] = Field(min_length=1)
-    current_levels: dict[str, str] = Field(default_factory=dict)
-    interests: list[str] = Field(default_factory=list)
-    occupation: str | None = Field(default=None, max_length=120)
+    interests: list[str] = Field(default_factory=list, max_length=10)
+    interested_in_premium: bool = False
+    # Nivel de inglés (CEFR) — se guarda en current_levels_json["en"] y define el reto diario.
+    english_level: str = Field(default="A1", max_length=4)
+
+    @field_validator("interests", mode="before")
+    @classmethod
+    def _normalize_interests_ids(cls, v: object) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return coerce_interests_list([v])
+        if isinstance(v, list):
+            return coerce_interests_list(v)
+        return coerce_interests_list([str(v)])
+
+    @field_validator("english_level", mode="before")
+    @classmethod
+    def _validate_english_level(cls, v: object) -> str:
+        return normalize_cefr_level(str(v) if v is not None else "A1")
+
+
+class OnboardingSaveRequest(BaseModel):
+    """Test inicial opcional: curso principal siempre inglés."""
+
+    ocupacion: str | None = Field(default=None, max_length=120)
+    niveles_actuales: dict[str, str] = Field(default_factory=dict)
+
+
+class ExtraLanguagesRequest(BaseModel):
+    language_codes: list[str] = Field(default_factory=list)
+
+
+class DisplayNamePatchRequest(BaseModel):
+    """Nombre y apellido en UI; se unen en un solo full_name en BD."""
+
+    first_name: str = Field(default="", max_length=80)
+    last_name: str = Field(default="", max_length=80)
+
+
+class EnglishLevelPatchRequest(BaseModel):
+    """Nivel MCER/CEFR del curso principal (inglés); afecta al generador del reto diario."""
+
+    english_level: str = Field(default="A1", max_length=4)
+
+    @field_validator("english_level", mode="before")
+    @classmethod
+    def _validate_english_level(cls, v: object) -> str:
+        return normalize_cefr_level(str(v) if v is not None else "A1")
 
 
 class LessonExerciseInput(BaseModel):
@@ -115,6 +175,8 @@ class ChallengeResultResponse(BaseModel):
     xp_awarded: int
     streak_days: int
     streak_message: str | None = None
+    # Enviar true si el reto ya estaba calificado: no se suma XP; evita toasts "correcto +0 XP".
+    repeat_submission: bool = False
 
 
 class CheckoutRequest(BaseModel):

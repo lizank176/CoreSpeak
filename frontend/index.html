@@ -33,7 +33,7 @@
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans text-slate-100 antialiased">
-  <div class="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-8 pt-4">
+  <div class="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 pb-8 pt-4 sm:px-6">
     <!-- Gamificación -->
     <div class="mb-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
       <div class="mb-2 flex items-center justify-between gap-2">
@@ -70,9 +70,9 @@
     <div id="status-line" class="mb-2 min-h-[1.25rem] text-center text-sm text-amber-300/90"></div>
     <div id="toast-line" class="mb-2 hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-200"></div>
 
-    <main id="chat-thread" class="flex flex-1 flex-col gap-3 overflow-y-auto rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-inner backdrop-blur-sm" style="max-height: min(52vh, 480px);" aria-live="polite"></main>
+    <main id="chat-thread" class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-2xl bg-transparent px-1 py-3 sm:px-2" style="max-height: min(70vh, 720px);" aria-live="polite"></main>
 
-    <div class="mt-4 flex gap-2 rounded-2xl border border-white/10 bg-slate-900/60 p-2 shadow-xl backdrop-blur-md">
+    <div class="mt-4 flex gap-2 rounded-2xl border border-white/10 bg-transparent p-2 backdrop-blur-[2px]">
       <label class="sr-only" for="user-reply">Tu respuesta</label>
       <input id="user-reply" type="text" autocomplete="off" placeholder="Escribe tu respuesta…"
         class="min-w-0 flex-1 rounded-xl border-0 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50" />
@@ -139,6 +139,37 @@
         }
       }
 
+      /** Convierte /api/auth/me (xp_total + streak_days) al formato applyGamificación (cap 100 XP / nivel ficticio UI). */
+      function gamificationFromProfile(me) {
+        if (!me || me.xp_total == null) return null;
+        const total = Math.max(0, Math.floor(Number(me.xp_total) || 0));
+        const lvl = Math.floor(total / XP_CAP) + 1;
+        const xin = total % XP_CAP;
+        return {
+          streak_days: Math.max(0, Math.floor(Number(me.streak_days) || 0)),
+          current_level: lvl,
+          total_xp: total,
+          xp_in_current_level: xin,
+          xp_to_next_level: XP_CAP - xin,
+        };
+      }
+
+      async function refreshGamificationFromServer() {
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (!token) return;
+        try {
+          const res = await fetch(apiUrl("/api/auth/me"), {
+            headers: { Authorization: "Bearer " + token },
+          });
+          if (!res.ok) return;
+          const me = await res.json().catch(() => null);
+          const g = gamificationFromProfile(me);
+          applyGamification(g);
+        } catch (_e) {
+          /* silenciar red */
+        }
+      }
+
       function setInputPlaceholder(lang) {
         const input = document.getElementById("user-reply");
         if (!input) return;
@@ -152,7 +183,7 @@
         const wrap = document.createElement("div");
         wrap.className = "flex justify-start opacity-0";
         wrap.innerHTML =
-          '<div class="max-w-[92%] rounded-2xl rounded-tl-md border border-sky-500/20 bg-gradient-to-br from-slate-800 to-slate-800/80 px-4 py-3 text-sm leading-relaxed text-slate-100 shadow-lg">' +
+          '<div class="w-full max-w-full rounded-2xl rounded-tl-md border border-sky-500/20 bg-gradient-to-br from-slate-800 to-slate-800/80 px-4 py-3.5 text-sm leading-relaxed text-slate-100 shadow-lg sm:px-5 sm:py-4">' +
           '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-400/90">Tutor IA</div>' +
           '<div class="whitespace-pre-wrap chat-body"></div></div>';
         thread.appendChild(wrap);
@@ -171,7 +202,7 @@
         const wrap = document.createElement("div");
         wrap.className = "flex justify-end animate-bubble-in";
         wrap.innerHTML =
-          '<div class="max-w-[85%] rounded-2xl rounded-tr-md border border-white/10 bg-sky-600/25 px-4 py-3 text-sm text-slate-100">' +
+          '<div class="max-w-[min(100%,36rem)] rounded-2xl rounded-tr-md border border-white/10 bg-sky-600/25 px-4 py-3.5 text-sm text-slate-100 sm:px-5">' +
           '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-200/70">Tú</div>' +
           '<div class="whitespace-pre-wrap"></div></div>';
         wrap.querySelector("div div:last-child").textContent = text;
@@ -186,7 +217,7 @@
         wrap.className = "flex justify-start animate-bubble-in";
         const border = ok ? "border-emerald-500/30 bg-emerald-950/40" : "border-amber-500/25 bg-amber-950/30";
         wrap.innerHTML =
-          '<div class="max-w-[92%] rounded-2xl rounded-tl-md border px-4 py-3 text-sm leading-relaxed ' + border + '">' +
+          '<div class="w-full max-w-full rounded-2xl rounded-tl-md border px-4 py-3.5 text-sm leading-relaxed sm:px-5 sm:py-4 ' + border + '">' +
           '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider ' + (ok ? "text-emerald-400" : "text-amber-400") + '">CoreSpeak</div>' +
           '<div class="whitespace-pre-wrap"></div></div>';
         wrap.querySelector("div div:last-child").textContent = text;
@@ -203,7 +234,7 @@
         }, 2000);
       }
 
-      window.__dailyChallenge = { expected: "", loaded: false };
+      window.__dailyChallenge = { id: null, loaded: false, submitted: false };
 
       async function loadChallenge() {
         const auth = requireAuth();
@@ -223,7 +254,7 @@
           status.classList.remove("hidden");
         }
 
-        const url = apiUrl("/get-daily-challenge/" + auth.userId);
+        const url = apiUrl("/api/challenges/daily");
         let res;
         try {
           res = await fetch(url, { headers: { Authorization: "Bearer " + auth.token } });
@@ -235,38 +266,43 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           const d = data.detail;
-          if (status) status.textContent = typeof d === "string" ? d : "Error al cargar el reto.";
+          let line =
+            typeof d === "string"
+              ? d
+              : Array.isArray(d) && d.length
+                ? d
+                    .map((x) => (x && (x.msg || x.message)) || JSON.stringify(x))
+                    .join(" ")
+                : d && typeof d === "object"
+                  ? JSON.stringify(d)
+                  : "";
+          if (status) status.textContent = line || `Error al cargar el reto (HTTP ${res.status}). Comprueba la consola «Red».`;
           return;
         }
 
         if (status) status.textContent = "";
         window.__dailyChallenge.loaded = true;
+        window.__dailyChallenge.submitted = false;
 
-        const lang = (data.idioma_estudio || "en").toLowerCase().slice(0, 2);
-        const langName = data.idioma_estudio_nombre || "English";
+        const lang = "en";
+        const langName = "English";
         const ll = document.getElementById("lang-label");
         if (ll) ll.textContent = langName;
 
         setInputPlaceholder(lang);
 
-        const cj = data.challenge_json || {};
-        window.__dailyChallenge.expected = String(cj.respuesta_esperada || "").trim();
-
-        if (data.gamification) applyGamification(data.gamification);
-
-        const pr = data.prioridad || {};
-        if (pill && pr.categoria) {
+        window.__dailyChallenge.id = data.id || null;
+        if (pill) {
           pill.classList.remove("hidden");
-          pill.textContent = (pr.modo === "prioridad" ? "Prioridad: " : pr.modo === "refuerzo" ? "Refuerzo: " : "Tema: ") + pr.categoria;
+          pill.textContent = "Reto diario";
         }
-
-        const msgs = Array.isArray(data.messages) ? data.messages : [];
+        const msgs = [];
+        if (data.scenario) msgs.push(String(data.scenario));
+        if (data.task_prompt) msgs.push(String(data.task_prompt));
+        if (data.expected_solution_hint) msgs.push("Pista: " + String(data.expected_solution_hint));
         for (let i = 0; i < msgs.length; i++) {
-          const m = msgs[i];
-          if (m && m.role === "tutor" && m.text) {
-            await new Promise((r) => setTimeout(r, 280 + i * 120));
-            appendTutorBubble(String(m.text));
-          }
+          await new Promise((r) => setTimeout(r, 220 + i * 80));
+          appendTutorBubble(msgs[i]);
         }
 
         const sendBtn = document.getElementById("send-reply");
@@ -284,9 +320,9 @@
           alert("Espera a que cargue el reto.");
           return;
         }
-        const exp = window.__dailyChallenge.expected;
-        if (!exp) {
-          alert("Este reto no trae respuesta esperada. Recarga la página.");
+        const challengeId = window.__dailyChallenge.id;
+        if (!challengeId) {
+          alert("No se pudo identificar el reto actual. Recarga la página.");
           return;
         }
 
@@ -299,13 +335,13 @@
         const toast = document.getElementById("toast-line");
         let res;
         try {
-          res = await fetch(apiUrl("/submit-daily-challenge/" + auth.userId), {
+          res = await fetch(apiUrl("/api/challenges/" + encodeURIComponent(challengeId) + "/submit"), {
             method: "POST",
             headers: {
               Authorization: "Bearer " + auth.token,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ answer: t, respuesta_esperada: exp }),
+            body: JSON.stringify({ answer: t }),
           });
         } catch (e) {
           if (sendBtn) sendBtn.disabled = false;
@@ -321,21 +357,37 @@
           return;
         }
 
-        const ok = !!data.correcto;
-        appendFeedbackBubble(data.feedback || (ok ? "¡Bien!" : "Sigue practicando."), ok);
-
-        if (data.gamification) {
-          applyGamification(data.gamification);
-          if (ok) {
-            flashStreak();
-            if (toast && data.gamification.celebration_message) {
-              toast.textContent = data.gamification.celebration_message;
-              toast.classList.remove("hidden");
-            }
+        const ok = !!data.is_correct_semantically;
+        const repeat = !!data.repeat_submission;
+        const xp = Number(data.xp_awarded) || 0;
+        appendFeedbackBubble(
+          (repeat
+            ? "Ya habíamos calificado tu respuesta. No se suma XP otra vez.\n\n"
+            : "") + (data.corrective_feedback || (ok ? "¡Bien!" : "Sigue practicando.")),
+          !repeat && ok
+        );
+        if (toast) {
+          if (repeat) {
+            toast.textContent = "Este reto ya estaba hecho. No se añade XP otra vez.";
+            toast.classList.remove("hidden");
+          } else if (xp > 0) {
+            const label = ok ? "Bien visto. " : "Progreso. ";
+            toast.textContent = label + "+" + String(xp) + " XP";
+            toast.classList.remove("hidden");
+            if (ok) flashStreak();
+          } else if (!ok) {
+            toast.textContent = "Mira el feedback y sigue practicando. +0 XP en este intento.";
+            toast.classList.remove("hidden");
           }
         }
 
         if (sendBtn) sendBtn.disabled = false;
+        if (!repeat) window.__dailyChallenge.submitted = true;
+        if (window.__dailyChallenge.submitted) {
+          if (sendBtn) sendBtn.disabled = true;
+        }
+
+        await refreshGamificationFromServer();
       }
 
       document.getElementById("send-reply")?.addEventListener("click", () => void submitReply());
@@ -346,7 +398,12 @@
         }
       });
 
-      document.addEventListener("DOMContentLoaded", () => void loadChallenge());
+      document.addEventListener("DOMContentLoaded", async () => {
+        const auth = requireAuth();
+        if (!auth) return;
+        await refreshGamificationFromServer();
+        await loadChallenge();
+      });
     })();
   </script>
 </body>

@@ -9,11 +9,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.api.admin import router as admin_router
+from app.api.agenda import router as agenda_router
 from app.api.auth import router as auth_router
 from app.api.billing import router as billing_router
 from app.api.challenges import router as challenge_router
 from app.api.courses import catalog_router, router as courses_router, users_router
 from app.config import settings
+from app.pricing_plans import billing_pricing_payload
 from app.db import init_db
 from app.security import decode_access_token
 
@@ -40,6 +42,7 @@ def create_app() -> FastAPI:
     PUBLIC_API_PATHS = {
         "/api/health",
         "/api/billing/webhooks/stripe",
+        "/api/catalog/interest-options",
     }
 
     @app.middleware("http")
@@ -55,12 +58,15 @@ def create_app() -> FastAPI:
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     content={"detail": "Missing auth token"},
                 )
-            token = auth.split(" ", 1)[1].strip()
+            token = (auth.split(" ", 1)[1] or "").strip()
             try:
                 payload = decode_access_token(token)
-                if payload.get("uid") is None:
-                    raise ValueError("Invalid token payload")
             except Exception:
+                return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    content={"detail": "Invalid token"},
+                )
+            if payload.get("uid") is None and not str(payload.get("sub") or "").strip():
                 return JSONResponse(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     content={"detail": "Invalid token"},
@@ -77,10 +83,12 @@ def create_app() -> FastAPI:
         return {"status": "ok", "api": "ready"}
 
     project_root = Path(__file__).resolve().parents[1]
-    templates = Jinja2Templates(directory=str(project_root / "templates"))
     frontend_dir = project_root / "frontend"
+    templates_dir = project_root / "templates"
+    jinja_templates = Jinja2Templates(directory=str(templates_dir))
     app.include_router(auth_router)
     app.include_router(admin_router)
+    app.include_router(agenda_router)
     app.include_router(challenge_router)
     app.include_router(billing_router)
     app.include_router(courses_router)
@@ -89,18 +97,10 @@ def create_app() -> FastAPI:
 
     @app.get("/pricing")
     def pricing_page(request: Request):
-        return templates.TemplateResponse(
-            request=request,
-            name="pricing.html",
-            context={
-                "free_plan": {"name": "Gratis", "price_eur_month": 0, "features": ["1 idioma", "2 lecciones/dia"]},
-                "premium_plan": {
-                    "name": "Premium",
-                    "price_eur_month": 5,
-                    "features": ["Ilimitado", "Feedback detallado IA", "Retos avanzados"],
-                },
-            },
-        )
+        ctx = billing_pricing_payload()
+        ctx["request"] = request
+        ctx["base_url"] = settings.app_base_url.rstrip("/")
+        return jinja_templates.TemplateResponse("pricing.html", ctx)
 
     if frontend_dir.exists():
         app.mount("/ui", StaticFiles(directory=str(frontend_dir)), name="ui")

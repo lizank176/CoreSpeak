@@ -79,31 +79,22 @@
                     </div>
                 </div>
 
-                <form>
-                    <div class="row g-3 mb-3">
+                <form id="config-personal-form" class="needs-validation" novalidate>
+                    <div id="config-personal-msg" class="alert py-2 px-3 small d-none" role="alert"></div>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-dark" data-i18n="config.name">Nombre</label>
-                            <input type="text" class="form-control custom-input" value="Usuario">
+                            <label class="form-label small fw-bold text-dark" for="config-first-name" data-i18n="config.name">Nombre</label>
+                            <input type="text" class="form-control custom-input" id="config-first-name" name="first_name" autocomplete="given-name" maxlength="80">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-dark" data-i18n="config.surname">Apellido</label>
-                            <input type="text" class="form-control custom-input" value="Demo">
+                            <label class="form-label small fw-bold text-dark" for="config-last-name" data-i18n="config.surname">Apellido</label>
+                            <input type="text" class="form-control custom-input" id="config-last-name" name="last_name" autocomplete="family-name" maxlength="80">
                         </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark" data-i18n="config.email">Correo electrónico</label>
-                        <input type="email" class="form-control custom-input" value="ds@gmail.com">
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-dark" data-i18n="config.birth">Fecha de nacimiento</label>
-                        <input type="date" class="form-control custom-input">
                     </div>
 
                     <div class="d-flex justify-content-between gap-3 pt-2">
-                        <button type="button" class="btn btn-outline-cancel w-100">Cancelar</button>
-                        <button type="submit" class="btn btn-primary-gradient w-100 justify-content-center">Guardar cambios</button>
+                        <button type="button" class="btn btn-outline-cancel w-100" id="config-personal-cancel">Cancelar</button>
+                        <button type="submit" class="btn btn-primary-gradient w-100 justify-content-center" id="config-personal-save">Guardar cambios</button>
                     </div>
                 </form>
             </div>
@@ -117,21 +108,22 @@
                     <p class="text-muted small mb-0">Personaliza tu experiencia de aprendizaje</p>
                 </div>
 
-                <div class="setting-row d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h6 class="mb-0 text-dark">Recordatorios diarios</h6>
-                        <p class="text-muted small mb-0">Recibe notificaciones para practicar</p>
-                    </div>
-                    <button class="btn btn-light border btn-sm px-3">Activar</button>
-                </div>
-
-                <div class="setting-row d-flex justify-content-between align-items-center mb-4">
-                    <div>
+                <div class="setting-row d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div class="flex-grow-1" style="min-width: 180px">
                         <h6 class="mb-0 text-dark">Nivel de dificultad</h6>
-                        <p class="text-muted small mb-0">Ajusta el nivel de las lecciones</p>
+                        <p class="text-muted small mb-0">MCER (inglés): el reto que ya tienes para hoy no cambia; desde el siguiente reto (mañana o cuando no haya reto de ese día) se usará este nivel.</p>
                     </div>
-                    <button class="btn btn-light border btn-sm px-3">Intermedio</button>
+                    <label class="visually-hidden" for="config-english-level">Nivel MCER</label>
+                    <select id="config-english-level" class="form-select form-select-sm border" style="max-width: 220px">
+                        <option value="A1">A1 — principiante</option>
+                        <option value="A2">A2 — básico</option>
+                        <option value="B1">B1 — intermedio bajo</option>
+                        <option value="B2">B2 — intermedio alto</option>
+                        <option value="C1">C1 — avanzado</option>
+                        <option value="C2">C2 — competente / nativo cercano</option>
+                    </select>
                 </div>
+                <p id="config-difficulty-msg" class="alert py-2 px-3 small d-none mb-4" role="status"></p>
 
                 <div class="setting-row d-flex justify-content-between align-items-center">
                     <div>
@@ -140,6 +132,30 @@
                     </div>
                     <button class="btn btn-light border btn-sm px-3">Español</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Idiomas extra (solo Premium; el inglés es el curso base para todos) -->
+        <div class="card settings-card mb-4 d-none" id="config-premium-languages-card">
+            <div class="card-body p-4">
+                <h5 class="mb-1 fw-semibold">Más idiomas de aprendizaje</h5>
+                <p class="text-muted small mb-3">Inglés es el curso principal para todos. Con Premium puedes añadir otros idiomas del catálogo.</p>
+                <div class="d-flex flex-wrap gap-3 mb-2" id="config-extra-lang-checks" role="group" aria-label="Idiomas adicionales">
+                    <div class="form-check">
+                        <input class="form-check-input config-extra-lang-cb" type="checkbox" value="es" id="cfg-lang-es">
+                        <label class="form-check-label" for="cfg-lang-es">Español</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input config-extra-lang-cb" type="checkbox" value="fr" id="cfg-lang-fr">
+                        <label class="form-check-label" for="cfg-lang-fr">Francés</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input config-extra-lang-cb" type="checkbox" value="uk" id="cfg-lang-uk">
+                        <label class="form-check-label" for="cfg-lang-uk">Ucraniano</label>
+                    </div>
+                </div>
+                <div id="config-extra-lang-msg" class="alert py-2 px-3 small d-none" role="alert"></div>
+                <button type="button" class="btn btn-primary btn-sm" id="config-extra-langs-save">Guardar idiomas</button>
             </div>
         </div>
 

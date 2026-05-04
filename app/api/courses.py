@@ -1,18 +1,30 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Any
+import json
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 
+from app.cefr import normalize_cefr_level
+from app.constants import PRIMARY_COURSE_CODE
+from app.interest_catalog import interest_options_public_payload
 from app.db import get_session
 from app.dependencies import get_current_user, require_premium_or_grace
 from app.models import AppUser, CourseLevel, Enrollment, LanguageCourse, Lesson, LessonAttempt, UserRole
+from app.schemas import DisplayNamePatchRequest, EnglishLevelPatchRequest, ExtraLanguagesRequest, OnboardingSaveRequest
+from app.services.enrollment_service import sync_user_enrollments
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 catalog_router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 users_router = APIRouter(prefix="/api/users", tags=["users"])
+
+
+@catalog_router.get("/interest-options")
+def catalog_interest_options() -> list[dict[str, Any]]:
+    """Intereses multicheck para el perfil: etiquetas i18n y frases EN estándar para la IA."""
+    return interest_options_public_payload()
 
 
 @router.get("/lessons")
@@ -65,20 +77,180 @@ def _to_lesson_dict(lesson: Lesson) -> dict:
     }
 
 
+def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(content, dict):
+        return []
+    exercises = content.get("exercises")
+    if not isinstance(exercises, list):
+        return []
+    blocks: list[dict[str, Any]] = []
+    for item in exercises:
+        if not isinstance(item, dict):
+            continue
+        ex_type = str(item.get("exercise_type") or "").strip().lower()
+        prompt = str(item.get("prompt") or "").strip()
+        options_json = item.get("options_json") if isinstance(item.get("options_json"), dict) else {}
+        correct_answer = item.get("correct_answer")
+
+        if ex_type in {"multiple_choice", "single_choice"}:
+            options = options_json.get("options")
+            if not isinstance(options, list):
+                options = []
+            valid_options = [str(op).strip() for op in options if str(op).strip()]
+            block = {
+                "type": "quiz",
+                "pregunta": prompt,
+                "opciones": valid_options,
+                "respuestas_validas": [str(correct_answer).strip()] if correct_answer else [],
+                "respuesta_correcta": str(correct_answer).strip() if correct_answer else None,
+            }
+            blocks.append(block)
+            continue
+
+        if ex_type == "fill_in_the_blank":
+            sentence = str(options_json.get("sentence") or prompt).strip()
+            hidden_word = str(options_json.get("hidden_word") or "").strip()
+            answers = [str(correct_answer).strip()] if correct_answer else []
+            block = {
+                "type": "fill_blank",
+                "pregunta": sentence or prompt,
+                "hidden_word": hidden_word,
+                "respuestas_validas": answers,
+                "respuesta_correcta": answers[0] if answers else None,
+            }
+            blocks.append(block)
+            continue
+    return blocks
+
+
+@users_router.patch("/me/display-name")
+def patch_display_name(
+    payload: DisplayNamePatchRequest,
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict[str, str]:
+    fn = (payload.first_name or "").strip()
+    ln = (payload.last_name or "").strip()
+    combined = " ".join(p for p in (fn, ln) if p)
+    if len(combined) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Indica nombre y/o apellido (al menos 2 caracteres en total).",
+        )
+    if len(combined) > 120:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Nombre demasiado largo.")
+    user.full_name = combined
+    user.updated_at = datetime.utcnow()
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return {"nombre": user.full_name or combined}
+
+
+@users_router.patch("/me/english-level")
+def patch_english_level(
+    payload: EnglishLevelPatchRequest,
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict[str, str]:
+    levels = dict(user.current_levels_json or {})
+    en_level = normalize_cefr_level(payload.english_level)
+    levels[PRIMARY_COURSE_CODE] = en_level
+    user.current_levels_json = levels
+    user.updated_at = datetime.utcnow()
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return {"english_level": en_level}
+
+
 @users_router.get("/me/profile")
 def me_profile(user: AppUser = Depends(get_current_user)) -> dict[str, Any]:
+    raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
+    code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
+    if not code and raw_levels:
+        fv = next(iter(raw_levels.values()), None)
+        code = str(fv).strip() if fv is not None else None
+    english_level = normalize_cefr_level(str(code) if code else "A1")
+
+    tg = user.target_languages_json if isinstance(user.target_languages_json, dict) else {}
+    intereses = user.interests_json if isinstance(user.interests_json, list) else []
+
     return {
         "id": user.id,
         "nombre": user.full_name,
         "email": user.email,
         "idioma_ui": user.ui_language,
         "idioma_nativo": user.native_language,
-        "idiomas_objetivo": user.target_languages_json.get("languages", []),
-        "intereses": user.interests_json,
+        "idiomas_objetivo": tg.get("languages", []),
+        "intereses": intereses,
         "ocupacion": user.occupation,
+        "interesado_premium": user.interested_in_premium,
         "is_premium": user.is_premium,
         "is_admin": user.role == UserRole.ADMIN,
+        "curso_principal": PRIMARY_COURSE_CODE,
+        "english_level": english_level,
     }
+
+
+@users_router.post("/me/onboarding")
+def save_onboarding(
+    payload: OnboardingSaveRequest,
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict[str, str]:
+    user.occupation = (payload.ocupacion or "").strip() or None
+    clj = dict(user.current_levels_json or {})
+    na = payload.niveles_actuales or {}
+    lvl = na.get(PRIMARY_COURSE_CODE)
+    if lvl and str(lvl).strip():
+        clj[PRIMARY_COURSE_CODE] = normalize_cefr_level(str(lvl))
+    if PRIMARY_COURSE_CODE not in clj:
+        clj[PRIMARY_COURSE_CODE] = "A1"
+    user.current_levels_json = clj
+    if not user.is_premium:
+        user.target_languages_json = {"languages": [PRIMARY_COURSE_CODE]}
+    user.updated_at = datetime.utcnow()
+    session.add(user)
+    sync_user_enrollments(session, user)
+    session.commit()
+    return {"status": "ok"}
+
+
+@users_router.post("/me/extra-languages")
+def set_extra_languages(
+    payload: ExtraLanguagesRequest,
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict[str, list[str]]:
+    if not user.is_premium:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los suscriptores Premium pueden añadir mas idiomas de aprendizaje.",
+        )
+    valid = {
+        c.language_code.lower()
+        for c in session.exec(select(LanguageCourse).where(LanguageCourse.is_active == True)).all()  # noqa: E712
+        if c.language_code
+    }
+    if PRIMARY_COURSE_CODE not in valid:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Falta el curso base de ingles en el catalogo"
+        )
+    out: list[str] = [PRIMARY_COURSE_CODE]
+    seen: set[str] = {PRIMARY_COURSE_CODE}
+    for c in payload.language_codes or []:
+        cl = str(c).strip().lower()
+        if not cl or cl in seen or cl not in valid:
+            continue
+        seen.add(cl)
+        out.append(cl)
+    user.target_languages_json = {"languages": out}
+    user.updated_at = datetime.utcnow()
+    session.add(user)
+    sync_user_enrollments(session, user)
+    session.commit()
+    return {"languages": out}
 
 
 @users_router.get("/{user_id}/progress")
@@ -194,6 +366,7 @@ def catalog_lesson_detail(
     if course and not user.is_premium and course.language_code.lower() not in chosen_codes:
         raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
     accessible = _lesson_accessible_for_user(lesson, user)
+    blocks = _catalog_blocks_from_content(lesson.content_json)
     return {
         "id": lesson.id,
         "title": lesson.title,
@@ -205,5 +378,6 @@ def catalog_lesson_detail(
         "audio_url": lesson.audio_url,
         "content": lesson.content_json,
         "exercises": lesson.content_json.get("exercises", []),
+        "exercises_json": json.dumps({"blocks": blocks}, ensure_ascii=False),
     }
 

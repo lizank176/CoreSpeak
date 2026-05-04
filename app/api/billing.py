@@ -11,6 +11,7 @@ from app.config import settings
 from app.db import get_session
 from app.dependencies import get_current_user, require_premium_or_grace
 from app.models import AppUser, BillingRecord, PaymentProvider, StripeWebhookEvent
+from app.pricing_plans import billing_pricing_payload
 from app.schemas import CheckoutRequest, CheckoutResponse, PortalResponse, PricingResponse, SubscriptionStatusResponse
 from app.services.enrollment_service import sync_user_enrollments
 
@@ -19,27 +20,7 @@ router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 @router.get("/pricing", response_model=PricingResponse)
 def pricing() -> PricingResponse:
-    return PricingResponse(
-        free_plan={
-            "name": "Gratis",
-            "price_eur_month": 0,
-            "features": [
-                "1 idioma activo",
-                "2 lecciones por dia",
-                "Retos basicos",
-            ],
-        },
-        premium_plan={
-            "name": "Premium",
-            "price_eur_month": 5,
-            "features": [
-                "Idiomas ilimitados",
-                "Feedback IA detallado",
-                "Retos avanzados y contenido exclusivo",
-                "Historial de facturacion",
-            ],
-        },
-    )
+    return PricingResponse(**billing_pricing_payload())
 
 
 @router.get("/subscription-status", response_model=SubscriptionStatusResponse)

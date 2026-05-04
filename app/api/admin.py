@@ -20,7 +20,9 @@ def dashboard_stats(
 ) -> dict:
     users = session.exec(select(AppUser)).all()
     lessons = session.exec(select(Lesson)).all()
-    courses = session.exec(select(LanguageCourse)).all()
+    courses = session.exec(
+        select(LanguageCourse).where(LanguageCourse.is_active == True, LanguageCourse.language_code != "de")  # noqa: E712
+    ).all()
     return {
         "users_total": len(users),
         "users_premium": sum(1 for u in users if u.is_premium),
@@ -35,7 +37,9 @@ def course_tree(
     _: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> list[dict]:
-    courses = session.exec(select(LanguageCourse)).all()
+    courses = session.exec(
+        select(LanguageCourse).where(LanguageCourse.is_active == True, LanguageCourse.language_code != "de")  # noqa: E712
+    ).all()
     levels = session.exec(select(CourseLevel)).all()
     lessons = session.exec(select(Lesson)).all()
 
