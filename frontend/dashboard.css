@@ -366,3 +366,46 @@ a{
     margin-right: auto;
     box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
 }
+
+/* Móvil: evitar desbordes horizontales y barra superior más usable */
+@media (max-width: 767.98px) {
+    .dashboard-header {
+        padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    }
+
+    .dashboard-header .container-fluid {
+        padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+    }
+
+    .dashboard-logo {
+        max-height: 72px;
+    }
+
+    .dashboard-nav > div {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .dashboard-nav-list {
+        width: 100%;
+        justify-content: flex-start !important;
+        row-gap: 0.35rem;
+    }
+
+    .dashboard-nav-item {
+        margin-left: 0 !important;
+    }
+
+    .dashboard-content {
+        padding-left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+        padding-right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+        padding-top: 1rem !important;
+    }
+
+    .saludo-section h1 {
+        font-size: clamp(1.25rem, 6vw, 1.6rem);
+        word-break: break-word;
+    }
+}

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CoreSpeak — Reto diario</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -25,18 +25,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
   <style>
+    html {
+      overflow-x: hidden;
+    }
     @keyframes bubble-in {
       from { opacity: 0; transform: translateY(12px) scale(0.98); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .animate-bubble-in { animation: bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .chat-thread-shell {
+      max-height: min(70vh, 720px);
+    }
+    @supports (height: 100dvh) {
+      .chat-thread-shell {
+        max-height: min(calc(100dvh - 15rem), 720px);
+      }
+    }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans text-slate-100 antialiased">
-  <div class="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 pb-8 pt-4 sm:px-6">
+<body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans text-slate-100 antialiased">
+  <div class="mx-auto flex min-h-screen min-w-0 w-full max-w-4xl flex-col px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-8 sm:pt-4">
     <!-- Gamificación -->
-    <div class="mb-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
-      <div class="mb-2 flex items-center justify-between gap-2">
+    <div class="mb-3 min-w-0 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
+      <div class="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
         <div class="flex items-center gap-2 min-w-0">
           <span id="streak-badge" class="flex shrink-0 items-center gap-1 rounded-xl bg-orange-500/20 px-2.5 py-1.5 text-sm font-bold text-orange-200 ring-1 ring-orange-500/30 transition-shadow" title="Racha de días seguidos">
             <span aria-hidden="true" class="text-lg leading-none">🔥</span>
@@ -47,7 +58,7 @@
             <div class="truncate text-xs text-slate-400"><span id="lang-label">—</span> · <span id="xp-label">0</span> XP</div>
           </div>
         </div>
-        <a href="dashboard.html" class="shrink-0 text-xs text-sky-400/90 hover:text-sky-300">Panel →</a>
+        <a href="dashboard.html" class="ml-auto shrink-0 text-xs text-sky-400/90 hover:text-sky-300 sm:ml-0">Panel →</a>
       </div>
       <div class="h-2 overflow-hidden rounded-full bg-slate-800">
         <div id="xp-bar" class="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-500 ease-out" style="width: 0%"></div>
@@ -59,10 +70,10 @@
       <span id="priority-pill" class="hidden max-w-[70%] truncate rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs text-sky-200/90"></span>
     </header>
 
-    <div class="mb-2 flex items-center gap-3">
+    <div class="mb-2 flex min-w-0 items-center gap-3">
       <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg shadow-lg shadow-sky-900/40" aria-hidden="true">✦</div>
-      <div>
-        <h1 class="text-lg font-semibold tracking-tight text-white">Tutor CoreSpeak</h1>
+      <div class="min-w-0">
+        <h1 class="text-base font-semibold tracking-tight text-white sm:text-lg">Tutor CoreSpeak</h1>
         <p class="text-xs text-slate-400">Micro-reto del día (~5 min)</p>
       </div>
     </div>
@@ -70,14 +81,14 @@
     <div id="status-line" class="mb-2 min-h-[1.25rem] text-center text-sm text-amber-300/90"></div>
     <div id="toast-line" class="mb-2 hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-200"></div>
 
-    <main id="chat-thread" class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-2xl bg-transparent px-1 py-3 sm:px-2" style="max-height: min(70vh, 720px);" aria-live="polite"></main>
+    <main id="chat-thread" class="chat-thread-shell flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl bg-transparent px-1 py-3 sm:px-2" aria-live="polite"></main>
 
-    <div class="mt-4 flex gap-2 rounded-2xl border border-white/10 bg-transparent p-2 backdrop-blur-[2px]">
+    <div class="mt-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-transparent p-2 backdrop-blur-[2px] sm:flex-row sm:items-stretch">
       <label class="sr-only" for="user-reply">Tu respuesta</label>
-      <input id="user-reply" type="text" autocomplete="off" placeholder="Escribe tu respuesta…"
-        class="min-w-0 flex-1 rounded-xl border-0 bg-slate-800/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50" />
+      <input id="user-reply" type="text" enterkeyhint="send" autocomplete="off" placeholder="Escribe tu respuesta…"
+        class="min-w-0 w-full flex-1 rounded-xl border-0 bg-slate-800/80 px-3 py-3 text-[16px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 sm:px-4 sm:text-sm" />
       <button type="button" id="send-reply"
-        class="shrink-0 rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50">
+        class="w-full shrink-0 rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50 sm:w-auto">
         Enviar
       </button>
     </div>
@@ -181,11 +192,11 @@
         const thread = document.getElementById("chat-thread");
         if (!thread || text == null) return;
         const wrap = document.createElement("div");
-        wrap.className = "flex justify-start opacity-0";
+        wrap.className = "flex w-full min-w-0 justify-start opacity-0";
         wrap.innerHTML =
-          '<div class="w-full max-w-full rounded-2xl rounded-tl-md border border-sky-500/20 bg-gradient-to-br from-slate-800 to-slate-800/80 px-4 py-3.5 text-sm leading-relaxed text-slate-100 shadow-lg sm:px-5 sm:py-4">' +
+          '<div class="w-full max-w-full min-w-0 rounded-2xl rounded-tl-md border border-sky-500/20 bg-gradient-to-br from-slate-800 to-slate-800/80 px-4 py-3.5 text-sm leading-relaxed text-slate-100 shadow-lg sm:px-5 sm:py-4">' +
           '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-400/90">Tutor IA</div>' +
-          '<div class="whitespace-pre-wrap chat-body"></div></div>';
+          '<div class="whitespace-pre-wrap break-words chat-body"></div></div>';
         thread.appendChild(wrap);
         requestAnimationFrame(() => {
           wrap.classList.add("animate-bubble-in");
@@ -200,11 +211,11 @@
         const thread = document.getElementById("chat-thread");
         if (!thread) return;
         const wrap = document.createElement("div");
-        wrap.className = "flex justify-end animate-bubble-in";
+        wrap.className = "flex w-full min-w-0 justify-end animate-bubble-in";
         wrap.innerHTML =
-          '<div class="max-w-[min(100%,36rem)] rounded-2xl rounded-tr-md border border-white/10 bg-sky-600/25 px-4 py-3.5 text-sm text-slate-100 sm:px-5">' +
+          '<div class="max-w-[min(100%,36rem)] min-w-0 rounded-2xl rounded-tr-md border border-white/10 bg-sky-600/25 px-4 py-3.5 text-sm text-slate-100 sm:px-5">' +
           '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-200/70">Tú</div>' +
-          '<div class="whitespace-pre-wrap"></div></div>';
+          '<div class="whitespace-pre-wrap break-words"></div></div>';
         wrap.querySelector("div div:last-child").textContent = text;
         thread.appendChild(wrap);
         thread.scrollTop = thread.scrollHeight;
@@ -214,12 +225,12 @@
         const thread = document.getElementById("chat-thread");
         if (!thread) return;
         const wrap = document.createElement("div");
-        wrap.className = "flex justify-start animate-bubble-in";
+        wrap.className = "flex w-full min-w-0 justify-start animate-bubble-in";
         const border = ok ? "border-emerald-500/30 bg-emerald-950/40" : "border-amber-500/25 bg-amber-950/30";
         wrap.innerHTML =
-          '<div class="w-full max-w-full rounded-2xl rounded-tl-md border px-4 py-3.5 text-sm leading-relaxed sm:px-5 sm:py-4 ' + border + '">' +
+          '<div class="w-full max-w-full min-w-0 rounded-2xl rounded-tl-md border px-4 py-3.5 text-sm leading-relaxed sm:px-5 sm:py-4 ' + border + '">' +
           '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider ' + (ok ? "text-emerald-400" : "text-amber-400") + '">CoreSpeak</div>' +
-          '<div class="whitespace-pre-wrap"></div></div>';
+          '<div class="whitespace-pre-wrap break-words"></div></div>';
         wrap.querySelector("div div:last-child").textContent = text;
         thread.appendChild(wrap);
         thread.scrollTop = thread.scrollHeight;
