@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -74,9 +74,10 @@ def create_app() -> FastAPI:
 
         return await call_next(request)
 
-    @app.get("/")
-    def healthcheck() -> dict[str, str]:
-        return {"status": "ok", "service": "core-speak-backend", "env": settings.app_env}
+    # La raíz abre la app web; monitores y Render deben usar /api/health.
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        return RedirectResponse(url="/ui/index.html", status_code=307)
 
     @app.get("/api/health")
     def api_health() -> dict[str, str]:
@@ -103,7 +104,11 @@ def create_app() -> FastAPI:
         return jinja_templates.TemplateResponse("pricing.html", ctx)
 
     if frontend_dir.exists():
-        app.mount("/ui", StaticFiles(directory=str(frontend_dir)), name="ui")
+        app.mount(
+            "/ui",
+            StaticFiles(directory=str(frontend_dir), html=True),
+            name="ui",
+        )
 
     return app
 
