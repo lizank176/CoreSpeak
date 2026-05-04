@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import logging
+import os
 from collections.abc import Generator
 from pathlib import Path
+from urllib.parse import urlparse
 
 from sqlalchemy import inspect as sa_inspect, text
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -9,14 +12,67 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from app.config import settings
 from app.models import CourseLevel, LanguageCourse
 
+logger = logging.getLogger(__name__)
+
+_LOCAL_MYSQL_DEFAULT = "mysql+pymysql://corespeak:corespeak@localhost:3306/corespeak"
+
+
+def _normalize_database_url(raw: str) -> str:
+    u = raw.strip()
+    if u.startswith("postgres://"):
+        return "postgresql+psycopg2://" + u[len("postgres://") :]
+    # Render/Neon suelen dar postgresql:// sin driver SQLAlchemy
+    if u.startswith("postgresql://") and "+" not in u.split("://", 1)[0]:
+        return "postgresql+psycopg2://" + u[len("postgresql://") :]
+    return u
+
+
+def _is_managed_database_url(url: str) -> bool:
+    """Postgres remoto o MySQL no local (p. ej. Render PostgreSQL enlazado)."""
+    if not url:
+        return False
+    u = _normalize_database_url(url)
+    if u.startswith(("postgresql+psycopg2://", "postgresql+psycopg://")):
+        return True
+    if u.startswith("mysql+pymysql://"):
+        parsed = urlparse(u.replace("mysql+pymysql", "mysql", 1))
+        host = (parsed.hostname or "").lower()
+        return host not in ("", "localhost", "127.0.0.1")
+    return False
+
 
 def _resolved_database_url() -> str:
+    raw = (settings.database_url or "").strip()
+    url = _normalize_database_url(raw)
+
+    # DATABASE_URL explícita (p. ej. Postgres de Render) gana sobre SQLite efímero.
+    if _is_managed_database_url(url):
+        host = urlparse(url).hostname or "?"
+        logger.info("Usando base de datos gestionada; host=%s", host)
+        return url
+
     if settings.use_sqlite:
         root = Path(__file__).resolve().parents[1]
         db_path = root / "data" / "corespeak.db"
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        return f"sqlite:///{db_path.as_posix()}"
-    return settings.database_url
+        sqlite_url = f"sqlite:///{db_path.as_posix()}"
+        if os.environ.get("RENDER"):
+            logger.warning(
+                "SQLite en disco efímero (Render): los datos pueden perderse al redeploy/reinicio. "
+                "Crea un PostgreSQL en Render y enlázalo para que DATABASE_URL sea la que use la API.",
+            )
+        else:
+            logger.info("SQLite local: %s", db_path)
+        return sqlite_url
+
+    if url == _LOCAL_MYSQL_DEFAULT or not url:
+        logger.warning(
+            "Sin USE_SQLITE ni DATABASE_URL remota: usando MySQL por defecto (%s). "
+            "En producción probablemente no haya servidor MySQL local.",
+            "localhost",
+        )
+
+    return url or raw
 
 
 _db_url = _resolved_database_url()

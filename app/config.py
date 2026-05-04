@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     app_debug: bool = True
     app_base_url: str = "http://127.0.0.1:8000"
 
-    # Si es true, se ignora MySQL y se usa un SQLite en ./data/corespeak.db (dev sin Docker).
+    # Sin DATABASE_URL remota: si true → SQLite en ./data/; si false → MySQL (url por defecto).
     use_sqlite: bool = False
 
     database_url: str = "mysql+pymysql://corespeak:corespeak@localhost:3306/corespeak"

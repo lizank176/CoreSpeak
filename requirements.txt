@@ -2,6 +2,7 @@ fastapi
 uvicorn
 sqlmodel
 PyMySQL
+psycopg2-binary
 python-dotenv
 pydantic-settings
 python-jose[cryptography]

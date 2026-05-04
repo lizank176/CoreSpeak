@@ -1,6 +1,9 @@
 # Blueprint opcional Render.com (plan gratis). Registra cuenta, conecta GitHub,
 # escoge este repo y añade en el dashboard las variables JWT_SECRET_KEY, GROQ_API_KEY, etc.
 # APP_BASE_URL = https://<nombre-del-servicio>.onrender.com
+#
+# Persistencia: crea PostgreSQL en Render y enlázalo al Web Service; DATABASE_URL tiene
+# prioridad sobre SQLite (el disco del contenedor suele borrarse al redeploy).
 
 services:
   - type: web
