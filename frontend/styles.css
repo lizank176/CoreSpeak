@@ -270,7 +270,8 @@ body.onboarding-page {
 }
 
 .onb-lang-card:focus-within .onb-lang-card-inner {
-    outline: none;
+    outline: 3px solid #7c3aed;
+    outline-offset: 2px;
     border-color: #a78bfa;
     box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.25);
 }

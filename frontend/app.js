@@ -1288,12 +1288,16 @@ function logout() {
   window.location.replace("inicio_session.html");
 }
 
-document.addEventListener("click", (e) => {
-  const a = e.target.closest("a.corespeak-logout");
-  if (!a) return;
-  e.preventDefault();
-  logout();
-});
+if (typeof CoreSpeakA11y !== "undefined") {
+  CoreSpeakA11y.initLogoutButtons(logout);
+} else {
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest(".corespeak-logout");
+    if (!el) return;
+    e.preventDefault();
+    logout();
+  });
+}
 
 function requireAuth() {
   const token = getStoredToken();
@@ -1344,7 +1348,19 @@ function formatApiErrorDetail(data) {
   return "";
 }
 
-function setLoginFormError(message) {
+function setLoginFormError(message, fieldErrors) {
+  const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
+  const pairs = [
+    ["login-email", "login-email-error"],
+    ["login-password", "login-password-error"],
+  ];
+  if (a11y) a11y.clearFieldErrors(pairs);
+  if (fieldErrors && a11y) {
+    Object.keys(fieldErrors).forEach((inputId) => {
+      const errId = inputId + "-error";
+      a11y.setFieldError(inputId, errId, fieldErrors[inputId]);
+    });
+  }
   const el = document.getElementById("login-error");
   if (!el) {
     if (message) window.alert(message);
@@ -1355,11 +1371,26 @@ function setLoginFormError(message) {
     el.classList.add("d-none");
     return;
   }
-  el.textContent = message;
+  el.textContent = "Error: " + message;
   el.classList.remove("d-none");
 }
 
-function setRegisterFormError(message) {
+function setRegisterFormError(message, fieldErrors) {
+  const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
+  const pairs = [
+    ["register-nombre", "register-nombre-error"],
+    ["register-email", "register-email-error"],
+    ["register-password", "register-password-error"],
+    ["register-password-confirm", "register-password-confirm-error"],
+    ["register-consent", "register-consent-error"],
+  ];
+  if (a11y) a11y.clearFieldErrors(pairs);
+  if (fieldErrors && a11y) {
+    Object.keys(fieldErrors).forEach((inputId) => {
+      const errId = inputId + "-error";
+      a11y.setFieldError(inputId, errId, fieldErrors[inputId]);
+    });
+  }
   const el = document.getElementById("register-error");
   if (!el) {
     if (message) window.alert(message);
@@ -1370,8 +1401,70 @@ function setRegisterFormError(message) {
     el.classList.add("d-none");
     return;
   }
-  el.textContent = message;
+  el.textContent = "Error: " + message;
   el.classList.remove("d-none");
+}
+
+function isValidEmailFormat(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function validateLoginClientSide() {
+  const email = document.getElementById("login-email")?.value?.trim() || "";
+  const password = document.getElementById("login-password")?.value || "";
+  const fieldErrors = {};
+  if (!email) {
+    fieldErrors["login-email"] = "Introduce tu correo electrónico.";
+  } else if (!isValidEmailFormat(email)) {
+    fieldErrors["login-email"] = "Introduce un correo con formato nombre@dominio.com.";
+  }
+  if (!password) {
+    fieldErrors["login-password"] = "Introduce tu contraseña.";
+  }
+  if (Object.keys(fieldErrors).length) {
+    setLoginFormError("Revisa los campos marcados.", fieldErrors);
+    const firstId = Object.keys(fieldErrors)[0];
+    document.getElementById(firstId)?.focus();
+    return false;
+  }
+  setLoginFormError("");
+  return true;
+}
+
+function validateRegisterClientSide() {
+  const nombre = document.getElementById("register-nombre")?.value?.trim() || "";
+  const email = document.getElementById("register-email")?.value?.trim() || "";
+  const password = document.getElementById("register-password")?.value || "";
+  const passwordConfirm = document.getElementById("register-password-confirm")?.value || "";
+  const consentAccepted = !!document.getElementById("register-consent")?.checked;
+  const fieldErrors = {};
+
+  if (!nombre) fieldErrors["register-nombre"] = "El nombre es obligatorio.";
+  if (!email) {
+    fieldErrors["register-email"] = "Introduce tu correo electrónico.";
+  } else if (!isValidEmailFormat(email)) {
+    fieldErrors["register-email"] = "Introduce un correo con formato nombre@dominio.com.";
+  }
+  if (!password) {
+    fieldErrors["register-password"] = "Introduce una contraseña.";
+  } else if (!/(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}/.test(password)) {
+    fieldErrors["register-password"] =
+      "Mínimo 8 caracteres, con al menos una letra, un número y un símbolo.";
+  }
+  if (password !== passwordConfirm) {
+    fieldErrors["register-password-confirm"] = "Las contraseñas no coinciden.";
+  }
+  if (!consentAccepted) {
+    fieldErrors["register-consent"] = "Debes aceptar los términos y la política de privacidad.";
+  }
+
+  if (Object.keys(fieldErrors).length) {
+    setRegisterFormError("Revisa los campos marcados.", fieldErrors);
+    document.getElementById(Object.keys(fieldErrors)[0])?.focus();
+    return false;
+  }
+  setRegisterFormError("");
+  return true;
 }
 
 /** user_id desde JSON (número, string, etc.); null si no es un entero >= 1. */
@@ -1386,9 +1479,14 @@ function coerceUserId(v) {
 }
 
 async function login() {
-  setLoginFormError("");
+  if (!validateLoginClientSide()) return;
+
   const email = document.getElementById("login-email")?.value?.trim() || "";
   const password = document.getElementById("login-password")?.value || "";
+  const btn = document.getElementById("login-btn");
+  const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
+  const defaultLabel = btn?.textContent?.trim() || "Iniciar sesion";
+  if (a11y) a11y.setBusy(btn, true, "Iniciando sesión…", defaultLabel);
 
   let res;
   try {
@@ -1399,7 +1497,8 @@ async function login() {
     });
   } catch (e) {
     console.warn("login: red", e);
-    setLoginFormError("");
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
+    setLoginFormError("No se pudo conectar. Comprueba tu red e inténtalo de nuevo.");
     return;
   }
 
@@ -1412,15 +1511,17 @@ async function login() {
       setLoginFormError(fromApi || "Revisa el correo y la contraseña.");
     } else {
       console.warn("login: HTTP", res.status, data);
-      setLoginFormError("");
+      setLoginFormError(fromApi || "No se pudo iniciar sesión. Inténtalo más tarde.");
     }
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
     return;
   }
 
   const data = await res.json();
   if (data.access_token == null || String(data.access_token).trim() === "") {
     console.warn("login: respuesta sin token");
-    setLoginFormError("");
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
+    setLoginFormError("Respuesta del servidor incompleta. Inténtalo de nuevo.");
     return;
   }
 
@@ -1444,7 +1545,8 @@ async function login() {
 
   if (uid == null) {
     console.warn("login: no se pudo obtener user_id", data);
-    setLoginFormError("");
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
+    setLoginFormError("No se pudo identificar tu usuario. Inténtalo de nuevo.");
     return;
   }
 
@@ -1455,30 +1557,17 @@ async function login() {
 }
 
 async function register() {
-  setRegisterFormError("");
+  if (!validateRegisterClientSide()) return;
+
   const nombre = document.getElementById("register-nombre")?.value?.trim() || "";
   const apellido = document.getElementById("register-apellido")?.value?.trim() || "";
   const email = document.getElementById("register-email")?.value?.trim() || "";
   const password = document.getElementById("register-password")?.value || "";
-  const passwordConfirm = document.getElementById("register-password-confirm")?.value || "";
   const consentAccepted = !!document.getElementById("register-consent")?.checked;
-
-  if (!nombre || !email || !password) {
-    setRegisterFormError("Nombre, email y contraseña son obligatorios.");
-    return;
-  }
-  if (password !== passwordConfirm) {
-    setRegisterFormError("Las contraseñas no coinciden.");
-    return;
-  }
-  if (!/(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}/.test(password)) {
-    setRegisterFormError("La contraseña debe tener mínimo 8 caracteres, números y símbolos.");
-    return;
-  }
-  if (!consentAccepted) {
-    setRegisterFormError("Debes aceptar los términos y la política de privacidad.");
-    return;
-  }
+  const btn = document.getElementById("register-btn");
+  const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
+  const defaultLabel = btn?.textContent?.trim() || "Crear cuenta";
+  if (a11y) a11y.setBusy(btn, true, "Creando cuenta…", defaultLabel);
 
   const res = await fetch(apiUrl("/api/auth/register"), {
     method: "POST",
@@ -1493,10 +1582,12 @@ async function register() {
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
     if (res.status === 409) {
       setRegisterFormError(
         formatApiErrorDetail(data) ||
-          "Este correo ya está registrado. Inicia sesión o usa otro email."
+          "Este correo ya está registrado. Inicia sesión o usa otro email.",
+        { "register-email": "Este correo ya está en uso." }
       );
     } else {
       setRegisterFormError(formatApiErrorDetail(data) || data.detail || "Error al crear la cuenta");
@@ -1506,6 +1597,7 @@ async function register() {
 
   const data = await res.json().catch(() => ({}));
   if (!data.access_token) {
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
     setRegisterFormError("Cuenta creada, pero no se pudo iniciar la sesión.");
     return;
   }
@@ -2150,7 +2242,7 @@ function renderDashboardCatalogCourseCard(course) {
   flagWrap.className = "flag-img-wrapper";
   const img = document.createElement("img");
   img.src = "https://flagcdn.com/w160/" + flag + ".png";
-  img.alt = "";
+  img.alt = "Bandera de " + langLabel;
   flagWrap.appendChild(img);
   const titleEl = document.createElement("div");
   titleEl.className = "course-title";
@@ -2169,23 +2261,37 @@ function renderDashboardCatalogCourseCard(course) {
   const bot = document.createElement("div");
   const progBg = document.createElement("div");
   progBg.className = "progress-bg";
+  progBg.setAttribute("role", "progressbar");
+  progBg.setAttribute("aria-valuemin", "0");
+  progBg.setAttribute("aria-valuemax", "100");
+  progBg.setAttribute("aria-valuenow", "0");
+  progBg.setAttribute("aria-label", "Progreso del curso de " + langLabel);
   const progFill = document.createElement("div");
   progFill.className = "progress-fill";
   progFill.style.width = "0%";
   progBg.appendChild(progFill);
+
+  const linkLabel =
+    (course.accessible ? btnLabel : lcCourse.premiumShort || "Premium") +
+    ": " +
+    titleText +
+    (subLine ? ", " + subLine : "");
+
   const a = document.createElement("a");
   a.href = "course.html?lang=" + encodeURIComponent(lang);
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "btn btn-gradient";
-  btn.textContent = course.accessible ? btnLabel : lcCourse.premiumShort || "Premium";
-  a.appendChild(btn);
+  a.className = "course-card-link";
+  a.setAttribute("aria-label", linkLabel);
+  const btnSpan = document.createElement("span");
+  btnSpan.className = "btn btn-gradient";
+  btnSpan.setAttribute("aria-hidden", "true");
+  btnSpan.textContent = course.accessible ? btnLabel : lcCourse.premiumShort || "Premium";
   bot.appendChild(progBg);
-  bot.appendChild(a);
+  bot.appendChild(btnSpan);
 
   card.appendChild(top);
   card.appendChild(bot);
-  col.appendChild(card);
+  a.appendChild(card);
+  col.appendChild(a);
   return col;
 }
 
@@ -3183,23 +3289,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initCoreSpeakUiLanguage();
   initPasswordVisibilityToggles();
 
-  if (document.getElementById("login-btn")) {
+  if (document.getElementById("login-form")) {
     void redirectIfAlreadyLoggedIn();
-    document.getElementById("login-btn").addEventListener("click", login);
+    document.getElementById("login-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      void login();
+    });
   }
-  if (document.getElementById("forgot-submit-btn")) {
-    document.getElementById("forgot-submit-btn").addEventListener("click", submitForgotPassword);
+  if (document.getElementById("forgot-form")) {
+    document.getElementById("forgot-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      void submitForgotPassword();
+    });
   }
-  if (document.getElementById("reset-submit-btn")) {
+  if (document.getElementById("reset-form")) {
     initResetPasswordTokenFromUrl();
-    document.getElementById("reset-submit-btn").addEventListener("click", submitResetPassword);
+    document.getElementById("reset-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      void submitResetPassword();
+    });
   }
-  if (document.getElementById("register-btn")) {
-    document.getElementById("register-btn").addEventListener("click", register);
+  if (document.getElementById("register-form")) {
+    document.getElementById("register-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      void register();
+    });
   }
-  if (document.getElementById("profile-setup-btn")) {
+  if (document.getElementById("profile-setup-form")) {
     void initProfileSetupForm();
-    document.getElementById("profile-setup-btn").addEventListener("click", saveProfileSetup);
+    document.getElementById("profile-setup-form").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      void saveProfileSetup();
+    });
   }
   // Detecta automaticamente la pagina dashboard si existen elementos de estadisticas.
   if (document.getElementById("stat-streak")) {
@@ -3262,7 +3383,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     void initConfigExtraLanguages();
   }
 
-  if (document.getElementById("agenda-root")) {
+  if (document.getElementById("agenda-tbody")) {
     initAgendaPage().catch((err) => console.error("initAgendaPage", err));
   }
 });
@@ -3435,22 +3556,37 @@ async function initAgendaPage() {
 
   const addBtn = document.getElementById("agenda-add-row");
   const newWordModal = document.getElementById("agenda-new-word-modal");
+  const newWordCard = document.getElementById("agenda-new-word-card");
   const newWordInput = document.getElementById("agenda-new-word-input");
   const newMeaningInput = document.getElementById("agenda-new-meaning-input");
   const newWordSave = document.getElementById("agenda-new-word-save");
   const newWordCancel = document.getElementById("agenda-new-word-cancel");
-
-  function openAgendaNewWordModal() {
-    if (!newWordModal || !newWordInput) return;
-    newWordInput.value = "";
-    if (newMeaningInput) newMeaningInput.value = "";
-    newWordModal.classList.remove("d-none");
-    setTimeout(() => newWordInput.focus(), 50);
-  }
+  let releaseAgendaModalFocus = null;
+  let agendaModalTrigger = null;
 
   function closeAgendaNewWordModal() {
     if (newWordModal) newWordModal.classList.add("d-none");
     if (newWordSave) newWordSave.disabled = false;
+    if (typeof releaseAgendaModalFocus === "function") {
+      releaseAgendaModalFocus();
+      releaseAgendaModalFocus = null;
+    }
+  }
+
+  function openAgendaNewWordModal() {
+    if (!newWordModal || !newWordInput) return;
+    agendaModalTrigger = document.activeElement;
+    newWordInput.value = "";
+    if (newMeaningInput) newMeaningInput.value = "";
+    newWordModal.classList.remove("d-none");
+    if (typeof CoreSpeakA11y !== "undefined" && newWordCard) {
+      if (typeof releaseAgendaModalFocus === "function") releaseAgendaModalFocus();
+      releaseAgendaModalFocus = CoreSpeakA11y.trapFocus(newWordCard, {
+        returnFocusTo: agendaModalTrigger,
+        onEscape: () => closeAgendaNewWordModal(),
+      });
+    }
+    setTimeout(() => newWordInput.focus(), 50);
   }
 
   async function submitAgendaNewWord() {
@@ -3514,12 +3650,13 @@ async function initAgendaPage() {
   if (newWordCancel) {
     newWordCancel.addEventListener("click", () => closeAgendaNewWordModal());
   }
-  const newWordCard = document.getElementById("agenda-new-word-card");
   if (newWordCard) {
     newWordCard.addEventListener("click", (ev) => ev.stopPropagation());
   }
   if (newWordModal) {
-    newWordModal.addEventListener("click", () => closeAgendaNewWordModal());
+    newWordModal.addEventListener("click", (ev) => {
+      if (ev.target === newWordModal) closeAgendaNewWordModal();
+    });
   }
   if (newWordInput) {
     newWordInput.addEventListener("keydown", (ev) => {
@@ -3853,7 +3990,11 @@ async function loadDynamicCoursePage() {
 
   const FLAG_BY_LANG = { en: "gb", es: "es", fr: "fr", de: "de", uk: "ua" };
   const flagEl = document.getElementById("course-flag");
-  if (flagEl) flagEl.src = "https://flagcdn.com/w160/" + (FLAG_BY_LANG[lang] || "gb") + ".png";
+  const langDisplay = getCourseLanguageDisplayName(lang);
+  if (flagEl) {
+    flagEl.src = "https://flagcdn.com/w160/" + (FLAG_BY_LANG[lang] || "gb") + ".png";
+    flagEl.alt = "Bandera de " + langDisplay;
+  }
 
   let res;
   try {
@@ -3920,9 +4061,20 @@ async function loadDynamicCoursePage() {
     progressTextEl.textContent = lc.progressCompleted(0, Math.max(totalLessons, 0), level);
   }
 
+  const progressWrap = document.querySelector(".course-intro .progress");
   const progressBarEl = document.getElementById("course-progress-bar");
+  const pct = totalLessons > 0 ? 5 : 0;
   if (progressBarEl) {
-    progressBarEl.style.width = totalLessons > 0 ? "5%" : "0%";
+    progressBarEl.style.width = pct + "%";
+  }
+  if (progressWrap) {
+    progressWrap.setAttribute("aria-valuenow", String(pct));
+    progressWrap.setAttribute("aria-valuemin", "0");
+    progressWrap.setAttribute("aria-valuemax", "100");
+    progressWrap.setAttribute(
+      "aria-label",
+      "Progreso del curso de " + langDisplay + ": " + pct + " por ciento"
+    );
   }
 
   const availableEl = document.getElementById("course-available");

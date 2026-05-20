@@ -1,0 +1,46 @@
+GUÍA RÁPIDA — NVDA (lector de pantalla) en Windows
+==================================================
+
+NVDA (NonVisual Desktop Access) se instaló en este equipo con winget.
+Versión: 2026.1 — https://www.nvaccess.org/
+
+INICIAR NVDA
+------------
+1. Menú Inicio → escribe "NVDA" → Enter
+2. O ejecuta el acceso directo del escritorio "NVDA"
+3. Al arrancar oirás un mensaje de bienvenida; acepta la configuración por defecto si es tu primera vez
+
+DETENER NVDA
+------------
+Insert + Q  (tecla Insert suele estar junto a Supr, arriba del cursor)
+
+MENÚ DE NVDA
+------------
+NVDA + N  (mantén NVDA —tecla Insert o CapsLock según configuración— y pulsa N)
+
+ATAJOS ÚTILES PARA PROBAR CORESPEAK
+-----------------------------------
+Tab / Shift+Tab     — mover foco entre enlaces, botones y campos
+Enter               — activar botón o enlace
+Espacio             — marcar checkbox
+Win + Ctrl + Enter  — Narrator (lector integrado de Windows; alternativa sin instalar nada)
+
+Prueba en el navegador:
+  http://127.0.0.1:8000/ui/inicio_session.html
+  http://127.0.0.1:8000/ui/dashboard.html
+
+Modo foco / modo exploración (NVDA):
+  Insert + Espacio  — alternar entre leer todo y seguir el foco del teclado
+
+LECTOR INTEGRADO (sin NVDA)
+---------------------------
+Narrator: Win + Ctrl + Enter para activar/desactivar
+
+RECOMENDACIÓN PARA LA PRÁCTICA
+------------------------------
+1. Abre el login con NVDA activo
+2. Pulsa Tab hasta "Saltar al contenido" y Enter
+3. Rellena email/contraseña y comprueba que NVDA lee las etiquetas
+4. Repite en dashboard: tarjetas "Reto diario" y "Agenda" deben leerse con nombre claro
+
+Si NVDA no habla: comprueba volumen, que no esté en modo silencioso (NVDA+S) y reinicia NVDA desde el icono de la bandeja del sistema.

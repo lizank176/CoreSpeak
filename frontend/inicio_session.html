@@ -5,59 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoreSpeak - Iniciar sesión</title>
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Estilos personalizados -->
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="a11y.css">
 
 </head>
 <body>
-    <!-- Fondo degradado -->
+    <a href="#main-content" class="skip-link">Saltar al contenido</a>
+
     <div class="gradient-bg d-flex justify-content-center align-items-center min-vh-100">
         <div class="container">
             <div class="row justify-content-center align-items-center ">
                 
-                <div class="login-card shadow-lg p-4 rounded-4 col-12 col-md-8 col-lg-5">
+                <main id="main-content" class="login-card shadow-lg p-4 rounded-4 col-12 col-md-8 col-lg-5" tabindex="-1">
 
-                <!-- Logo -->
                 <div class="text-center mb-3 logo ">
                     <a href="dashboard.html" class="text-decoration-none d-inline-block"><img src="img/logo.png" alt="CoreSpeak" class="logo-img"></a>
                 </div>
 
-                <h3 class="text-center mb-3" data-i18n="login.title">Iniciar sesión</h3>
+                <h1 class="h3 text-center mb-3" data-i18n="login.title">Iniciar sesión</h1>
                 <p class="text-center text-muted mb-4" data-i18n="login.lead">Ingresa a tu cuenta para continuar aprendiendo</p>
 
-                <div id="login-error" class="alert alert-danger py-2 px-3 small mb-3 d-none" role="alert" aria-live="polite"></div>
+                <div id="login-error" class="alert alert-danger py-2 px-3 small mb-3 d-none" role="alert" aria-live="assertive"></div>
 
-                <form id="login-form">
+                <form id="login-form" novalidate>
 
-                    <!-- Email -->
                     <div class="mb-3">
-                        <label class="form-label" data-i18n="login.email">Correo electrónico</label>
-                        <input id="login-email" type="email" class="form-control" data-i18n-placeholder="login.phEmail" placeholder="tu@email.com" autocomplete="email">
+                        <label class="form-label" for="login-email" data-i18n="login.email">Correo electrónico</label>
+                        <input id="login-email" name="email" type="email" class="form-control" data-i18n-placeholder="login.phEmail" placeholder="tu@email.com" autocomplete="email" required aria-describedby="login-email-error">
+                        <span id="login-email-error" class="a11y-field-error d-none" role="alert"></span>
                     </div>
 
-                    <!-- Contraseña -->
                     <div class="mb-3">
-                        <label class="form-label" data-i18n="login.password">Contraseña</label>
+                        <label class="form-label" for="login-password" data-i18n="login.password">Contraseña</label>
                         <div class="input-group">
-                            <input id="login-password" type="password" class="form-control" placeholder="••••••••" autocomplete="current-password">
+                            <input id="login-password" name="password" type="password" class="form-control" placeholder="••••••••" autocomplete="current-password" required aria-describedby="login-password-error">
                             <button id="toggle-login-password" class="btn btn-outline-secondary password-visibility-btn" type="button" aria-label="Mostrar contraseña" title="Mostrar contraseña">
-                                <img src="img/eye-closed.svg" alt="" class="password-eye-icon" width="22" height="14">
+                                <img src="img/eye-closed.svg" alt="" class="password-eye-icon" width="22" height="14" aria-hidden="true">
                             </button>
                         </div>
+                        <span id="login-password-error" class="a11y-field-error d-none" role="alert"></span>
                     </div>
 
-                    <!-- Botón -->
-                    <button id="login-btn" type="button" class="btn btn-primary w-100 login-btn iniciar" data-i18n="login.submit">
+                    <button id="login-btn" type="submit" class="btn btn-primary w-100 login-btn iniciar" data-i18n="login.submit">
                         Iniciar sesion
                     </button>
 
-
                 </form>
 
-                <!-- Enlaces -->
                 <div class="text-center mt-3">
                     <a href="olvido_contrasena.html" class="small"><span data-i18n="login.forgot">¿Olvidaste tu contraseña?</span></a>
                 </div>
@@ -66,11 +61,12 @@
                     <span data-i18n="login.noAccount">¿No tienes cuenta?</span>
                     <a href="registrarse.html" class="register-link"><span data-i18n="login.register">Regístrate aquí</span></a>
                 </div>
-            </div>
+                </main>
         </div>  
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="a11y.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

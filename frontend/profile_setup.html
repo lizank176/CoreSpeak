@@ -6,16 +6,18 @@
     <title>CoreSpeak - Tu perfil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="a11y.css">
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Saltar al contenido</a>
     <div class="gradient-bg min-vh-100 d-flex justify-content-center align-items-start">
         <div class="container mt-4">
             <div class="row justify-content-center">
-                <div class="login-card registrar shadow-lg p-4 rounded-4 col-12 col-md-8 col-lg-6">
+                <main id="main-content" class="login-card registrar shadow-lg p-4 rounded-4 col-12 col-md-8 col-lg-6" tabindex="-1">
                     <div class="text-center mb-3 logo">
                         <img src="img/logo.png" alt="CoreSpeak" class="logo-img">
                     </div>
-                    <h3 class="text-center mb-2">Personaliza tu experiencia</h3>
+                    <h1 class="h3 text-center mb-2">Personaliza tu experiencia</h1>
                     <p class="text-center text-muted mb-2 small">
                         Todos aprenden <strong>inglés</strong> en CoreSpeak. Con <strong>Premium</strong> podrás añadir
                         más idiomas desde Ajustes cuando quieras.
@@ -23,7 +25,7 @@
                     <p class="text-center text-muted small mb-3">
                         El <strong>nivel de inglés</strong> que elijas se usa para el <strong>reto diario</strong> y el contenido a tu medida.
                     </p>
-                    <div id="profile-setup-error" class="alert alert-danger py-2 px-3 small mb-3 d-none" role="alert"></div>
+                    <div id="profile-setup-error" class="alert alert-danger py-2 px-3 small mb-3 d-none" role="alert" aria-live="assertive"></div>
 
                     <form id="profile-setup-form">
                         <div class="mb-3">
@@ -46,18 +48,18 @@
                                 <option value="uk">Українська</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label d-block mb-2">Centros de interés</label>
-                            <div id="setup-interests-grid" class="row g-2" role="group" aria-label="Intereses"></div>
-                            <p class="text-muted small mt-2 mb-0" id="setup-interests-msg" role="status"></p>
-                        </div>
+                        <fieldset class="mb-3 border-0 p-0 m-0">
+                            <legend class="form-label mb-2">Centros de interés</legend>
+                            <div id="setup-interests-grid" class="row g-2"></div>
+                            <p class="text-muted small mt-2 mb-0" id="setup-interests-msg" role="status" aria-live="polite"></p>
+                        </fieldset>
                         <div class="form-check mb-4">
                             <input class="form-check-input" type="checkbox" id="setup-wants-premium">
                             <label class="form-check-label" for="setup-wants-premium">
                                 Quiero hacerme <strong>Premium</strong> (te llevaremos a los planes; el pago es aparte)
                             </label>
                         </div>
-                        <button id="profile-setup-btn" type="button" class="btn btn-primary w-100 login-btn">
+                        <button id="profile-setup-btn" type="submit" class="btn btn-primary w-100 login-btn">
                             Guardar y continuar
                         </button>
                     </form>
@@ -66,10 +68,11 @@
                         ¿Problemas para guardar o vienes de otro dispositivo?
                         <a href="inicio_session.html" class="register-link d-inline">Iniciar sesión</a>
                     </p>
-                </div>
+                </main>
             </div>
         </div>
     </div>
+    <script src="a11y.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

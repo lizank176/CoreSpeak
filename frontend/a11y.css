@@ -1,0 +1,155 @@
+/* CoreSpeak — utilidades de accesibilidad compartidas */
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 10000;
+  padding: 0.75rem 1.25rem;
+  background: #1e293b;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: 0.5rem;
+  top: 0.5rem;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  outline: 3px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.sr-only,
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Foco visible global (no eliminar outline sin reemplazo) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.dashboard-nav-link:focus-visible,
+.course-card-link:focus-visible {
+  outline: 3px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.custom-input:focus-visible {
+  outline: 3px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+/* Contraste texto secundario (WCAG AA ~4.5:1 sobre blanco) */
+.text-muted,
+.text-secondary {
+  color: #5c6370 !important;
+}
+
+.register-link {
+  color: #7c22c9;
+}
+
+/* Errores de campo: no solo color */
+.a11y-field-error {
+  display: block;
+  font-size: 0.875rem;
+  color: #b91c1c;
+  margin-top: 0.25rem;
+}
+
+.a11y-field-error::before {
+  content: "Error: ";
+  font-weight: 600;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
+}
+
+/* Ley de Fitts: objetivos táctiles mínimos */
+.password-visibility-btn,
+.dashboard-nav-more-btn,
+.nav-premium-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Tarjeta-curso como enlace único */
+.course-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: inherit;
+}
+
+.course-card-link:hover,
+.course-card-link:focus-visible {
+  text-decoration: none;
+  color: inherit;
+}
+
+.course-card-link .btn-gradient {
+  pointer-events: none;
+}
+
+.dashboard-stat-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 12px;
+}
+
+.dashboard-stat-link:hover,
+.dashboard-stat-link:focus-visible {
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashboard-stat-link:focus-visible .stat-card {
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.45);
+}
+
+button.corespeak-logout.dashboard-nav-link {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

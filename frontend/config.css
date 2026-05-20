@@ -27,9 +27,13 @@
 
 .custom-input:focus {
     background-color: #fff;
-    border-color: #a855f7; /* Borde morado al hacer click */
+    border-color: #a855f7;
     box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
-    outline: none;
+}
+
+.custom-input:focus-visible {
+    outline: 3px solid #7c3aed;
+    outline-offset: 2px;
 }
 
 /* Avatar Morado */
