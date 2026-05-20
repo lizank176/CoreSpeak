@@ -1661,13 +1661,9 @@ async function submitForgotPassword() {
         "err"
       );
     } else {
-      const baseMsg =
-        data.message ||
-        "Si el correo existe en CoreSpeak, se ha intentado enviar el enlace.";
       setInlineAuthAlert(
         msgEl,
-        baseMsg +
-          " Revisa spam. Si tienes cuenta registrada y sigue sin llegar, mira la terminal del servidor ([password-reset]) o prueba: python scripts/sendgrid_smoke.py tu@correo.com",
+        "Si el correo existe, recibirás un enlace para restablecer la contraseña. Revisa spam.",
         "ok"
       );
     }
