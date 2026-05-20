@@ -300,11 +300,18 @@
 }
 
 /* Modal micrófono */
+.agenda-mic-overlay.d-none {
+  display: none !important;
+}
+
+.agenda-mic-overlay:not(.d-none) {
+  display: flex;
+}
+
 .agenda-mic-overlay {
   position: fixed;
   inset: 0;
   z-index: 1080;
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;

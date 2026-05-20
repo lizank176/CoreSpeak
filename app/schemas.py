@@ -68,6 +68,7 @@ class UserProfileResponse(BaseModel):
     occupation: str | None
     interested_in_premium: bool
     is_premium: bool
+    role: str = "user"
     expiry_date: datetime | None
     streak_days: int
     xp_total: int

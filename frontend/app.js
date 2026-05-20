@@ -2099,6 +2099,24 @@ function _coerceCount(v) {
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : null;
 }
 
+/** Muestra enlaces Admin solo si el usuario tiene rol administrador. */
+function applyAdminNavVisibility(isAdmin) {
+  const adminNav = document.getElementById("admin-nav-wrap");
+  if (adminNav) {
+    if (isAdmin) {
+      adminNav.classList.remove("d-none");
+      adminNav.classList.add("d-lg-block");
+    } else {
+      adminNav.classList.add("d-none");
+      adminNav.classList.remove("d-lg-block");
+    }
+  }
+  const adminMobileLi = document.getElementById("admin-nav-mobile-li");
+  if (adminMobileLi) {
+    adminMobileLi.classList.toggle("d-none", !isAdmin);
+  }
+}
+
 async function loadMyProgress() {
   const auth = requireAuth();
   if (!auth) return;
@@ -2113,15 +2131,15 @@ async function loadMyProgress() {
     const n = profile && profile.nombre != null ? String(profile.nombre).trim() : "";
     if (n) displayName = n;
   }
-  const isAdmin = !!(profile && profile.is_admin);
-  const adminNav = document.getElementById("admin-nav-wrap");
-  if (adminNav) {
-    adminNav.classList.toggle("d-none", !isAdmin);
+  let meAuth = null;
+  const meResEarly = await fetch(apiUrl("/api/auth/me"), { headers });
+  if (meResEarly.ok) {
+    meAuth = await meResEarly.json().catch(() => null);
   }
-  const adminMobileLi = document.getElementById("admin-nav-mobile-li");
-  if (adminMobileLi) {
-    adminMobileLi.classList.toggle("d-none", !isAdmin);
-  }
+  const isAdmin =
+    !!(profile && profile.is_admin) ||
+    String(meAuth?.role || "").toLowerCase() === "admin";
+  applyAdminNavVisibility(isAdmin);
 
   const res = await fetch(apiUrl("/api/users/" + auth.userId + "/progress"), { headers });
   let p = null;
@@ -2133,14 +2151,15 @@ async function loadMyProgress() {
     }
   }
 
-  let meAuth = null;
-  const meRes = await fetch(apiUrl("/api/auth/me"), { headers });
-  if (meRes.ok) {
-    meAuth = await meRes.json().catch(() => null);
-    if (meAuth && meAuth.full_name != null) {
-      const fn = String(meAuth.full_name).trim();
-      if (fn && !displayName) displayName = fn;
+  if (!meAuth) {
+    const meRes = await fetch(apiUrl("/api/auth/me"), { headers });
+    if (meRes.ok) {
+      meAuth = await meRes.json().catch(() => null);
     }
+  }
+  if (meAuth && meAuth.full_name != null) {
+    const fn = String(meAuth.full_name).trim();
+    if (fn && !displayName) displayName = fn;
   }
 
   const u = getUiPack(getCurrentUiLangSync());
@@ -3322,6 +3341,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       void saveProfileSetup();
     });
   }
+  if (document.getElementById("admin-nav-wrap")) {
+    applyAdminNavVisibility(false);
+  }
   // Detecta automaticamente la pagina dashboard si existen elementos de estadisticas.
   if (document.getElementById("stat-streak")) {
     void loadMyProgress();
@@ -3392,15 +3414,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 let agendaRenderGeneration = 0;
 
 async function loadAgendaWords() {
-  const auth = requireAuth();
-  if (!auth) return [];
-  const res = await fetch(apiUrl("/api/agenda/words"), { headers: { Authorization: "Bearer " + auth.token } });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    alert(data.detail || "No se pudo cargar la agenda");
-    return [];
+  const headers = apiHeaders();
+  if (!headers) return [];
+  try {
+    const res = await fetch(apiUrl("/api/agenda/words"), { headers });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.warn("loadAgendaWords HTTP", res.status, data);
+      return { error: formatApiErrorDetail(data) || "No se pudo cargar la agenda" };
+    }
+    const data = await res.json().catch(() => []);
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.warn("loadAgendaWords", e);
+    return { error: "No se pudo contactar con el servidor. Comprueba que la API esté en marcha." };
   }
-  return res.json();
 }
 
 async function saveAgendaRow(id, word, meaning) {
@@ -3523,7 +3551,7 @@ async function renderAgendaTable() {
   if (!tbody) return;
 
   const gen = ++agendaRenderGeneration;
-  const words = await loadAgendaWords();
+  const loaded = await loadAgendaWords();
   if (gen !== agendaRenderGeneration) {
     return;
   }
@@ -3532,6 +3560,19 @@ async function renderAgendaTable() {
   if (loading) loading.remove();
 
   tbody.innerHTML = "";
+
+  if (loaded && loaded.error) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 3;
+    td.className = "text-center text-muted py-5";
+    td.textContent = loaded.error;
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  const words = Array.isArray(loaded) ? loaded : [];
 
   if (words.length === 0) {
     const ag = getUiPack(getCurrentUiLangSync()).agenda || {};
@@ -3551,8 +3592,6 @@ async function renderAgendaTable() {
 async function initAgendaPage() {
   const auth = requireAuth();
   if (!auth) return;
-
-  await renderAgendaTable();
 
   const addBtn = document.getElementById("agenda-add-row");
   const newWordModal = document.getElementById("agenda-new-word-modal");
@@ -3666,6 +3705,8 @@ async function initAgendaPage() {
       }
     });
   }
+
+  void renderAgendaTable();
 }
 
 function corespeakYoutubeVideoId(url) {

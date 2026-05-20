@@ -48,6 +48,31 @@ body{
     opacity: 0.9;
 }
 
+/* Un solo ojo: ocultar el revelador nativo de Edge/Chrome; usar el botón custom */
+.input-group .form-control[type="password"]::-ms-reveal,
+.input-group .form-control[type="password"]::-ms-clear {
+    display: none;
+}
+
+.input-group .form-control[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.input-group .form-control[type="password"]::-webkit-password-toggle-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+.password-visibility-btn {
+    flex-shrink: 0;
+}
+
+.password-visibility-btn .password-eye-icon {
+    display: block;
+}
+
 /* Enlaces */
 a {
     text-decoration: none;
