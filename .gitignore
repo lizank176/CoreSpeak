@@ -1,5 +1,10 @@
 .env
+.cursor/
 venv/
+
+# Informe accesibilidad/usabilidad (entrega local, no subir al repo)
+docs/
+scripts/generate_informe_pdf.py
 __pycache__/
 *.pyc
 *.pyo
