@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -46,6 +48,24 @@ class Settings(BaseSettings):
     stripe_price_id_monthly: str | None = None
     stripe_success_url: str | None = None
     stripe_cancel_url: str | None = None
+
+
+def effective_database_url(configured: str) -> str:
+    """
+    Si MYSQL_HOST y MYSQL_USER están definidos, construye la URL con contraseña
+    codificada (evita errores 1045 en Render cuando la clave tiene @ # % etc.).
+    """
+    host = os.environ.get("MYSQL_HOST", "").strip()
+    user = os.environ.get("MYSQL_USER", "").strip()
+    if not host or not user:
+        return configured
+    password = os.environ.get("MYSQL_PASSWORD", "")
+    port = (os.environ.get("MYSQL_PORT") or "3306").strip() or "3306"
+    database = (os.environ.get("MYSQL_DATABASE") or "defaultdb").strip() or "defaultdb"
+    return (
+        f"mysql+pymysql://{quote_plus(user)}:{quote_plus(password)}"
+        f"@{host}:{port}/{database}"
+    )
 
 
 settings = Settings()

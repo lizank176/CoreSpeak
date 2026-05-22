@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from sqlalchemy import inspect as sa_inspect, text
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from app.config import settings
+from app.config import effective_database_url, settings
 from app.models import CourseLevel, LanguageCourse
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ def _is_managed_database_url(url: str) -> bool:
 
 
 def _resolved_database_url() -> str:
-    raw = (settings.database_url or "").strip()
+    raw = effective_database_url((settings.database_url or "").strip())
     url = _normalize_database_url(raw)
 
     # DATABASE_URL explícita (p. ej. Postgres de Render) gana sobre SQLite efímero.

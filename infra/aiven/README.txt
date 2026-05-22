@@ -30,7 +30,12 @@ RENDER (dashboard → Environment):
   APP_BASE_URL=https://tu-servicio.onrender.com
   (+ JWT_SECRET_KEY, GROQ_API_KEY, etc.)
 
-  En Aiven → Allowed inbound IP addresses: permite 0.0.0.0/0 (pruebas) o las IPs de salida de Render.
+  En Aiven → Allowed inbound IP addresses: permite 0.0.0.0/0 (pruebas) o la IP de Render
+  (en logs de error suele salir, ej. 74.220.48.29).
+
+  Si ves "Access denied for user 'avnadmin'@'IP'":
+  - Resetea la contraseña en Aiven y actualiza MYSQL_PASSWORD en Render.
+  - Usa MYSQL_HOST + MYSQL_PASSWORD (no DATABASE_URL) para no romper símbolos en la clave.
 
   Tras el deploy, revisa logs: debe aparecer "MySQL SSL: usando CA" y "host=....aivencloud.com".
   No debe decir "SQLite".
