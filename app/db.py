@@ -14,6 +14,7 @@ from app.models import CourseLevel, LanguageCourse
 
 logger = logging.getLogger(__name__)
 
+_ROOT = Path(__file__).resolve().parents[1]
 _LOCAL_MYSQL_DEFAULT = "mysql+pymysql://corespeak:corespeak@localhost:3306/corespeak"
 
 
@@ -75,13 +76,58 @@ def _resolved_database_url() -> str:
     return url or raw
 
 
+def _default_aiven_ca_path() -> Path | None:
+    candidate = _ROOT / "infra" / "aiven" / "ca.pem"
+    return candidate if candidate.is_file() else None
+
+
+def _resolve_mysql_ca_path() -> Path | None:
+    """Ruta al CA de Aiven: archivo local, MYSQL_SSL_CA o PEM en MYSQL_SSL_CA_CONTENT (Render)."""
+    content = (os.environ.get("MYSQL_SSL_CA_CONTENT") or "").strip()
+    if content:
+        if "\\n" in content and "-----BEGIN" in content:
+            content = content.replace("\\n", "\n")
+        cache = Path(os.environ.get("MYSQL_SSL_CA_CACHE", "/tmp/aiven-ca.pem"))
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(content if content.endswith("\n") else content + "\n", encoding="utf-8")
+        return cache
+
+    ca_raw = (settings.mysql_ssl_ca or os.environ.get("MYSQL_SSL_CA") or "").strip()
+    if ca_raw:
+        p = Path(ca_raw)
+        if not p.is_absolute():
+            p = _ROOT / p
+        return p if p.is_file() else None
+    return _default_aiven_ca_path()
+
+
+def _mysql_connect_args(url: str) -> dict:
+    parsed = urlparse(url.replace("mysql+pymysql", "mysql", 1))
+    host = (parsed.hostname or "").lower()
+    if host in ("", "localhost", "127.0.0.1"):
+        return {}
+
+    ca_path = _resolve_mysql_ca_path()
+    if not ca_path or not ca_path.is_file():
+        if "aivencloud.com" in host:
+            logger.warning(
+                "MySQL remoto Aiven sin certificado CA. Define MYSQL_SSL_CA, MYSQL_SSL_CA_CONTENT "
+                "(Render) o infra/aiven/ca.pem en la imagen.",
+            )
+        return {}
+
+    logger.info("MySQL SSL: usando CA %s", ca_path)
+    return {"ssl": {"ca": str(ca_path.resolve())}}
+
+
 _db_url = _resolved_database_url()
 _is_sqlite = _db_url.startswith("sqlite")
+_connect_args = {"check_same_thread": False} if _is_sqlite else _mysql_connect_args(_db_url)
 engine = create_engine(
     _db_url,
     echo=False,
     pool_pre_ping=True,
-    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    connect_args=_connect_args,
 )
 
 

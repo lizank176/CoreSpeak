@@ -38,20 +38,36 @@ La UI será, por ejemplo:
    Opcionales Stripe / correo SendGrid igual que en tu .env local.
 
 
-4b) QUE LOS DATOS NO SE BORREN (MUY IMPORTANTE)
-   En el plan Free el disco del Web Service suele ser EFÍMERO: si solo usas
-   USE_SQLITE=true sin Postgres, tras un redeploy o reinicio PUEDES PERDER usuarios/datos.
+4b) BASE DE DATOS EN PRODUCCIÓN — AIVEN MYSQL (recomendado)
+   En Render Dashboard → tu Web Service → Environment, añade:
 
-   Opción recomendada (persistencia real):
-   - Render Dashboard → New + → PostgreSQL (plan Free donde exista para tu cuenta)
-   - Crea la base; después en esa base usa "Connect" o el menú para ENLAZAR (Link) tu
-     Web Service corespeak-api. Render inyectará automáticamente la variable DATABASE_URL.
-   - Vuelve a desplegar el Web Service si hace falta. El código usa DATABASE_URL antes que
-     SQLite cuando detecta Postgres.
-   Opcional conservar como respaldo USE_SQLITE=true; si DATABASE_URL existe, Postgres manda.
+   USE_SQLITE=false
 
+   DATABASE_URL=mysql+pymysql://avnadmin:CONTRASEÑA_CODIFICADA@HOST:PUERTO/defaultdb
+     (copia host/puerto/usuario de Aiven → Connection information / Service URI;
+      si la contraseña tiene @ # % codifícala en la URL, ej. @ → %40)
 
-   SQLite solo desarrollo / pruebas muy cortas sin importar pérdidas al redeploy.
+   MYSQL_SSL_CA_CONTENT=
+     (abre ca.pem descargado de Aiven y pega TODO el texto del certificado, incluyendo
+      -----BEGIN CERTIFICATE----- y -----END CERTIFICATE-----)
+
+   En Aiven Console → tu servicio MySQL → Allowed inbound IP addresses:
+     añade 0.0.0.0/0 para pruebas (Render Free no tiene IP fija) o las IPs que te dé Render.
+
+   La API detecta host *.aivencloud.com y usa SSL automáticamente si hay CA.
+
+   Tras "Manual Deploy", en Logs busca:
+     - "Usando base de datos gestionada; host=....aivencloud.com"
+     - "MySQL SSL: usando CA"
+   Si ves "SQLite", revisa DATABASE_URL y USE_SQLITE.
+
+   Migrar datos desde tu PC: exporta con Workbench desde Docker 3307 e importa en Aiven,
+   o ejecuta scripts/migrate_sqlite_to_mysql.py apuntando a Aiven (solo primera vez).
+
+4c) Alternativa antigua: PostgreSQL de Render (el código prioriza DATABASE_URL remota;
+   si usas Postgres en lugar de Aiven, la URL debe ser postgresql+psycopg2://...)
+
+   SQLite (USE_SQLITE=true) NO usar en producción: el disco de Render se borra al redeploy.
 
 
 SI EL BUILD FALLA ("Exited with status 1"):

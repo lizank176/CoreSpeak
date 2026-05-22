@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     use_sqlite: bool = False
 
     database_url: str = "mysql+pymysql://corespeak:corespeak@localhost:3306/corespeak"
+    # Certificado CA de Aiven (descarga ca.pem del panel). Ruta relativa al proyecto o absoluta.
+    mysql_ssl_ca: str | None = None
 
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"

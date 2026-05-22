@@ -173,7 +173,10 @@ docker compose up -d mysql
 
 3. Configurar `.env`:
 
+- `USE_SQLITE=false` (MySQL; `true` solo para pruebas con `data/corespeak.db`).
 - `DATABASE_URL` (ejemplo actual: puerto `3307`).
+- Migración SQLite → MySQL: `.\venv\Scripts\python.exe scripts\migrate_sqlite_to_mysql.py`
+- Aiven: misma `DATABASE_URL` con host/puerto del panel; ver comentarios en `env.example`.
 - `JWT_SECRET_KEY`.
 - `GROQ_API_KEY` (opcional; existe fallback local).
 - Stripe:
