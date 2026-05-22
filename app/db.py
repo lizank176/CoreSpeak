@@ -48,8 +48,28 @@ def _resolved_database_url() -> str:
 
     # DATABASE_URL explícita (p. ej. Postgres de Render) gana sobre SQLite efímero.
     if _is_managed_database_url(url):
-        host = urlparse(url).hostname or "?"
-        logger.info("Usando base de datos gestionada; host=%s", host)
+        parsed = urlparse(url.replace("mysql+pymysql", "mysql", 1))
+        host = parsed.hostname or "?"
+        user = parsed.username or "?"
+        db = (parsed.path or "").lstrip("/") or "?"
+        source = "MYSQL_SERVICE_URI" if os.environ.get("MYSQL_SERVICE_URI", "").strip() else (
+            "MYSQL_HOST/USER/PASSWORD"
+            if os.environ.get("MYSQL_HOST", "").strip() and os.environ.get("MYSQL_USER", "").strip()
+            else "DATABASE_URL"
+        )
+        logger.info(
+            "MySQL remoto (%s): host=%s user=%s database=%s password_len=%s",
+            source,
+            host,
+            user,
+            db,
+            len(parsed.password or ""),
+        )
+        if os.environ.get("RENDER") and source == "DATABASE_URL" and "aivencloud.com" in (host or ""):
+            logger.error(
+                "RENDER+Aiven: borra DATABASE_URL y usa MYSQL_SERVICE_URI (copiar URI del panel Aiven) "
+                "o MYSQL_HOST + MYSQL_USER + MYSQL_PASSWORD + MYSQL_SSL_CA_CONTENT.",
+            )
         return url
 
     if settings.use_sqlite:

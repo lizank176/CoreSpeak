@@ -43,14 +43,14 @@ La UI será, por ejemplo:
 
    USE_SQLITE=false
 
-   Opción recomendada (evita error 1045 Access denied por contraseña mal codificada):
-   MYSQL_HOST=mysql-xxxx.i.aivencloud.com
-   MYSQL_PORT=10862
-   MYSQL_USER=avnadmin
-   MYSQL_PASSWORD=(contraseña tal cual del panel Aiven, sin comillas)
-   MYSQL_DATABASE=defaultdb
+   Opción A (más fiable): copia en Aiven → Overview → "Service URI" y en Render:
+   MYSQL_SERVICE_URI=mysql://avnadmin:...@host:puerto/defaultdb?ssl-mode=REQUIRED
+   (pega la URI entera; BORRA DATABASE_URL si existía)
 
-   Alternativa: DATABASE_URL=mysql+pymysql://... (contraseña con símbolos → codificar en URL)
+   Opción B: MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE
+   (contraseña sin comillas; BORRA DATABASE_URL)
+
+   NO uses DATABASE_URL con contraseña a mano si tiene @ # % (provoca 1045 Access denied).
 
    MYSQL_SSL_CA_CONTENT=
      (abre ca.pem descargado de Aiven y pega TODO el texto del certificado, incluyendo

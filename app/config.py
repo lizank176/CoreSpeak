@@ -50,16 +50,42 @@ class Settings(BaseSettings):
     stripe_cancel_url: str | None = None
 
 
+def _strip_wrapping_quotes(value: str) -> str:
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+        return v[1:-1].strip()
+    return v
+
+
+def _service_uri_to_pymysql_url(service_uri: str) -> str:
+    """Convierte la Service URI de Aiven (mysql://...) a mysql+pymysql:// sin query SSL."""
+    from urllib.parse import urlparse, urlunparse
+
+    uri = _strip_wrapping_quotes(service_uri)
+    if uri.startswith("mysql+pymysql://"):
+        base = uri
+    elif uri.startswith("mysql://"):
+        base = "mysql+pymysql://" + uri[len("mysql://") :]
+    else:
+        return uri
+    parsed = urlparse(base)
+    # pymysql no usa ?ssl-mode= en la URL; el SSL va en connect_args (ca.pem).
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path or "/defaultdb", "", "", ""))
+
+
 def effective_database_url(configured: str) -> str:
     """
-    Si MYSQL_HOST y MYSQL_USER están definidos, construye la URL con contraseña
-    codificada (evita errores 1045 en Render cuando la clave tiene @ # % etc.).
+    Prioridad: MYSQL_SERVICE_URI (copiar/pegar desde Aiven) > MYSQL_HOST+USER+PASSWORD > DATABASE_URL.
     """
+    service_uri = os.environ.get("MYSQL_SERVICE_URI", "").strip()
+    if service_uri:
+        return _service_uri_to_pymysql_url(service_uri)
+
     host = os.environ.get("MYSQL_HOST", "").strip()
     user = os.environ.get("MYSQL_USER", "").strip()
     if not host or not user:
         return configured
-    password = os.environ.get("MYSQL_PASSWORD", "")
+    password = _strip_wrapping_quotes(os.environ.get("MYSQL_PASSWORD", ""))
     port = (os.environ.get("MYSQL_PORT") or "3306").strip() or "3306"
     database = (os.environ.get("MYSQL_DATABASE") or "defaultdb").strip() or "defaultdb"
     return (
