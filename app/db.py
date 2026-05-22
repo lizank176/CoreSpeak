@@ -58,9 +58,14 @@ def _resolved_database_url() -> str:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         sqlite_url = f"sqlite:///{db_path.as_posix()}"
         if os.environ.get("RENDER"):
-            logger.warning(
-                "SQLite en disco efímero (Render): los datos pueden perderse al redeploy/reinicio. "
-                "Crea un PostgreSQL en Render y enlázalo para que DATABASE_URL sea la que use la API.",
+            db_host = urlparse(_normalize_database_url(raw)).hostname if raw else None
+            logger.error(
+                "RENDER está usando SQLite (datos efímeros). Para Aiven MySQL configura en el dashboard: "
+                "USE_SQLITE=false, DATABASE_URL=mysql+pymysql://...@HOST.aivencloud.com:PUERTO/defaultdb "
+                "y MYSQL_SSL_CA_CONTENT=(contenido de ca.pem). "
+                "Ahora USE_SQLITE=%s y DATABASE_URL host=%s",
+                settings.use_sqlite,
+                db_host or "(no definido o localhost)",
             )
         else:
             logger.info("SQLite local: %s", db_path)
