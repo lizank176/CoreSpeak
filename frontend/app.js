@@ -2101,12 +2101,10 @@ function applyAdminNavVisibility(isAdmin) {
   if (adminNav) {
     if (isAdmin) {
       adminNav.classList.remove("d-none");
-      // Visible en la barra en cualquier ancho (en móvil también está en el menú ☰).
-      adminNav.classList.add("d-block");
-      adminNav.classList.remove("d-lg-block");
+      adminNav.classList.add("d-lg-block");
     } else {
       adminNav.classList.add("d-none");
-      adminNav.classList.remove("d-block", "d-lg-block");
+      adminNav.classList.remove("d-lg-block");
     }
   }
   const adminMobileLi = document.getElementById("admin-nav-mobile-li");
@@ -4355,17 +4353,10 @@ async function loadLessonPage() {
     if (grow.children.length) listEl.appendChild(grow);
   }
 
-  let iframeSrc =
+  const iframeSrc =
     detail.accessible && (detail.youtube_url || detail.youtube_embed_url)
       ? corespeakYoutubeIframeSrc(detail.youtube_url || "", detail.youtube_embed_url)
       : null;
-  if (!iframeSrc && detail.accessible && detail.video_url) {
-    iframeSrc = corespeakYoutubeIframeSrc(detail.video_url, null);
-    if (!iframeSrc) {
-      const vimeoSrc = corespeakExtraVideoIframeSrc(detail.video_url, null, "vimeo");
-      if (vimeoSrc) iframeSrc = vimeoSrc;
-    }
-  }
 
   if (iframeSrc && detail.accessible) {
     const mediaRow = document.createElement("div");
@@ -4455,22 +4446,12 @@ async function loadLessonPage() {
     listEl.appendChild(block);
   });
 
-  if (detail.accessible) {
-    let audioSrc = "";
-    if (detail.audio_playback_url) {
-      audioSrc = String(detail.audio_playback_url).trim();
-    } else if (detail.audio_url) {
-      audioSrc = corespeakLessonMediaSrc(detail.audio_url);
-    } else if (detail.audio_static_path) {
-      audioSrc = staticUrl("/static/" + String(detail.audio_static_path).replace(/^\/+/, ""));
-    }
-    if (audioSrc) {
-      const au = document.createElement("audio");
-      au.className = "w-100 mb-3";
-      au.controls = true;
-      au.src = audioSrc;
-      listEl.appendChild(au);
-    }
+  if (detail.audio_static_path && detail.accessible) {
+    const au = document.createElement("audio");
+    au.className = "w-100 mb-3";
+    au.controls = true;
+    au.src = staticUrl("/static/" + String(detail.audio_static_path).replace(/^\/+/, ""));
+    listEl.appendChild(au);
   }
 
   const exWrap = document.createElement("div");

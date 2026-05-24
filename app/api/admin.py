@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.dependencies import require_admin
-from app.models import AppUser, CourseLevel, LanguageCourse, Lesson, LessonAttempt, LessonExercise
+from app.models import AppUser, CourseLevel, LanguageCourse, Lesson, LessonExercise
 from app.schemas import CreateLessonRequest
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -121,28 +121,4 @@ def create_lesson(
         "message": "Leccion guardada",
         "json_payload_saved": lesson.content_json,
     }
-
-
-@router.delete("/lessons/{lesson_id}")
-def delete_lesson(
-    lesson_id: int,
-    _: AppUser = Depends(require_admin),
-    session: Session = Depends(get_session),
-) -> dict:
-    lesson = session.get(Lesson, lesson_id)
-    if not lesson:
-        raise HTTPException(status_code=404, detail="Lección no encontrada")
-
-    for exercise in session.exec(
-        select(LessonExercise).where(LessonExercise.lesson_id == lesson_id)
-    ).all():
-        session.delete(exercise)
-    for attempt in session.exec(
-        select(LessonAttempt).where(LessonAttempt.lesson_id == lesson_id)
-    ).all():
-        session.delete(attempt)
-
-    session.delete(lesson)
-    session.commit()
-    return {"message": "Lección eliminada", "lesson_id": lesson_id}
 

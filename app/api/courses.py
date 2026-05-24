@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import json
-import re
 from datetime import date, datetime
 from typing import Any
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
@@ -76,60 +75,6 @@ def _to_lesson_dict(lesson: Lesson) -> dict:
         "media": {"video_url": lesson.video_url, "image_url": lesson.image_url, "audio_url": lesson.audio_url},
         "content": lesson.content_json,
     }
-
-
-_YOUTUBE_ID_RE = re.compile(
-    r"(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})",
-    re.IGNORECASE,
-)
-_VIMEO_ID_RE = re.compile(r"vimeo\.com/(?:video/)?(\d+)", re.IGNORECASE)
-
-
-def _lesson_media_display_fields(lesson: Lesson) -> dict[str, Any]:
-    """Campos que consume lesson.html (vídeo/audio/imágenes del admin)."""
-    out: dict[str, Any] = {
-        "youtube_url": None,
-        "youtube_embed_url": None,
-        "extra_videos": [],
-        "audio_static_path": None,
-        "audio_playback_url": None,
-        "gallery_images": [],
-    }
-    video = (lesson.video_url or "").strip()
-    if video:
-        yt = _YOUTUBE_ID_RE.search(video)
-        if yt:
-            vid = yt.group(1)
-            out["youtube_url"] = video
-            out["youtube_embed_url"] = f"https://www.youtube.com/embed/{vid}"
-        else:
-            vm = _VIMEO_ID_RE.search(video)
-            if vm:
-                out["extra_videos"].append(
-                    {
-                        "url": video,
-                        "embed_url": f"https://player.vimeo.com/video/{vm.group(1)}",
-                        "kind": "vimeo",
-                        "caption": None,
-                    }
-                )
-            elif video.lower().endswith((".mp4", ".webm", ".ogg", ".mov")):
-                out["extra_videos"].append({"url": video, "kind": "mp4", "caption": None})
-            elif video.startswith(("http://", "https://")):
-                out["extra_videos"].append({"url": video, "kind": "external", "caption": None})
-
-    image = (lesson.image_url or "").strip()
-    if image:
-        out["gallery_images"] = [image]
-
-    audio = (lesson.audio_url or "").strip()
-    if audio:
-        if audio.startswith(("http://", "https://")):
-            out["audio_playback_url"] = audio
-        else:
-            out["audio_static_path"] = audio.lstrip("/")
-
-    return out
 
 
 def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -422,22 +367,15 @@ def catalog_lesson_detail(
         raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
     accessible = _lesson_accessible_for_user(lesson, user)
     blocks = _catalog_blocks_from_content(lesson.content_json)
-    media = _lesson_media_display_fields(lesson)
     return {
         "id": lesson.id,
         "title": lesson.title,
         "description": lesson.description,
         "accessible": accessible,
         "cover_image_path": lesson.image_url,
-        "media_gallery": media.get("gallery_images") or [],
-        "gallery_images": media.get("gallery_images") or [],
+        "media_gallery": [],
         "video_url": lesson.video_url,
         "audio_url": lesson.audio_url,
-        "youtube_url": media.get("youtube_url"),
-        "youtube_embed_url": media.get("youtube_embed_url"),
-        "extra_videos": media.get("extra_videos") or [],
-        "audio_static_path": media.get("audio_static_path"),
-        "audio_playback_url": media.get("audio_playback_url"),
         "content": lesson.content_json,
         "exercises": lesson.content_json.get("exercises", []),
         "exercises_json": json.dumps({"blocks": blocks}, ensure_ascii=False),
