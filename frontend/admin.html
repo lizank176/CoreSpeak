@@ -141,6 +141,11 @@
                 <div class="fw-semibold mb-1">Selección actual</div>
                 <div id="selection-summary" class="text-muted">Sin selección</div>
               </div>
+              <hr>
+              <div class="fw-semibold mb-2">Lecciones en este nivel</div>
+              <ul id="admin-lessons-list" class="list-group list-group-flush small mb-0">
+                <li class="list-group-item text-muted px-0">Selecciona idioma y nivel.</li>
+              </ul>
             </div>
           </section>
         </div>
@@ -173,7 +178,7 @@
                 <div class="col-12">
                   <label class="form-label">Vídeo (YouTube/Vimeo URL)</label>
                   <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
-                  <div class="small text-muted mt-1">Se guarda como URL en base de datos.</div>
+                  <div class="small text-muted mt-1">Pega un enlace de YouTube o Vimeo (no se sube archivo de vídeo). Se guarda como URL en la base de datos.</div>
                   <div id="video-preview-wrap" class="mt-2 d-none">
                     <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Video preview"></iframe>
                   </div>
@@ -263,16 +268,135 @@
 
       let selectedCourseId = null;
       let selectedLevelId = null;
+      let selectedCourseCode = "";
       let selectedCourseName = "";
       let selectedLevelName = "";
+      let selectedLevelCode = "";
       let exerciseState = [];
       let courseTreeData = [];
+      let saveLessonBusy = false;
 
       function updateSelectionLabels() {
         const summary = selectedCourseName && selectedLevelName
           ? (selectedCourseName + " / " + selectedLevelName)
           : "Sin selección";
         el("selection-summary").textContent = summary;
+        renderLevelLessonsList();
+      }
+
+      function removeLessonFromTree(lessonId) {
+        const course = courseTreeData.find(function (c) {
+          return Number(c.id) === Number(selectedCourseId);
+        });
+        const lvl = course && (course.levels || []).find(function (x) {
+          return Number(x.id) === Number(selectedLevelId);
+        });
+        if (lvl && Array.isArray(lvl.lessons)) {
+          lvl.lessons = lvl.lessons.filter(function (l) {
+            return Number(l.id) !== Number(lessonId);
+          });
+        }
+      }
+
+      function renderLevelLessonsList() {
+        const listEl = el("admin-lessons-list");
+        if (!listEl) return;
+        listEl.innerHTML = "";
+        if (!selectedCourseId || !selectedLevelId) {
+          const li = document.createElement("li");
+          li.className = "list-group-item text-muted px-0";
+          li.textContent = "Selecciona idioma y nivel.";
+          listEl.appendChild(li);
+          return;
+        }
+        const course = courseTreeData.find(function (c) {
+          return Number(c.id) === Number(selectedCourseId);
+        });
+        const lvl = course && (course.levels || []).find(function (x) {
+          return Number(x.id) === Number(selectedLevelId);
+        });
+        const lessons = (lvl && lvl.lessons) || [];
+        if (lessons.length === 0) {
+          const li = document.createElement("li");
+          li.className = "list-group-item text-muted px-0";
+          li.textContent = "No hay lecciones en este nivel.";
+          listEl.appendChild(li);
+          return;
+        }
+        lessons.forEach(function (les) {
+          const li = document.createElement("li");
+          li.className = "list-group-item d-flex justify-content-between align-items-start gap-2 px-0";
+          const info = document.createElement("div");
+          const titleEl = document.createElement("div");
+          titleEl.className = "fw-medium";
+          titleEl.textContent = les.title || "Sin título";
+          const metaEl = document.createElement("div");
+          metaEl.className = "text-muted";
+          metaEl.textContent =
+            "ID " + les.id +
+            (les.premium ? " · Premium" : "") +
+            (les.published === false ? " · Borrador" : "");
+          info.appendChild(titleEl);
+          info.appendChild(metaEl);
+          const actions = document.createElement("div");
+          actions.className = "d-flex flex-column gap-1 flex-shrink-0";
+          const viewBtn = document.createElement("a");
+          viewBtn.className = "btn btn-outline-secondary btn-sm";
+          viewBtn.href =
+            "lesson.html?lesson_id=" + encodeURIComponent(String(les.id)) +
+            "&lang=" + encodeURIComponent(selectedCourseCode || "en") +
+            "&level=" + encodeURIComponent(selectedLevelCode || "A1");
+          viewBtn.textContent = "Ver";
+          viewBtn.target = "_blank";
+          viewBtn.rel = "noopener noreferrer";
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "btn btn-outline-danger btn-sm";
+          delBtn.textContent = "Borrar";
+          delBtn.addEventListener("click", function () {
+            void deleteLesson(les.id, les.title);
+          });
+          actions.appendChild(viewBtn);
+          actions.appendChild(delBtn);
+          li.appendChild(info);
+          li.appendChild(actions);
+          listEl.appendChild(li);
+        });
+      }
+
+      async function deleteLesson(lessonId, title) {
+        const label = (title && String(title).trim()) || ("ID " + lessonId);
+        if (!window.confirm("¿Eliminar la lección «" + label + "»? No se puede deshacer.")) {
+          return;
+        }
+        let res;
+        try {
+          res = await fetch(apiUrl("/api/admin/lessons/" + encodeURIComponent(String(lessonId))), {
+            method: "DELETE",
+            headers: apiHeaders()
+          });
+        } catch (err) {
+          console.warn("deleteLesson", err);
+          setMsg("Error de red al borrar la lección.", false);
+          return;
+        }
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          const detail = data.detail;
+          setMsg(
+            typeof detail === "string" ? detail : "No se pudo borrar la lección.",
+            false
+          );
+          return;
+        }
+        removeLessonFromTree(lessonId);
+        const statEl = el("stat-lessons-total");
+        if (statEl) {
+          const n = Math.max(0, Number(statEl.textContent || "0") - 1);
+          statEl.textContent = String(n);
+        }
+        renderLevelLessonsList();
+        setMsg("Lección eliminada: «" + label + "».", true);
       }
 
       function normalizeLanguageName(code, fallbackName) {
@@ -291,9 +415,9 @@
       function normalizeVideoEmbed(url) {
         const v = String(url || "").trim();
         if (!v) return "";
-        const yt = v.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/i);
+        const yt = v.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
         if (yt && yt[1]) return "https://www.youtube.com/embed/" + yt[1];
-        const vm = v.match(/vimeo\.com\/(\d+)/i);
+        const vm = v.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
         if (vm && vm[1]) return "https://player.vimeo.com/video/" + vm[1];
         return "";
       }
@@ -607,6 +731,7 @@
       }
 
       async function saveLesson() {
+        if (saveLessonBusy) return;
         const issues = validateExercises();
         if (!selectedCourseId || !selectedLevelId) {
           issues.unshift("Selecciona idioma y nivel en los selectores.");
@@ -618,18 +743,50 @@
           setMsg("No se puede guardar: " + issues.join(" "), false);
           return;
         }
-        const payload = buildLessonPayload();
-        const res = await fetch(apiUrl("/api/admin/lessons"), {
-          method: "POST",
-          headers: apiHeaders(),
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json().catch(function () { return {}; });
-        if (!res.ok) {
-          setMsg(data.detail || "Error al guardar la lección.", false);
-          return;
+        const saveBtn = el("btn-save-lesson");
+        const saveBtnLabel = saveBtn ? saveBtn.textContent : "Guardar lección";
+        saveLessonBusy = true;
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Guardando…";
         }
-        setMsg("Lección guardada correctamente. ID: " + (data.lesson_id || "-"), true);
+        try {
+          const payload = buildLessonPayload();
+          const res = await fetch(apiUrl("/api/admin/lessons"), {
+            method: "POST",
+            headers: apiHeaders(),
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) {
+            const detail = data.detail;
+            const msg = Array.isArray(detail)
+              ? detail.map(function (d) { return d.msg || JSON.stringify(d); }).join(" ")
+              : (detail || "Error al guardar la lección.");
+            setMsg(msg, false);
+            return;
+          }
+          const lessonId = data.lesson_id;
+          if (!lessonId) {
+            setMsg("Lección guardada pero sin ID en la respuesta.", false);
+            return;
+          }
+          const lang = (selectedCourseCode || "en").toLowerCase();
+          const level = (selectedLevelCode || "A1").toUpperCase();
+          window.location.href =
+            "lesson.html?lesson_id=" + encodeURIComponent(String(lessonId)) +
+            "&lang=" + encodeURIComponent(lang) +
+            "&level=" + encodeURIComponent(level);
+        } catch (err) {
+          console.warn("saveLesson", err);
+          setMsg("Error de red al guardar. Inténtalo de nuevo.", false);
+        } finally {
+          saveLessonBusy = false;
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = saveBtnLabel;
+          }
+        }
       }
 
       function renderCourseSelectors(treeRows) {
@@ -651,8 +808,10 @@
 
         selectedCourseId = null;
         selectedLevelId = null;
+        selectedCourseCode = "";
         selectedCourseName = "";
         selectedLevelName = "";
+        selectedLevelCode = "";
         updateSelectionLabels();
       }
 
@@ -702,10 +861,12 @@
           levelSelect.innerHTML = "";
           selectedCourseId = null;
           selectedLevelId = null;
+          selectedCourseCode = "";
+          selectedCourseName = "";
           selectedLevelName = "";
+          selectedLevelCode = "";
 
           if (!courseId) {
-            selectedCourseName = "";
             levelSelect.disabled = true;
             levelSelect.innerHTML = "<option value=''>Primero selecciona un idioma</option>";
             updateSelectionLabels();
@@ -715,7 +876,8 @@
           const course = courseTreeData.find(function (c) { return Number(c.id) === courseId; });
           if (!course) return;
           selectedCourseId = course.id;
-          selectedCourseName = normalizeLanguageName(course.code, course.name) + " (" + String(course.code || "").toLowerCase() + ")";
+          selectedCourseCode = String(course.code || "en").toLowerCase();
+          selectedCourseName = normalizeLanguageName(course.code, course.name) + " (" + selectedCourseCode + ")";
           levelSelect.disabled = false;
           levelSelect.innerHTML = "<option value=''>Selecciona un nivel</option>";
           (course.levels || []).forEach(function (lvl) {
@@ -733,6 +895,7 @@
           if (!selectedCourseId || !levelId) {
             selectedLevelId = null;
             selectedLevelName = "";
+            selectedLevelCode = "";
             updateSelectionLabels();
             return;
           }
@@ -740,7 +903,8 @@
           const lvl = course && (course.levels || []).find(function (x) { return Number(x.id) === levelId; });
           if (!lvl) return;
           selectedLevelId = lvl.id;
-          selectedLevelName = (lvl.code || "") + " · " + (lvl.title || "Nivel");
+          selectedLevelCode = String(lvl.code || "A1").trim().toUpperCase();
+          selectedLevelName = selectedLevelCode + " · " + (lvl.title || "Nivel");
           updateSelectionLabels();
           setMsg("Nivel seleccionado: " + selectedLevelName, true);
         });
