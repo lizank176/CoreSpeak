@@ -1348,7 +1348,32 @@ function formatApiErrorDetail(data) {
   return "";
 }
 
-function setLoginFormError(message, fieldErrors) {
+function setAlertMessage(el, message, variant, fallbackToWindowAlert) {
+  const text = String(message || "").trim();
+  if (!el) {
+    if (text && fallbackToWindowAlert) window.alert(text);
+    return;
+  }
+  if (!text) {
+    el.textContent = "";
+    el.classList.add("d-none");
+    return;
+  }
+  const tone =
+    variant === "ok"
+      ? "alert-success"
+      : variant === "info"
+        ? "alert-info"
+        : variant === "warn"
+          ? "alert-warning"
+          : "alert-danger";
+  const margin = el.classList.contains("mb-4") ? "mb-4" : "mb-3";
+  el.textContent = text;
+  el.className = "alert py-2 px-3 small " + margin + " " + tone;
+  el.classList.remove("d-none");
+}
+
+function setLoginFormMessage(message, variant, fieldErrors) {
   const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
   const pairs = [
     ["login-email", "login-email-error"],
@@ -1362,20 +1387,14 @@ function setLoginFormError(message, fieldErrors) {
     });
   }
   const el = document.getElementById("login-error");
-  if (!el) {
-    if (message) window.alert(message);
-    return;
-  }
-  if (!message) {
-    el.textContent = "";
-    el.classList.add("d-none");
-    return;
-  }
-  el.textContent = "Error: " + message;
-  el.classList.remove("d-none");
+  setAlertMessage(el, message, variant || "err", true);
 }
 
-function setRegisterFormError(message, fieldErrors) {
+function setLoginFormError(message, fieldErrors) {
+  setLoginFormMessage(message, "err", fieldErrors);
+}
+
+function setRegisterFormMessage(message, variant, fieldErrors) {
   const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
   const pairs = [
     ["register-nombre", "register-nombre-error"],
@@ -1392,17 +1411,11 @@ function setRegisterFormError(message, fieldErrors) {
     });
   }
   const el = document.getElementById("register-error");
-  if (!el) {
-    if (message) window.alert(message);
-    return;
-  }
-  if (!message) {
-    el.textContent = "";
-    el.classList.add("d-none");
-    return;
-  }
-  el.textContent = "Error: " + message;
-  el.classList.remove("d-none");
+  setAlertMessage(el, message, variant || "err", true);
+}
+
+function setRegisterFormError(message, fieldErrors) {
+  setRegisterFormMessage(message, "err", fieldErrors);
 }
 
 function isValidEmailFormat(email) {
@@ -1487,6 +1500,7 @@ async function login() {
   const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
   const defaultLabel = btn?.textContent?.trim() || "Iniciar sesion";
   if (a11y) a11y.setBusy(btn, true, "Iniciando sesión…", defaultLabel);
+  setLoginFormMessage("Comprobando tus datos. Te llevaremos a tu panel en unos segundos…", "info");
 
   let res;
   try {
@@ -1553,7 +1567,11 @@ async function login() {
   setLoginFormError("");
   setStoredToken(data.access_token);
   localStorage.setItem(USER_ID_KEY, String(uid));
-  window.location.href = "dashboard.html";
+  if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
+  setLoginFormMessage("Sesión iniciada correctamente. Entrando al panel…", "ok");
+  setTimeout(function () {
+    window.location.href = "dashboard.html";
+  }, 350);
 }
 
 async function register() {
@@ -1568,17 +1586,26 @@ async function register() {
   const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
   const defaultLabel = btn?.textContent?.trim() || "Crear cuenta";
   if (a11y) a11y.setBusy(btn, true, "Creando cuenta…", defaultLabel);
+  setRegisterFormMessage("Estamos creando tu cuenta. Después podrás personalizar tu perfil.", "info");
 
-  const res = await fetch(apiUrl("/api/auth/register"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      full_name: [nombre, apellido].filter(Boolean).join(" "),
-      email,
-      password,
-      accepted_terms: consentAccepted,
-    }),
-  });
+  let res;
+  try {
+    res = await fetch(apiUrl("/api/auth/register"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        full_name: [nombre, apellido].filter(Boolean).join(" "),
+        email,
+        password,
+        accepted_terms: consentAccepted,
+      }),
+    });
+  } catch (e) {
+    console.warn("register: red", e);
+    if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
+    setRegisterFormError("No se pudo conectar. Comprueba tu red e inténtalo de nuevo.");
+    return;
+  }
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -1623,18 +1650,15 @@ async function register() {
     console.warn("register: me lookup error", e);
   }
 
-  setRegisterFormError("");
-  window.location.href = "profile_setup.html";
+  setRegisterFormMessage("Cuenta creada correctamente. Vamos a preparar tu perfil…", "ok");
+  if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
+  setTimeout(function () {
+    window.location.href = "profile_setup.html";
+  }, 400);
 }
 
 function setInlineAuthAlert(el, message, variant) {
-  if (!el) return;
-  const t = String(message || "").trim();
-  el.textContent = t;
-  el.className =
-    "alert py-2 px-3 small mb-3 " +
-    (variant === "ok" ? "alert-success" : variant === "err" ? "alert-danger" : "alert-info");
-  el.classList.toggle("d-none", !t);
+  setAlertMessage(el, message, variant === "err" ? "err" : variant || "info", false);
 }
 
 async function submitForgotPassword() {
@@ -1646,7 +1670,7 @@ async function submitForgotPassword() {
     return;
   }
   if (btn) btn.disabled = true;
-  setInlineAuthAlert(msgEl, "", "");
+  setInlineAuthAlert(msgEl, "Estamos enviando el enlace de recuperación…", "info");
   try {
     const res = await fetch(apiUrl("/api/auth/forgot-password"), {
       method: "POST",
@@ -1663,12 +1687,12 @@ async function submitForgotPassword() {
     } else {
       setInlineAuthAlert(
         msgEl,
-        "Si el correo existe, recibirás un enlace para restablecer la contraseña. Revisa spam.",
+        "Solicitud enviada. Si el correo existe, recibirás un enlace para restablecer la contraseña. Revisa también spam o promociones.",
         "ok"
       );
     }
   } catch (e) {
-    setInlineAuthAlert(msgEl, "Error de red.", "err");
+    setInlineAuthAlert(msgEl, "No se pudo enviar la solicitud por un problema de red.", "err");
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1719,7 +1743,7 @@ async function submitResetPassword() {
     return;
   }
   if (btn) btn.disabled = true;
-  setInlineAuthAlert(msgEl, "", "");
+  setInlineAuthAlert(msgEl, "Guardando tu nueva contraseña…", "info");
   try {
     const res = await fetch(apiUrl("/api/auth/reset-password"), {
       method: "POST",
@@ -1735,7 +1759,11 @@ async function submitResetPassword() {
       );
       if (btn) btn.disabled = false;
     } else {
-      setInlineAuthAlert(msgEl, data.message || "Contraseña actualizada. Redirigiendo…", "ok");
+      setInlineAuthAlert(
+        msgEl,
+        data.message || "Contraseña actualizada correctamente. Te llevamos al inicio de sesión…",
+        "ok"
+      );
       setTimeout(function () {
         window.location.href = "inicio_session.html";
       }, 1800);
@@ -1746,7 +1774,7 @@ async function submitResetPassword() {
   }
 }
 
-function setProfileSetupError(message) {
+function setProfileSetupError(message, kind) {
   const el = document.getElementById("profile-setup-error");
   if (!el) return;
   const text = String(message || "").trim();
@@ -1755,7 +1783,9 @@ function setProfileSetupError(message) {
     el.textContent = "";
     return;
   }
+  const tone = kind === "ok" ? "alert-success" : kind === "info" ? "alert-info" : "alert-danger";
   el.textContent = text;
+  el.className = "alert py-2 px-3 small mb-3 " + tone;
   el.classList.remove("d-none");
 }
 
@@ -1919,6 +1949,7 @@ async function saveProfileSetup() {
   const interests = getSelectedInterestIds().slice(0, MAX_PROFILE_INTERESTS);
   const btn = document.getElementById("profile-setup-btn");
   if (btn) btn.disabled = true;
+  setProfileSetupError("Guardando tu perfil y preferencias…", "info");
 
   try {
     const res = await fetch(apiUrl("/api/auth/profile-setup"), {
@@ -1944,10 +1975,16 @@ async function saveProfileSetup() {
     }
     localStorage.setItem(UI_LANG_STORAGE_KEY, uiLanguage);
     if (wantsPremium) {
-      window.location.href = "pricing.html";
+      setProfileSetupError("Perfil guardado. Ahora te llevamos a los planes Premium…", "ok");
+      setTimeout(function () {
+        window.location.href = "pricing.html";
+      }, 400);
       return;
     }
-    window.location.href = "dashboard.html";
+    setProfileSetupError("Perfil guardado correctamente. Entrando al panel…", "ok");
+    setTimeout(function () {
+      window.location.href = "dashboard.html";
+    }, 400);
   } catch (e) {
     setProfileSetupError("No se pudo guardar tu perfil. Revisa tu conexión e inténtalo de nuevo.");
   } finally {
@@ -2513,7 +2550,7 @@ async function initConfigPersonalName() {
   if (cancelBtn) {
     cancelBtn.addEventListener("click", function () {
       applyFields(_configDisplayNameOriginal.first, _configDisplayNameOriginal.last);
-      showMsg("", "");
+      showMsg("Cambios descartados. Se han restaurado tus datos anteriores.", "info");
     });
   }
 
@@ -2526,7 +2563,7 @@ async function initConfigPersonalName() {
       showMsg("Escribe al menos tu nombre o apellidos (mínimo 2 caracteres en total).", "err");
       return;
     }
-    showMsg("");
+    showMsg("Guardando tu nombre…", "info");
     const auth2 = requireAuth();
     if (!auth2) return;
     const saveBtn = document.getElementById("config-personal-save");
@@ -2549,7 +2586,7 @@ async function initConfigPersonalName() {
       }
       const sp2 = _splitDisplayName(data.nombre);
       applyFields(sp2.first, sp2.last);
-      showMsg("Cambios guardados.", "ok");
+      showMsg("Nombre actualizado correctamente.", "ok");
       if (typeof applyPageI18n === "function") {
         applyPageI18n(getCurrentUiLangSync());
       }
@@ -2612,6 +2649,7 @@ async function initConfigEnglishLevel() {
     if (busy) return;
     busy = true;
     const level = normalizeCefrLevelInput(sel.value);
+    showMsg("Guardando tu nivel MCER…", "info");
     try {
       const res2 = await fetch(apiUrl("/api/users/me/english-level"), {
         method: "PATCH",
@@ -2684,6 +2722,11 @@ async function initConfigExtraLanguages() {
       return;
     }
     const extra = Array.from(document.querySelectorAll(".config-extra-lang-cb:checked")).map((c) => c.value);
+    if (msg) {
+      msg.className = "alert alert-info py-2 px-3 small";
+      msg.textContent = "Guardando tus idiomas disponibles…";
+      msg.classList.remove("d-none");
+    }
     const res2 = await fetch(apiUrl("/api/users/me/extra-languages"), {
       method: "POST",
       headers: {
@@ -2705,15 +2748,34 @@ async function initConfigExtraLanguages() {
     }
     if (msg) {
       msg.className = "alert alert-success py-2 px-3 small";
-      msg.textContent = "Idiomas actualizados.";
+      msg.textContent = "Idiomas actualizados correctamente.";
       msg.classList.remove("d-none");
     }
   });
 }
 
+function setOnboardingMessage(message, kind) {
+  const el = document.getElementById("onboarding-msg");
+  if (!el) return;
+  const text = String(message || "").trim();
+  if (!text) {
+    el.textContent = "";
+    el.classList.add("d-none");
+    return;
+  }
+  el.textContent = text;
+  el.className =
+    "alert py-2 px-3 small mb-3 " +
+    (kind === "ok" ? "alert-success" : kind === "info" ? "alert-info" : "alert-danger");
+  el.classList.remove("d-none");
+}
+
 async function saveOnboarding() {
   const auth = requireAuth();
-  if (!auth) return;
+  if (!auth) {
+    setOnboardingMessage("Tu sesión ha caducado. Inicia sesión otra vez para guardar tu configuración.", "err");
+    return;
+  }
 
   const ocupacion = document.getElementById("onb-ocupacion")?.value?.trim() || "";
   const niveles_actuales = {};
@@ -2721,18 +2783,33 @@ async function saveOnboarding() {
   if (enLvl) {
     niveles_actuales.en = enLvl;
   }
+  const btn = document.getElementById("onboarding-save-btn");
+  if (btn) btn.disabled = true;
+  setOnboardingMessage("Guardando tu configuración inicial…", "info");
 
-  const res = await fetch(apiUrl("/api/users/me/onboarding"), {
-    method: "POST",
-    headers: apiHeaders() || { "Content-Type": "application/json" },
-    body: JSON.stringify({ ocupacion, niveles_actuales }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    alert(data.detail || "No se pudo guardar el test inicial");
-    return;
+  try {
+    const res = await fetch(apiUrl("/api/users/me/onboarding"), {
+      method: "POST",
+      headers: apiHeaders() || { "Content-Type": "application/json" },
+      body: JSON.stringify({ ocupacion, niveles_actuales }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setOnboardingMessage(
+        formatApiErrorDetail(data) || data.detail || "No se pudo guardar tu configuración inicial.",
+        "err"
+      );
+      return;
+    }
+    setOnboardingMessage("Datos guardados. Entrando al panel…", "ok");
+    setTimeout(function () {
+      window.location.href = "dashboard.html";
+    }, 400);
+  } catch (e) {
+    setOnboardingMessage("No se pudo conectar con el servidor. Inténtalo de nuevo.", "err");
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  window.location.href = "dashboard.html";
 }
 
 function renderGrammarDialogueExercise(container, ui) {
@@ -3409,6 +3486,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 /** Evita que un render en curso borre filas mientras carga la API. */
 let agendaRenderGeneration = 0;
 
+function setAgendaStatus(message, kind) {
+  const el = document.getElementById("agenda-status-msg");
+  if (!el) {
+    if (message && kind === "err") window.alert(message);
+    return;
+  }
+  const text = String(message || "").trim();
+  if (!text) {
+    el.textContent = "";
+    el.classList.add("d-none");
+    return;
+  }
+  el.textContent = text;
+  el.className =
+    "alert py-2 px-3 small mb-3 " +
+    (kind === "ok" ? "alert-success" : kind === "info" ? "alert-info" : "alert-danger");
+  el.classList.remove("d-none");
+}
+
 async function loadAgendaWords() {
   const headers = apiHeaders();
   if (!headers) return [];
@@ -3440,9 +3536,10 @@ async function saveAgendaRow(id, word, meaning) {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    alert(data.detail || "No se pudo guardar");
+    setAgendaStatus(data.detail || "No se pudieron guardar los cambios en la agenda.", "err");
     return false;
   }
+  setAgendaStatus("Cambios guardados en tu agenda.", "ok");
   return true;
 }
 
@@ -3462,12 +3559,15 @@ async function createAgendaWord(word, meaning) {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      alert(data.detail || "No se pudo añadir la palabra");
+      setAgendaStatus(data.detail || "No se pudo añadir la palabra a la agenda.", "err");
       return null;
     }
     return res.json();
   } catch (e) {
-    alert("No se pudo contactar con el servidor. Abre la app desde la misma URL que la API (por ejemplo http://127.0.0.1:8000/ui/agenda.html) y comprueba que el backend esté en marcha.");
+    setAgendaStatus(
+      "No se pudo contactar con el servidor. Abre la app desde la misma URL que la API y comprueba que el backend esté en marcha.",
+      "err"
+    );
     return null;
   }
 }
@@ -3481,7 +3581,7 @@ async function deleteAgendaWord(id) {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    alert(data.detail || "No se pudo eliminar");
+    setAgendaStatus(data.detail || "No se pudo eliminar la palabra de la agenda.", "err");
     return false;
   }
   return true;
@@ -3536,7 +3636,10 @@ function buildAgendaRowTr(item) {
   btnDel.addEventListener("click", async () => {
     if (!confirm(ag.confirmDelete || "")) return;
     const ok = await deleteAgendaWord(id);
-    if (ok) tr.remove();
+    if (ok) {
+      tr.remove();
+      setAgendaStatus("Palabra eliminada de tu agenda.", "ok");
+    }
   });
 
   return tr;
@@ -3630,11 +3733,12 @@ async function initAgendaPage() {
     const w = newWordInput.value.trim();
     const m = (newMeaningInput && newMeaningInput.value.trim()) || "";
     if (!w && !m) {
-      alert("Escribe al menos la palabra o el significado.");
+      setAgendaStatus("Escribe al menos la palabra o el significado antes de guardar.", "err");
       newWordInput.focus();
       return;
     }
     newWordSave.disabled = true;
+    setAgendaStatus("Guardando la nueva palabra en tu agenda…", "info");
     let created;
     try {
       created = await createAgendaWord(w, m);
@@ -3646,7 +3750,7 @@ async function initAgendaPage() {
     }
     const newId = created.id;
     if (newId == null || newId === "") {
-      alert("El servidor no devolvió el id de la palabra. Recarga la página.");
+      setAgendaStatus("La palabra se creó, pero falta su identificador. Recarga la página.", "err");
       return;
     }
     closeAgendaNewWordModal();
@@ -3667,6 +3771,7 @@ async function initAgendaPage() {
     }
 
     await renderAgendaTable();
+    setAgendaStatus("Palabra añadida correctamente. Ya puedes completar o editar el significado.", "ok");
     const rowAfter = document.querySelector('#agenda-tbody tr[data-id="' + String(newId) + '"]');
     const inpAfter = rowAfter && rowAfter.querySelector(".agenda-cell-meaning");
     if (inpAfter) inpAfter.focus();
@@ -3794,6 +3899,22 @@ function corespeakAnswerMatchesValid(userInput, validList) {
   return false;
 }
 
+function corespeakAnswerListMatchesValid(userInputs, validList) {
+  const cleanedUser = (Array.isArray(userInputs) ? userInputs : [])
+    .map(function (x) { return corespeakLimpiarTexto(x); })
+    .filter(Boolean)
+    .sort();
+  const cleanedValid = (Array.isArray(validList) ? validList : [])
+    .map(function (x) { return corespeakLimpiarTexto(x); })
+    .filter(Boolean)
+    .sort();
+  if (cleanedUser.length === 0 || cleanedUser.length !== cleanedValid.length) return false;
+  for (let i = 0; i < cleanedUser.length; i++) {
+    if (cleanedUser[i] !== cleanedValid[i]) return false;
+  }
+  return true;
+}
+
 function corespeakExerciseQuestionText(b) {
   if (!b || typeof b !== "object") return "";
   return String(
@@ -3857,6 +3978,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
     const valid = corespeakCollectValidAnswers(b);
     const qText = corespeakExerciseQuestionText(b);
     const opciones = Array.isArray(b.opciones) ? b.opciones : Array.isArray(b.options) ? b.options : null;
+    const isSingleChoice = String(b && b.selection_mode || "").toLowerCase() === "single_choice";
 
     const card = document.createElement("div");
     card.className = "card mb-3 border shadow-sm";
@@ -3911,7 +4033,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
 
     const uid = "ex-" + idx + "-" + Math.random().toString(36).slice(2, 9);
     let inputEl = null;
-    const radios = [];
+    const choices = [];
 
     if (opciones && opciones.length > 0 && (type === "quiz" || type === "test" || type === "multiple_choice")) {
       const wrap = document.createElement("div");
@@ -3921,18 +4043,18 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
         const id = uid + "-o" + j;
         const row = document.createElement("div");
         row.className = "form-check";
-        const radio = document.createElement("input");
-        radio.type = "radio";
-        radio.className = "form-check-input";
-        radio.name = uid + "-mc";
-        radio.id = id;
-        radio.value = String(labelText);
-        radios.push(radio);
+        const choice = document.createElement("input");
+        choice.type = isSingleChoice ? "radio" : "checkbox";
+        choice.className = "form-check-input";
+        if (isSingleChoice) choice.name = uid + "-mc";
+        choice.id = id;
+        choice.value = String(labelText);
+        choices.push(choice);
         const lab = document.createElement("label");
         lab.className = "form-check-label";
         lab.setAttribute("for", id);
         lab.textContent = String(labelText);
-        row.appendChild(radio);
+        row.appendChild(choice);
         row.appendChild(lab);
         wrap.appendChild(row);
       });
@@ -3958,14 +4080,11 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
 
     btn.addEventListener("click", function () {
       let userVal = "";
+      let userVals = [];
       if (inputEl) userVal = (inputEl.value || "").trim();
       else {
-        for (let r = 0; r < radios.length; r++) {
-          if (radios[r].checked) {
-            userVal = radios[r].value;
-            break;
-          }
-        }
+        userVals = choices.filter(function (x) { return x.checked; }).map(function (x) { return x.value; });
+        userVal = userVals[0] || "";
       }
       if (!userVal) {
         feedback.className = "small mt-2 text-warning";
@@ -3977,7 +4096,11 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
         feedback.textContent = lc.exerciseNoValidConfig || "";
         return;
       }
-      const ok = corespeakAnswerMatchesValid(userVal, valid);
+      const ok = inputEl
+        ? corespeakAnswerMatchesValid(userVal, valid)
+        : isSingleChoice
+          ? corespeakAnswerMatchesValid(userVal, valid)
+          : corespeakAnswerListMatchesValid(userVals, valid);
       feedback.className = "small mt-2 fw-semibold " + (ok ? "text-success" : "text-danger");
       feedback.textContent = ok ? lc.exerciseCorrect || "OK" : lc.exerciseWrong || "—";
     });
@@ -4254,6 +4377,24 @@ async function loadLessonPage() {
     backLink.textContent = lc.back;
     backLink.setAttribute("href", "course.html?lang=" + encodeURIComponent(lang));
   }
+  const adminWrap = document.getElementById("lesson-admin-actions");
+  const adminMsg = document.getElementById("lesson-admin-msg");
+  const editBtn = document.getElementById("lesson-edit-btn");
+  const deleteBtn = document.getElementById("lesson-delete-btn");
+
+  function setLessonAdminMessage(message, kind) {
+    if (!adminMsg) return;
+    const text = String(message || "").trim();
+    if (!text) {
+      adminMsg.textContent = "";
+      adminMsg.className = "small mt-2 mb-0 d-none";
+      return;
+    }
+    adminMsg.textContent = text;
+    adminMsg.className =
+      "small mt-2 mb-0 " +
+      (kind === "ok" ? "text-success" : kind === "info" ? "text-primary" : "text-danger");
+  }
 
   const lessonTitleEl = document.getElementById("lesson-title");
   const lessonMetaEl = document.getElementById("lesson-meta-line");
@@ -4298,6 +4439,62 @@ async function loadLessonPage() {
   if (!detail) {
     if (lessonTitleEl) lessonTitleEl.textContent = lc.lessonLoadError || "";
     return;
+  }
+
+  let isAdmin = false;
+  try {
+    const meRes = await fetch(apiUrl("/api/auth/me"), {
+      headers: { Authorization: "Bearer " + auth.token },
+    });
+    if (meRes.ok) {
+      const me = await meRes.json().catch(() => null);
+      isAdmin = String(me?.role || "").toLowerCase() === "admin";
+    }
+  } catch (e) {
+    console.warn("loadLessonPage admin role", e);
+  }
+
+  if (adminWrap && isAdmin) {
+    adminWrap.classList.remove("d-none");
+    if (editBtn) {
+      editBtn.href = "admin.html?lesson_id=" + encodeURIComponent(lessonIdRaw);
+    }
+    if (deleteBtn && !deleteBtn.dataset.corespeakBound) {
+      deleteBtn.dataset.corespeakBound = "1";
+      deleteBtn.addEventListener("click", async function () {
+        const title = detail.title || ("ID " + lessonIdRaw);
+        if (!window.confirm("¿Eliminar la lección «" + title + "»? Esta acción no se puede deshacer.")) {
+          return;
+        }
+        deleteBtn.disabled = true;
+        setLessonAdminMessage("Eliminando la lección…", "info");
+        try {
+          const delRes = await fetch(apiUrl("/api/admin/lessons/" + encodeURIComponent(lessonIdRaw)), {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + auth.token },
+          });
+          const delData = await delRes.json().catch(() => ({}));
+          if (!delRes.ok) {
+            setLessonAdminMessage(
+              formatApiErrorDetail(delData) || delData.detail || "No se pudo borrar la lección.",
+              "err"
+            );
+            deleteBtn.disabled = false;
+            return;
+          }
+          setLessonAdminMessage("Lección eliminada. Volviendo al curso…", "ok");
+          setTimeout(function () {
+            window.location.href = backLink?.getAttribute("href") || "dashboard.html";
+          }, 500);
+        } catch (err) {
+          console.warn("delete lesson from lesson page", err);
+          setLessonAdminMessage("No se pudo borrar la lección por un problema de red.", "err");
+          deleteBtn.disabled = false;
+        }
+      });
+    }
+  } else if (adminWrap) {
+    adminWrap.classList.add("d-none");
   }
 
   if (lessonTitleEl) lessonTitleEl.textContent = detail.title || "—";
@@ -4353,10 +4550,13 @@ async function loadLessonPage() {
     if (grow.children.length) listEl.appendChild(grow);
   }
 
-  const iframeSrc =
+  let iframeSrc =
     detail.accessible && (detail.youtube_url || detail.youtube_embed_url)
       ? corespeakYoutubeIframeSrc(detail.youtube_url || "", detail.youtube_embed_url)
       : null;
+  if (!iframeSrc && detail.accessible && detail.video_url) {
+    iframeSrc = corespeakYoutubeIframeSrc(detail.video_url, null);
+  }
 
   if (iframeSrc && detail.accessible) {
     const mediaRow = document.createElement("div");

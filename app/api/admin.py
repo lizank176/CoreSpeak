@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.dependencies import require_admin
-from app.models import AppUser, CourseLevel, LanguageCourse, Lesson, LessonExercise
+from app.models import AppUser, CourseLevel, LanguageCourse, Lesson, LessonAttempt, LessonExercise
 from app.schemas import CreateLessonRequest
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -63,16 +63,7 @@ def create_lesson(
     admin: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> dict:
-    level = session.exec(select(CourseLevel).where(CourseLevel.id == payload.level_id)).first()
-    if not level:
-        raise HTTPException(status_code=404, detail="Nivel no encontrado")
-
-    for exercise in payload.exercises:
-        if exercise.exercise_type.value in {"multiple_choice", "fill_in_the_blank"} and not exercise.correct_answer:
-            raise HTTPException(status_code=400, detail="Ejercicio requiere opcion/respuesta correcta")
-        if exercise.exercise_type.value == "media_comprehension" and not exercise.model_answer:
-            raise HTTPException(status_code=400, detail="Comprension requiere respuesta modelo")
-
+    _validate_lesson_payload(payload, session)
     lesson = Lesson(
         course_id=payload.course_id,
         level_id=payload.level_id,
@@ -100,11 +91,122 @@ def create_lesson(
     session.add(lesson)
     session.commit()
     session.refresh(lesson)
+    _replace_lesson_exercises(session, lesson.id, payload)
+    return {
+        "lesson_id": lesson.id,
+        "message": "Leccion guardada",
+        "json_payload_saved": lesson.content_json,
+    }
 
+
+@router.get("/lessons/{lesson_id}")
+def admin_lesson_detail(
+    lesson_id: int,
+    _: AppUser = Depends(require_admin),
+    session: Session = Depends(get_session),
+) -> dict:
+    lesson = session.get(Lesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    exercises = session.exec(
+        select(LessonExercise).where(LessonExercise.lesson_id == lesson_id).order_by(LessonExercise.position)
+    ).all()
+    return {
+        "id": lesson.id,
+        "course_id": lesson.course_id,
+        "level_id": lesson.level_id,
+        "title": lesson.title,
+        "description": lesson.description,
+        "is_premium": lesson.is_premium,
+        "is_published": lesson.is_published,
+        "video_url": lesson.video_url,
+        "image_url": lesson.image_url,
+        "audio_url": lesson.audio_url,
+        "exercises": [_serialize_lesson_exercise(item) for item in exercises],
+    }
+
+
+@router.patch("/lessons/{lesson_id}")
+def update_lesson(
+    lesson_id: int,
+    payload: CreateLessonRequest,
+    _: AppUser = Depends(require_admin),
+    session: Session = Depends(get_session),
+) -> dict:
+    lesson = session.get(Lesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    _validate_lesson_payload(payload, session)
+    lesson.course_id = payload.course_id
+    lesson.level_id = payload.level_id
+    lesson.title = payload.title
+    lesson.description = payload.description
+    lesson.is_premium = payload.is_premium
+    lesson.is_published = payload.is_published
+    lesson.video_url = payload.video_url
+    lesson.image_url = payload.image_url
+    lesson.audio_url = payload.audio_url
+    lesson.content_json = {
+        "title": payload.title,
+        "description": payload.description,
+        "media": {
+            "video_url": payload.video_url,
+            "image_url": payload.image_url,
+            "audio_url": payload.audio_url,
+        },
+        "exercises": [item.model_dump() for item in payload.exercises],
+    }
+    lesson.updated_at = datetime.utcnow()
+    session.add(lesson)
+    session.commit()
+    session.refresh(lesson)
+    _replace_lesson_exercises(session, lesson.id, payload)
+    return {
+        "lesson_id": lesson.id,
+        "message": "Lección actualizada",
+        "json_payload_saved": lesson.content_json,
+    }
+
+
+@router.delete("/lessons/{lesson_id}")
+def delete_lesson(
+    lesson_id: int,
+    _: AppUser = Depends(require_admin),
+    session: Session = Depends(get_session),
+) -> dict:
+    lesson = session.get(Lesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+
+    for exercise in session.exec(select(LessonExercise).where(LessonExercise.lesson_id == lesson_id)).all():
+        session.delete(exercise)
+    for attempt in session.exec(select(LessonAttempt).where(LessonAttempt.lesson_id == lesson_id)).all():
+        session.delete(attempt)
+    session.delete(lesson)
+    session.commit()
+    return {"lesson_id": lesson_id, "message": "Lección eliminada"}
+
+
+def _validate_lesson_payload(payload: CreateLessonRequest, session: Session) -> None:
+    level = session.exec(select(CourseLevel).where(CourseLevel.id == payload.level_id)).first()
+    if not level:
+        raise HTTPException(status_code=404, detail="Nivel no encontrado")
+
+    for exercise in payload.exercises:
+        if exercise.exercise_type.value in {"multiple_choice", "fill_in_the_blank"} and not exercise.correct_answer:
+            raise HTTPException(status_code=400, detail="Ejercicio requiere opcion/respuesta correcta")
+        if exercise.exercise_type.value == "media_comprehension" and not exercise.model_answer:
+            raise HTTPException(status_code=400, detail="Comprension requiere respuesta modelo")
+
+
+def _replace_lesson_exercises(session: Session, lesson_id: int, payload: CreateLessonRequest) -> None:
+    for existing in session.exec(select(LessonExercise).where(LessonExercise.lesson_id == lesson_id)).all():
+        session.delete(existing)
+    session.commit()
     for idx, item in enumerate(payload.exercises, start=1):
         session.add(
             LessonExercise(
-                lesson_id=lesson.id,
+                lesson_id=lesson_id,
                 exercise_type=item.exercise_type,
                 prompt=item.prompt,
                 options_json=item.options_json,
@@ -116,9 +218,13 @@ def create_lesson(
         )
     session.commit()
 
+def _serialize_lesson_exercise(item: LessonExercise) -> dict:
     return {
-        "lesson_id": lesson.id,
-        "message": "Leccion guardada",
-        "json_payload_saved": lesson.content_json,
+        "exercise_type": item.exercise_type.value,
+        "prompt": item.prompt,
+        "options_json": item.options_json,
+        "correct_answer": item.correct_answer,
+        "model_answer": item.model_answer,
+        "points": item.points,
     }
 

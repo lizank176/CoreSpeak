@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
+import re
 from datetime import date, datetime
 from typing import Any
-import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
@@ -77,6 +78,53 @@ def _to_lesson_dict(lesson: Lesson) -> dict:
     }
 
 
+_YOUTUBE_ID_RE = re.compile(
+    r"(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})",
+    re.IGNORECASE,
+)
+_VIMEO_ID_RE = re.compile(r"vimeo\.com/(?:video/)?(\d+)", re.IGNORECASE)
+
+
+def _lesson_media_display_fields(lesson: Lesson) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "youtube_url": None,
+        "youtube_embed_url": None,
+        "extra_videos": [],
+    }
+    video = (lesson.video_url or "").strip()
+    if not video:
+        return out
+    yt = _YOUTUBE_ID_RE.search(video)
+    if yt:
+        out["youtube_url"] = video
+        out["youtube_embed_url"] = f"https://www.youtube.com/embed/{yt.group(1)}"
+        return out
+    vm = _VIMEO_ID_RE.search(video)
+    if vm:
+        out["extra_videos"].append(
+            {
+                "url": video,
+                "embed_url": f"https://player.vimeo.com/video/{vm.group(1)}",
+                "kind": "vimeo",
+                "caption": None,
+            }
+        )
+        return out
+    if video.lower().endswith((".mp4", ".webm", ".ogg", ".mov")):
+        out["extra_videos"].append({"url": video, "kind": "mp4", "caption": None})
+    return out
+
+
+def _extract_correct_answers(correct_answer: Any, options_json: dict[str, Any]) -> list[str]:
+    configured = options_json.get("correct_answers")
+    if isinstance(configured, list):
+        return [str(x).strip() for x in configured if str(x).strip()]
+    raw = str(correct_answer or "").strip()
+    if not raw:
+        return []
+    return [part.strip() for part in raw.split("||") if part.strip()]
+
+
 def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[str, Any]]:
     if not isinstance(content, dict):
         return []
@@ -97,12 +145,16 @@ def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[st
             if not isinstance(options, list):
                 options = []
             valid_options = [str(op).strip() for op in options if str(op).strip()]
+            correct_answers = _extract_correct_answers(correct_answer, options_json)
             block = {
                 "type": "quiz",
                 "pregunta": prompt,
                 "opciones": valid_options,
-                "respuestas_validas": [str(correct_answer).strip()] if correct_answer else [],
-                "respuesta_correcta": str(correct_answer).strip() if correct_answer else None,
+                "respuestas_validas": correct_answers,
+                "respuesta_correcta": correct_answers[0] if correct_answers else None,
+                "selection_mode": "single_choice"
+                if str(options_json.get("mode") or "").strip().lower() == "single_choice"
+                else "multiple_choice",
             }
             blocks.append(block)
             continue
@@ -367,6 +419,7 @@ def catalog_lesson_detail(
         raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
     accessible = _lesson_accessible_for_user(lesson, user)
     blocks = _catalog_blocks_from_content(lesson.content_json)
+    media = _lesson_media_display_fields(lesson)
     return {
         "id": lesson.id,
         "title": lesson.title,
@@ -375,6 +428,9 @@ def catalog_lesson_detail(
         "cover_image_path": lesson.image_url,
         "media_gallery": [],
         "video_url": lesson.video_url,
+        "youtube_url": media.get("youtube_url"),
+        "youtube_embed_url": media.get("youtube_embed_url"),
+        "extra_videos": media.get("extra_videos") or [],
         "audio_url": lesson.audio_url,
         "content": lesson.content_json,
         "exercises": lesson.content_json.get("exercises", []),

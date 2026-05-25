@@ -149,6 +149,7 @@
           <section class="card stat-card p-3">
             <div class="card-body pt-0">
               <h2 class="h5 mb-3">Lesson Builder</h2>
+              <p id="lesson-editor-mode" class="small text-muted mb-3 d-none"></p>
               <div class="row g-3">
                 <div class="col-12 col-md-8">
                   <label class="form-label">Título de la lección</label>
@@ -247,10 +248,11 @@
   <script>
     (function () {
       function el(id) { return document.getElementById(id); }
-      function setMsg(text, ok) {
+      function setMsg(text, variant) {
         const msg = el("lesson-msg");
         msg.textContent = text || "";
-        msg.className = "small mt-2 mb-0 " + (ok ? "text-success" : "text-danger");
+        const tone = variant === "ok" ? "text-success" : variant === "info" ? "text-primary" : "text-danger";
+        msg.className = "small mt-2 mb-0 " + tone;
       }
       function escapeHtml(str) {
         return String(str || "").replace(/[&<>"']/g, function (ch) {
@@ -263,8 +265,11 @@
 
       let selectedCourseId = null;
       let selectedLevelId = null;
+      let selectedCourseCode = "";
       let selectedCourseName = "";
+      let selectedLevelCode = "";
       let selectedLevelName = "";
+      let editingLessonId = null;
       let exerciseState = [];
       let courseTreeData = [];
 
@@ -286,6 +291,121 @@
           pt: "Portugués"
         };
         return map[key] || (fallbackName || "Idioma");
+      }
+
+      function getRequestedLessonId() {
+        const raw = new URLSearchParams(window.location.search).get("lesson_id") || "";
+        return /^\d+$/.test(String(raw).trim()) ? Number(raw) : null;
+      }
+
+      function setEditorMode(mode, lessonId) {
+        const hint = el("lesson-editor-mode");
+        const saveBtn = el("btn-save-lesson");
+        if (hint) {
+          if (mode === "edit" && lessonId) {
+            hint.textContent = "Estás editando la lección ID " + lessonId + ".";
+            hint.classList.remove("d-none");
+          } else {
+            hint.textContent = "";
+            hint.classList.add("d-none");
+          }
+        }
+        if (saveBtn) {
+          saveBtn.textContent = mode === "edit" ? "Guardar cambios" : "Guardar lección";
+        }
+      }
+
+      function getStoredCorrectAnswers(item, optionsJson) {
+        if (Array.isArray(optionsJson.correct_answers)) {
+          return optionsJson.correct_answers.map(function (x) { return String(x || "").trim(); }).filter(Boolean);
+        }
+        const raw = String(item && item.correct_answer || "").trim();
+        if (!raw) return [];
+        return raw.split("||").map(function (x) { return x.trim(); }).filter(Boolean);
+      }
+
+      function lessonInputToState(item) {
+        const type = String(item && item.exercise_type || "").toLowerCase();
+        const optionsJson = item && typeof item.options_json === "object" ? item.options_json : {};
+        if (type === "fill_in_the_blank") {
+          return {
+            exercise_type: "fill_in_the_blank",
+            prompt: item.prompt || optionsJson.sentence || "",
+            sentence: optionsJson.sentence || item.prompt || "",
+            hidden_word: optionsJson.hidden_word || "",
+            correct_answer: item.correct_answer || "",
+            points: Number(item.points || 10) || 10
+          };
+        }
+        const options = Array.isArray(optionsJson.options) ? optionsJson.options : [];
+        const correctAnswers = getStoredCorrectAnswers(item, optionsJson);
+        const selectionMode = String(optionsJson.mode || "").toLowerCase() === "single_choice"
+          ? "single_choice"
+          : "multiple_choice";
+        return {
+          exercise_type: selectionMode,
+          prompt: item.prompt || "",
+          options: [0, 1, 2, 3].map(function (idx) {
+            const text = String(options[idx] || "");
+            return { text: text, is_correct: !!text && correctAnswers.indexOf(text.trim()) >= 0 };
+          }),
+          points: Number(item.points || 10) || 10
+        };
+      }
+
+      function selectCourseAndLevel(courseId, levelId) {
+        const langSelect = el("select-language");
+        const levelSelect = el("select-level");
+        if (!langSelect || !levelSelect) return;
+        langSelect.value = String(courseId);
+        langSelect.dispatchEvent(new Event("change"));
+        levelSelect.value = String(levelId);
+        levelSelect.dispatchEvent(new Event("change"));
+      }
+
+      function fillLessonForm(detail) {
+        editingLessonId = Number(detail.id);
+        setEditorMode("edit", editingLessonId);
+        selectCourseAndLevel(detail.course_id, detail.level_id);
+        el("lesson-title").value = detail.title || "";
+        el("lesson-description").value = detail.description || "";
+        el("lesson-premium").checked = !!detail.is_premium;
+        el("media-video-url").value = detail.video_url || "";
+        el("media-image-url").value = detail.image_url || "";
+        el("media-audio-url").value = detail.audio_url || "";
+        exerciseState = Array.isArray(detail.exercises) && detail.exercises.length
+          ? detail.exercises.map(lessonInputToState)
+          : [exerciseDefault("multiple_choice")];
+        renderExercises();
+        el("media-video-url").dispatchEvent(new Event("input"));
+        el("media-image-url").dispatchEvent(new Event("input"));
+        el("media-audio-url").dispatchEvent(new Event("input"));
+      }
+
+      async function maybeLoadLessonForEdit() {
+        const requestedId = getRequestedLessonId();
+        if (!requestedId) {
+          setEditorMode("create");
+          return;
+        }
+        setMsg("Cargando la lección para editar…", "info");
+        try {
+          const res = await fetch(apiUrl("/api/admin/lessons/" + encodeURIComponent(String(requestedId))), {
+            headers: apiHeaders()
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) {
+            setMsg(data.detail || "No se pudo cargar la lección para editar.", "err");
+            setEditorMode("create");
+            return;
+          }
+          fillLessonForm(data);
+          setMsg("Lección cargada. Ya puedes editarla.", "ok");
+        } catch (err) {
+          console.warn("maybeLoadLessonForEdit", err);
+          setMsg("No se pudo cargar la lección por un problema de red.", "err");
+          setEditorMode("create");
+        }
       }
 
       function normalizeVideoEmbed(url) {
@@ -391,12 +511,13 @@
         }
         const options = state.options || [];
         let optionsHtml = "";
+        const usesCheckboxes = state.exercise_type === "multiple_choice";
         for (let i = 0; i < 4; i += 1) {
           const op = options[i] || { text: "", is_correct: false };
           optionsHtml += (
             "<div class='input-group mb-1'>" +
               "<span class='input-group-text'>" +
-                "<input class='form-check-input mt-0 ex-option-correct' type='radio' name='correct-" + idx + "' data-option-index='" + i + "' " + (op.is_correct ? "checked" : "") + ">" +
+                "<input class='form-check-input mt-0 ex-option-correct' type='" + (usesCheckboxes ? "checkbox" : "radio") + "' " + (usesCheckboxes ? "" : ("name='correct-" + idx + "'")) + " data-option-index='" + i + "' " + (op.is_correct ? "checked" : "") + ">" +
               "</span>" +
               "<input class='form-control ex-option-text' data-option-index='" + i + "' value='" + escapeHtml(op.text || "") + "' placeholder='Opción " + (i + 1) + "'>" +
             "</div>"
@@ -408,7 +529,7 @@
             "<textarea class='form-control ex-prompt' rows='2' placeholder='¿Cuál es la forma correcta?'>" + escapeHtml(state.prompt || "") + "</textarea>" +
           "</div>" +
           "<div class='mb-2'>" +
-            "<label class='form-label'>Opciones (marca una correcta)</label>" +
+            "<label class='form-label'>Opciones (" + (usesCheckboxes ? "marca una o varias correctas" : "marca una correcta") + ")</label>" +
             optionsHtml +
           "</div>"
         );
@@ -418,6 +539,7 @@
         const typeSelect = card.querySelector(".exercise-type");
         const removeBtn = card.querySelector(".btn-remove");
         const body = card.querySelector(".exercise-body");
+        removeBtn.classList.toggle("d-none", exerciseState.length <= 1);
         typeSelect.addEventListener("change", function () {
           exerciseState[idx] = exerciseDefault(typeSelect.value);
           renderExercises();
@@ -447,14 +569,14 @@
           const prompt = card.querySelector(".ex-prompt");
           state.prompt = prompt ? prompt.value.trim() : "";
           const textInputs = card.querySelectorAll(".ex-option-text");
-          const radios = card.querySelectorAll(".ex-option-correct");
+          const checks = card.querySelectorAll(".ex-option-correct");
           const options = [];
           textInputs.forEach(function (input) {
             options.push({ text: input.value.trim(), is_correct: false });
           });
-          radios.forEach(function (radio) {
-            if (radio.checked) {
-              const i = Number(radio.getAttribute("data-option-index"));
+          checks.forEach(function (control) {
+            if (control.checked) {
+              const i = Number(control.getAttribute("data-option-index"));
               if (options[i]) options[i].is_correct = true;
             }
           });
@@ -539,7 +661,12 @@
             const validOptions = (ex.options || []).filter(function (o) { return o.text && o.text.trim(); });
             if (validOptions.length < 2) issues.push(label + ": escribe mínimo 2 opciones.");
             const correctCount = (ex.options || []).filter(function (o) { return !!o.is_correct; }).length;
-            if (correctCount !== 1) issues.push(label + ": marca una única opción correcta.");
+            if (ex.exercise_type === "single_choice" && correctCount !== 1) {
+              issues.push(label + ": marca una única opción correcta.");
+            }
+            if (ex.exercise_type === "multiple_choice" && correctCount < 1) {
+              issues.push(label + ": marca al menos una opción correcta.");
+            }
           }
           if (ex.exercise_type === "fill_in_the_blank") {
             if (!ex.hidden_word) issues.push(label + ": define la palabra oculta.");
@@ -553,15 +680,16 @@
         const exercises = exerciseState.map(function (ex) {
           if (ex.exercise_type === "multiple_choice" || ex.exercise_type === "single_choice") {
             const options = (ex.options || []).filter(function (o) { return o.text && o.text.trim(); });
-            const correct = options.find(function (o) { return !!o.is_correct; });
+            const correctAnswers = options.filter(function (o) { return !!o.is_correct; }).map(function (o) { return o.text.trim(); });
             return {
               exercise_type: "multiple_choice",
               prompt: ex.prompt,
               options_json: {
-                mode: "single_choice",
-                options: options.map(function (o) { return o.text.trim(); })
+                mode: ex.exercise_type === "single_choice" ? "single_choice" : "multiple_choice",
+                options: options.map(function (o) { return o.text.trim(); }),
+                correct_answers: correctAnswers
               },
-              correct_answer: correct ? correct.text.trim() : null,
+              correct_answer: correctAnswers.length ? correctAnswers.join("||") : null,
               model_answer: null,
               points: 10
             };
@@ -615,21 +743,44 @@
           issues.unshift("El título de la lección es obligatorio.");
         }
         if (issues.length > 0) {
-          setMsg("No se puede guardar: " + issues.join(" "), false);
+          setMsg("No se puede guardar: " + issues.join(" "), "err");
           return;
         }
         const payload = buildLessonPayload();
-        const res = await fetch(apiUrl("/api/admin/lessons"), {
-          method: "POST",
-          headers: apiHeaders(),
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json().catch(function () { return {}; });
-        if (!res.ok) {
-          setMsg(data.detail || "Error al guardar la lección.", false);
-          return;
+        const isEditing = editingLessonId != null;
+        setMsg(
+          isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…",
+          "info"
+        );
+        try {
+          const res = await fetch(
+            apiUrl("/api/admin/lessons" + (isEditing ? "/" + encodeURIComponent(String(editingLessonId)) : "")),
+            {
+            method: isEditing ? "PATCH" : "POST",
+            headers: apiHeaders(),
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) {
+            setMsg(data.detail || "Error al guardar la lección.", "err");
+            return;
+          }
+          const lessonId = data.lesson_id || editingLessonId;
+          setMsg(
+            (isEditing ? "Lección actualizada correctamente." : "Lección guardada correctamente.") +
+              " Redirigiendo…",
+            "ok"
+          );
+          setTimeout(function () {
+            window.location.href =
+              "lesson.html?lesson_id=" + encodeURIComponent(String(lessonId)) +
+              "&lang=" + encodeURIComponent(selectedCourseCode || "en") +
+              "&level=" + encodeURIComponent(selectedLevelCode || "A1");
+          }, 350);
+        } catch (err) {
+          console.warn("saveLesson", err);
+          setMsg("No se pudo guardar la lección por un problema de red.", "err");
         }
-        setMsg("Lección guardada correctamente. ID: " + (data.lesson_id || "-"), true);
       }
 
       function renderCourseSelectors(treeRows) {
@@ -651,7 +802,9 @@
 
         selectedCourseId = null;
         selectedLevelId = null;
+        selectedCourseCode = "";
         selectedCourseName = "";
+        selectedLevelCode = "";
         selectedLevelName = "";
         updateSelectionLabels();
       }
@@ -702,10 +855,12 @@
           levelSelect.innerHTML = "";
           selectedCourseId = null;
           selectedLevelId = null;
+          selectedCourseCode = "";
+          selectedLevelCode = "";
+          selectedCourseName = "";
           selectedLevelName = "";
 
           if (!courseId) {
-            selectedCourseName = "";
             levelSelect.disabled = true;
             levelSelect.innerHTML = "<option value=''>Primero selecciona un idioma</option>";
             updateSelectionLabels();
@@ -715,7 +870,8 @@
           const course = courseTreeData.find(function (c) { return Number(c.id) === courseId; });
           if (!course) return;
           selectedCourseId = course.id;
-          selectedCourseName = normalizeLanguageName(course.code, course.name) + " (" + String(course.code || "").toLowerCase() + ")";
+          selectedCourseCode = String(course.code || "").toLowerCase();
+          selectedCourseName = normalizeLanguageName(course.code, course.name) + " (" + selectedCourseCode + ")";
           levelSelect.disabled = false;
           levelSelect.innerHTML = "<option value=''>Selecciona un nivel</option>";
           (course.levels || []).forEach(function (lvl) {
@@ -725,13 +881,14 @@
             levelSelect.appendChild(op);
           });
           updateSelectionLabels();
-          setMsg("Idioma seleccionado. Ahora elige un nivel.", true);
+          setMsg("Idioma seleccionado. Ahora elige un nivel.", "ok");
         });
 
         el("select-level").addEventListener("change", function () {
           const levelId = Number(el("select-level").value || 0);
           if (!selectedCourseId || !levelId) {
             selectedLevelId = null;
+            selectedLevelCode = "";
             selectedLevelName = "";
             updateSelectionLabels();
             return;
@@ -740,9 +897,10 @@
           const lvl = course && (course.levels || []).find(function (x) { return Number(x.id) === levelId; });
           if (!lvl) return;
           selectedLevelId = lvl.id;
-          selectedLevelName = (lvl.code || "") + " · " + (lvl.title || "Nivel");
+          selectedLevelCode = String(lvl.code || "").toUpperCase();
+          selectedLevelName = selectedLevelCode + " · " + (lvl.title || "Nivel");
           updateSelectionLabels();
-          setMsg("Nivel seleccionado: " + selectedLevelName, true);
+          setMsg("Nivel seleccionado: " + selectedLevelName, "ok");
         });
 
         el("btn-add-exercise").addEventListener("click", function () {
@@ -752,12 +910,13 @@
         el("btn-validate").addEventListener("click", function () {
           const issues = validateExercises();
           if (issues.length) {
-            setMsg("Validación fallida: " + issues.join(" "), false);
+            setMsg("Validación fallida: " + issues.join(" "), "err");
             return;
           }
-          setMsg("Validación OK. Todo listo para guardar.", true);
+          setMsg("Validación OK. Todo listo para guardar.", "ok");
         });
         el("btn-save-lesson").addEventListener("click", saveLesson);
+        await maybeLoadLessonForEdit();
       });
     })();
   </script>
