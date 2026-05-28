@@ -4,17 +4,20 @@ import json
 import re
 from datetime import date, datetime
 from typing import Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 
 from app.cefr import normalize_cefr_level
+from app.config import settings
 from app.constants import PRIMARY_COURSE_CODE
 from app.interest_catalog import interest_options_public_payload
 from app.db import get_session
 from app.dependencies import get_current_user, require_premium_or_grace
 from app.models import AppUser, CourseLevel, Enrollment, LanguageCourse, Lesson, LessonAttempt, UserRole
 from app.schemas import DisplayNamePatchRequest, EnglishLevelPatchRequest, ExtraLanguagesRequest, OnboardingSaveRequest
+from app.security import create_password_reset_token
 from app.services.enrollment_service import sync_user_enrollments
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
@@ -242,6 +245,19 @@ def me_profile(user: AppUser = Depends(get_current_user)) -> dict[str, Any]:
         "is_admin": user.role == UserRole.ADMIN,
         "curso_principal": PRIMARY_COURSE_CODE,
         "english_level": english_level,
+    }
+
+
+@users_router.post("/me/password-reset-link")
+def create_self_password_reset_link(user: AppUser = Depends(get_current_user)) -> dict[str, str | int]:
+    token = create_password_reset_token(user.email)
+    base = settings.app_base_url.rstrip("/")
+    reset_url = f"{base}/ui/restablecer_contrasena.html?token={quote(token, safe='')}"
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        "reset_url": reset_url,
+        "message": "Enlace de cambio de contraseña generado.",
     }
 
 

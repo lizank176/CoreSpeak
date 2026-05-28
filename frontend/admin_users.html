@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoreSpeak | Gestión de usuarios</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="a11y.css">
+  <style>
+    .admin-page-wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      border-radius: 999px;
+      padding: .2rem .65rem;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+    .status-chip--ok {
+      background: #e8f7ee;
+      color: #146c43;
+    }
+    .status-chip--off {
+      background: #f8d7da;
+      color: #842029;
+    }
+    .table-actions {
+      min-width: 260px;
+    }
+  </style>
+</head>
+<body data-corespeak-float-chat="off">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
+  <div class="container-fluid p-0">
+    <div class="dashboard-header">
+      <div class="container-fluid">
+        <nav class="dashboard-nav d-flex">
+          <div class="col-md-1 col-lg-3">
+            <a href="dashboard.html" class="text-decoration-none"><img src="img/logo.png" alt="CoreSpeak Logo" class="dashboard-logo"></a>
+          </div>
+          <div class="col-md-9 col-lg-8">
+            <ul class="dashboard-nav-list d-flex justify-content-end align-items-center h-100">
+              <li class="dashboard-nav-item">
+                <a href="admin.html" class="dashboard-nav-link text-warning">
+                  <span aria-hidden="true">⚙</span> Admin
+                </a>
+              </li>
+              <li class="dashboard-nav-item">
+                <a href="configuracion.html" class="dashboard-nav-link">
+                  <span>Configuración</span>
+                </a>
+              </li>
+              <li class="dashboard-nav-item">
+                <button type="button" class="dashboard-nav-link corespeak-logout">
+                  <span>Cerrar sesión</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <main id="main-content" class="dashboard-content p-4" tabindex="-1">
+    <div class="admin-page-wrap">
+      <div id="admin-users-gate" class="d-none">
+        <div class="alert alert-danger mb-3">No tienes permisos de administrador para acceder a esta gestión.</div>
+        <a class="btn btn-primary" href="dashboard.html">Volver al dashboard</a>
+      </div>
+
+      <div id="admin-users-panel" class="d-none">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h1 class="h3 mb-1">Gestión de usuarios</h1>
+            <p class="text-muted mb-0">Busca cuentas, genera enlaces de restablecimiento y controla el acceso.</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="admin.html">Volver al admin</a>
+            <a class="btn btn-outline-secondary btn-sm" href="dashboard.html">Ir al panel usuario</a>
+          </div>
+        </div>
+
+        <div id="user-admin-msg" class="alert py-2 px-3 small mb-3 d-none" role="status" aria-live="polite"></div>
+
+        <section class="card stat-card p-3 mb-4">
+          <div class="card-body pt-0">
+            <div class="row g-3 align-items-end">
+              <div class="col-12 col-lg-6">
+                <label class="form-label" for="user-search">Buscar por nombre o correo</label>
+                <input id="user-search" type="search" class="form-control" placeholder="Ej: lizank176@gmail.com">
+              </div>
+              <div class="col-12 col-lg-6">
+                <div class="d-flex flex-wrap gap-2">
+                  <button id="user-search-btn" type="button" class="btn btn-primary">Buscar</button>
+                  <button id="user-clear-btn" type="button" class="btn btn-outline-secondary">Limpiar</button>
+                  <button id="user-refresh-btn" type="button" class="btn btn-outline-secondary">Recargar</button>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3 small">
+              <span class="badge text-bg-light">Resultados: <span id="users-total">0</span></span>
+              <span class="badge text-bg-light">Activos: <span id="users-active">0</span></span>
+              <span class="badge text-bg-light">Admins: <span id="users-admins">0</span></span>
+              <span class="badge text-bg-light">Premium: <span id="users-premium">0</span></span>
+            </div>
+          </div>
+        </section>
+
+        <section id="reset-link-card" class="card stat-card p-3 mb-4 d-none">
+          <div class="card-body pt-0">
+            <h2 class="h5 mb-2">Enlace de restablecimiento generado</h2>
+            <p class="text-muted small mb-3">Puedes copiarlo y enviárselo manualmente al usuario.</p>
+            <div class="input-group">
+              <input id="reset-link-output" type="text" class="form-control" readonly>
+              <button id="copy-reset-link-btn" type="button" class="btn btn-outline-primary">Copiar</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card stat-card p-3">
+          <div class="card-body pt-0">
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th scope="col">Usuario</th>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Plan</th>
+                    <th scope="col">Última actividad</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body">
+                  <tr>
+                    <td colspan="6" class="text-muted">Cargando usuarios...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="a11y.js"></script>
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      var state = {
+        users: [],
+        query: "",
+        lastResetUserId: null
+      };
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function showMsg(message, variant) {
+        if (typeof setAlertMessage === "function") {
+          setAlertMessage(el("user-admin-msg"), message, variant || "info", false);
+          return;
+        }
+        var node = el("user-admin-msg");
+        node.textContent = String(message || "");
+        node.classList.toggle("d-none", !message);
+      }
+
+      function formatDate(raw) {
+        if (!raw) return "Sin datos";
+        try {
+          return new Date(raw).toLocaleString("es-ES");
+        } catch (err) {
+          return "Sin datos";
+        }
+      }
+
+      function renderSummary() {
+        var items = Array.isArray(state.users) ? state.users : [];
+        el("users-total").textContent = String(items.length);
+        el("users-active").textContent = String(items.filter(function (user) { return !!user.is_active; }).length);
+        el("users-admins").textContent = String(items.filter(function (user) { return String(user.role || "") === "admin"; }).length);
+        el("users-premium").textContent = String(items.filter(function (user) { return !!user.is_premium; }).length);
+      }
+
+      function renderTable() {
+        var body = el("users-table-body");
+        var items = Array.isArray(state.users) ? state.users : [];
+        if (!items.length) {
+          body.innerHTML = "<tr><td colspan='6' class='text-muted'>No se han encontrado usuarios.</td></tr>";
+          renderSummary();
+          return;
+        }
+        body.innerHTML = items.map(function (user) {
+          var statusClass = user.is_active ? "status-chip status-chip--ok" : "status-chip status-chip--off";
+          var statusText = user.is_active ? "Activa" : "Desactivada";
+          var planText = user.is_premium ? "Premium" : "Gratis";
+          var roleBadge = String(user.role || "") === "admin"
+            ? "<span class='badge text-bg-warning'>Admin</span>"
+            : "<span class='badge text-bg-secondary'>Usuario</span>";
+          return ""
+            + "<tr data-user-id='" + Number(user.id || 0) + "'>"
+            +   "<td>"
+            +     "<div class='fw-semibold'>" + escapeHtml(user.full_name || "Sin nombre") + "</div>"
+            +     "<div class='small text-muted'>" + escapeHtml(user.email || "") + "</div>"
+            +     "<div class='small text-muted'>Alta: " + escapeHtml(formatDate(user.created_at)) + "</div>"
+            +   "</td>"
+            +   "<td>" + roleBadge + "</td>"
+            +   "<td><span class='" + statusClass + "'>" + escapeHtml(statusText) + "</span></td>"
+            +   "<td><span class='badge text-bg-light'>" + escapeHtml(planText) + "</span></td>"
+            +   "<td class='small text-muted'>" + escapeHtml(formatDate(user.last_active_at)) + "</td>"
+            +   "<td class='table-actions'>"
+            +     "<div class='d-flex flex-wrap gap-2'>"
+            +       "<button type='button' class='btn btn-outline-primary btn-sm' data-action='reset'>Reset contraseña</button>"
+            +       "<button type='button' class='btn btn-outline-secondary btn-sm' data-action='toggle'>" + (user.is_active ? "Desactivar" : "Activar") + "</button>"
+            +       "<button type='button' class='btn btn-outline-danger btn-sm' data-action='delete'>Eliminar</button>"
+            +     "</div>"
+            +   "</td>"
+            + "</tr>";
+        }).join("");
+        renderSummary();
+      }
+
+      async function gate() {
+        var auth = typeof requireAuth === "function" ? requireAuth() : null;
+        if (!auth) return false;
+        var res = await fetch(apiUrl("/api/users/me/profile"), { headers: apiHeaders() });
+        if (!res.ok) return false;
+        var profile = await res.json();
+        return !!profile.is_admin;
+      }
+
+      async function loadUsers(query) {
+        state.query = String(query == null ? state.query : query).trim();
+        showMsg("Cargando usuarios...", "info");
+        var url = apiUrl("/api/admin/users");
+        if (state.query) {
+          url += "?q=" + encodeURIComponent(state.query);
+        }
+        var res = await fetch(url, { headers: apiHeaders() });
+        if (!res.ok) {
+          var err = await res.json().catch(function () { return {}; });
+          throw new Error((err && err.detail) || "No se pudo cargar la lista de usuarios.");
+        }
+        var data = await res.json();
+        state.users = Array.isArray(data.items) ? data.items : [];
+        renderTable();
+        showMsg(state.users.length ? "Lista de usuarios actualizada." : "No se encontraron usuarios con ese filtro.", state.users.length ? "ok" : "warn");
+      }
+
+      function currentUserFromRow(target) {
+        var row = target.closest("tr[data-user-id]");
+        if (!row) return null;
+        var userId = Number(row.getAttribute("data-user-id") || 0);
+        return state.users.find(function (user) { return Number(user.id) === userId; }) || null;
+      }
+
+      async function handleReset(user) {
+        showMsg("Generando enlace de restablecimiento...", "info");
+        var res = await fetch(apiUrl("/api/admin/users/" + user.id + "/password-reset-link"), {
+          method: "POST",
+          headers: apiHeaders()
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          throw new Error((data && data.detail) || "No se pudo generar el enlace.");
+        }
+        state.lastResetUserId = Number(user.id || 0);
+        el("reset-link-output").value = String(data.reset_url || "");
+        el("reset-link-card").classList.remove("d-none");
+        var copied = false;
+        if (navigator.clipboard && data.reset_url) {
+          try {
+            await navigator.clipboard.writeText(String(data.reset_url));
+            copied = true;
+          } catch (err) {
+            copied = false;
+          }
+        }
+        showMsg(copied ? "Enlace generado y copiado al portapapeles." : "Enlace generado. Puedes copiarlo desde el cuadro inferior.", "ok");
+      }
+
+      async function handleToggle(user) {
+        var nextActive = !user.is_active;
+        var verb = nextActive ? "activar" : "desactivar";
+        if (!window.confirm("¿Seguro que quieres " + verb + " la cuenta de " + (user.email || "este usuario") + "?")) {
+          return;
+        }
+        showMsg((nextActive ? "Activando" : "Desactivando") + " cuenta...", "info");
+        var res = await fetch(apiUrl("/api/admin/users/" + user.id + "/status?active=" + encodeURIComponent(nextActive ? "true" : "false")), {
+          method: "PATCH",
+          headers: apiHeaders()
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          throw new Error((data && data.detail) || "No se pudo actualizar el estado de la cuenta.");
+        }
+        await loadUsers(state.query);
+        showMsg(String(data.message || "Estado actualizado."), "ok");
+      }
+
+      async function handleDelete(user) {
+        var label = user.email || user.full_name || "este usuario";
+        if (!window.confirm("Se eliminará la cuenta de " + label + " y sus datos asociados. Esta acción no se puede deshacer. ¿Continuar?")) {
+          return;
+        }
+        showMsg("Eliminando usuario...", "warn");
+        var res = await fetch(apiUrl("/api/admin/users/" + user.id), {
+          method: "DELETE",
+          headers: apiHeaders()
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          throw new Error((data && data.detail) || "No se pudo eliminar al usuario.");
+        }
+        if (Number(state.lastResetUserId || 0) === Number(user.id || 0)) {
+          el("reset-link-card").classList.add("d-none");
+          el("reset-link-output").value = "";
+          state.lastResetUserId = null;
+        }
+        await loadUsers(state.query);
+        showMsg(String(data.message || "Usuario eliminado."), "ok");
+      }
+
+      function bindEvents() {
+        el("user-search-btn").addEventListener("click", function () {
+          loadUsers(el("user-search").value).catch(function (err) {
+            showMsg(err.message || "No se pudo buscar usuarios.", "err");
+          });
+        });
+        el("user-clear-btn").addEventListener("click", function () {
+          el("user-search").value = "";
+          loadUsers("").catch(function (err) {
+            showMsg(err.message || "No se pudo recargar la lista.", "err");
+          });
+        });
+        el("user-refresh-btn").addEventListener("click", function () {
+          loadUsers(el("user-search").value).catch(function (err) {
+            showMsg(err.message || "No se pudo recargar la lista.", "err");
+          });
+        });
+        el("user-search").addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            el("user-search-btn").click();
+          }
+        });
+        el("copy-reset-link-btn").addEventListener("click", async function () {
+          var value = String(el("reset-link-output").value || "").trim();
+          if (!value) return;
+          try {
+            await navigator.clipboard.writeText(value);
+            showMsg("Enlace copiado al portapapeles.", "ok");
+          } catch (err) {
+            showMsg("No se pudo copiar automáticamente. Puedes copiarlo manualmente.", "warn");
+          }
+        });
+        el("users-table-body").addEventListener("click", function (event) {
+          var button = event.target.closest("button[data-action]");
+          if (!button) return;
+          var user = currentUserFromRow(button);
+          if (!user) return;
+          var action = button.getAttribute("data-action");
+          var task = null;
+          if (action === "reset") task = handleReset(user);
+          if (action === "toggle") task = handleToggle(user);
+          if (action === "delete") task = handleDelete(user);
+          if (task && typeof task.catch === "function") {
+            task.catch(function (err) {
+              showMsg(err.message || "La acción no pudo completarse.", "err");
+            });
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        try {
+          var ok = await gate();
+          if (!ok) {
+            el("admin-users-gate").classList.remove("d-none");
+            return;
+          }
+          el("admin-users-panel").classList.remove("d-none");
+          bindEvents();
+          await loadUsers("");
+        } catch (err) {
+          showMsg(err.message || "No se pudo iniciar la gestión de usuarios.", "err");
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -161,6 +161,7 @@ def init_db() -> None:
     from app import models  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
+    ensure_user_is_active_column()
     ensure_user_subscription_status_column()
     ensure_user_ui_language_column()
     ensure_user_interested_in_premium_column()
@@ -186,6 +187,25 @@ def ensure_user_subscription_status_column() -> None:
             return
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN subscription_status VARCHAR(40) DEFAULT 'inactive'"))
+            conn.commit()
+    except Exception:
+        pass
+
+
+def ensure_user_is_active_column() -> None:
+    try:
+        inspector = sa_inspect(engine)
+        if "users" not in inspector.get_table_names():
+            return
+        cols = {c.get("name") for c in inspector.get_columns("users")}
+        if "is_active" in cols:
+            return
+        is_sql = engine.dialect.name == "sqlite"
+        with engine.connect() as conn:
+            if is_sql:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"))
+            else:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1"))
             conn.commit()
     except Exception:
         pass

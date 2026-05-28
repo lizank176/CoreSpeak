@@ -717,3 +717,120 @@ Brief flow: compare meaning → note concrete English mistakes → end with moti
             weak_score=True,
         )
         return False, 0.0, fb
+
+
+def _language_name_for_tutor(code: str) -> str:
+    lc = (code or "en").strip().lower()
+    names = {
+        "en": "English",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "uk": "Ukrainian",
+    }
+    return names.get(lc, lc.upper() or "English")
+
+
+def _localized_tutor_fallback(ui_language: str, target_language: str) -> dict[str, Any]:
+    lc = (ui_language or "es").strip().lower().split("-")[0] or "es"
+    target_name = _language_name_for_tutor(target_language)
+    if lc == "en":
+        return {
+            "chat_response": (
+                f"I'm your CoreSpeak Premium tutor. I can help with grammar, vocabulary, pronunciation tips, "
+                f"and short examples in {target_name}. Ask me a specific doubt and I'll explain it clearly."
+            ),
+            "translation_hint": None,
+            "next_micro_challenge": "Write one short sentence using the structure you want to practice.",
+            "corrections": [],
+            "new_vocabulary": [],
+        }
+    return {
+        "chat_response": (
+            f"Soy tu tutor Premium de CoreSpeak. Puedo ayudarte con gramática, vocabulario, pronunciación y ejemplos "
+            f"breves en {target_name}. Escríbeme una duda concreta y te la explico paso a paso."
+        ),
+        "translation_hint": None,
+        "next_micro_challenge": "Escribe una frase corta usando la estructura que quieres practicar.",
+        "corrections": [],
+        "new_vocabulary": [],
+    }
+
+
+def build_premium_tutor_reply(
+    user_message: str,
+    *,
+    native_language: str = "es",
+    ui_language: str = "es",
+    target_language: str = "en",
+    level_code: str = "B1",
+    topic: str | None = None,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    cleaned_history: list[dict[str, str]] = []
+    for item in history or []:
+        role = str(item.get("role") or "").strip().lower()
+        content = str(item.get("content") or "").strip()
+        if role not in {"user", "assistant"} or not content:
+            continue
+        cleaned_history.append({"role": role, "content": content[:900]})
+    cleaned_history = cleaned_history[-8:]
+
+    ui_short = (ui_language or native_language or "es").strip().lower().split("-")[0] or "es"
+    lvl = normalize_cefr_level(level_code)
+    target_name = _language_name_for_tutor(target_language)
+    history_block = "\n".join(
+        f"{item['role'].upper()}: {item['content']}" for item in cleaned_history
+    ) or "(empty)"
+
+    system_prompt = (
+        "You are CoreSpeak Premium Tutor, a concise and supportive language coach. "
+        f"The learner is studying {target_name} at CEFR {lvl}. "
+        f"Use language roughly aligned with locale '{ui_short}' for explanations when helpful, "
+        f"but always include examples in {target_name}. "
+        "Answer the exact doubt first, then give one practical example, and only then suggest a tiny next step if useful. "
+        "Keep answers focused, short, and free of filler. Avoid markdown tables. "
+        'Return ONLY valid JSON with keys "chat_response", "translation_hint", "next_micro_challenge", '
+        '"corrections", and "new_vocabulary". '
+        '"translation_hint" and "next_micro_challenge" may be null. '
+        '"corrections" and "new_vocabulary" must be arrays of short strings.'
+    )
+    user_prompt = f"""
+TARGET_LANGUAGE: {target_name}
+LEVEL: {lvl}
+TOPIC: {topic or "general doubts"}
+NATIVE_LANGUAGE: {native_language or "es"}
+UI_LANGUAGE: {ui_language or native_language or "es"}
+
+RECENT_HISTORY:
+{history_block}
+
+LATEST_USER_MESSAGE:
+{user_message.strip()}
+
+Write a reply that helps the learner understand and continue practicing immediately.
+"""
+    fallback = _localized_tutor_fallback(ui_short, target_language)
+    try:
+        content = _groq_request(system_prompt, user_prompt, temperature=0.4)
+        data = json.loads(content)
+        chat_response = str(data.get("chat_response") or "").strip()
+        if not chat_response:
+            return fallback
+        translation_hint_raw = data.get("translation_hint")
+        next_micro_raw = data.get("next_micro_challenge")
+        corrections_raw = data.get("corrections")
+        vocab_raw = data.get("new_vocabulary")
+        return {
+            "chat_response": chat_response,
+            "translation_hint": str(translation_hint_raw).strip() if translation_hint_raw else None,
+            "next_micro_challenge": str(next_micro_raw).strip() if next_micro_raw else None,
+            "corrections": [str(x).strip() for x in corrections_raw if str(x).strip()]
+            if isinstance(corrections_raw, list)
+            else [],
+            "new_vocabulary": [str(x).strip() for x in vocab_raw if str(x).strip()]
+            if isinstance(vocab_raw, list)
+            else [],
+        }
+    except Exception:
+        return fallback

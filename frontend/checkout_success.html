@@ -43,7 +43,7 @@
         statusEl.textContent = "No se encontró el identificador de sesión.";
         return;
       }
-      const res = await fetch(apiUrl("/api/payments/stripe/session/" + encodeURIComponent(sessionId)), { headers: apiHeaders() });
+      const res = await fetch(apiUrl("/api/billing/checkout-session/" + encodeURIComponent(sessionId)), { headers: apiHeaders() });
       const data = await res.json().catch(function () { return {}; });
       if (!res.ok) {
         statusEl.textContent = data.detail || "No se pudo verificar el pago.";

@@ -15,7 +15,7 @@ from app.dependencies import get_current_user
 from app.config import settings
 from app.constants import PRIMARY_COURSE_CODE
 from app.cefr import normalize_cefr_level
-from app.models import AppUser
+from app.models import AppUser, ChallengeStatus, DailyChallenge
 from app.schemas import (
     ForgotPasswordRequest,
     LoginRequest,
@@ -38,6 +38,38 @@ from app.interest_catalog import coerce_interests_list
 from app.user_languages import merge_premium_language_codes
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+def _completed_challenges_count(session: Session, user_id: int) -> int:
+    return len(
+        session.exec(
+            select(DailyChallenge).where(
+                DailyChallenge.user_id == user_id,
+                DailyChallenge.status == ChallengeStatus.COMPLETED,
+            )
+        ).all()
+    )
+
+
+def _resolve_user_english_level(user: AppUser) -> str:
+    raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
+    code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
+    if not code and raw_levels:
+        fv = next(iter(raw_levels.values()), None)
+        code = str(fv).strip() if fv is not None else None
+    return normalize_cefr_level(str(code) if code else "A1")
+
+
+def _completed_challenges_count_for_level(session: Session, user_id: int, level_code: str) -> int:
+    return len(
+        session.exec(
+            select(DailyChallenge).where(
+                DailyChallenge.user_id == user_id,
+                DailyChallenge.status == ChallengeStatus.COMPLETED,
+                DailyChallenge.level_code == normalize_cefr_level(level_code),
+            )
+        ).all()
+    )
 
 
 @router.post("/register", response_model=TokenResponse)
@@ -126,6 +158,11 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)) -> Tok
     user = session.exec(select(AppUser).where(AppUser.email == str(payload.email).lower().strip())).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales invalidas")
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta está desactivada. Contacta con administración.",
+        )
     token = create_access_token(subject=user.email, extra_claims={"uid": user.id})
     return TokenResponse(
         access_token=token,
@@ -135,9 +172,15 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)) -> Tok
 
 
 @router.get("/me", response_model=UserProfileResponse)
-def me(user: AppUser = Depends(get_current_user)) -> UserProfileResponse:
+def me(user: AppUser = Depends(get_current_user), session: Session = Depends(get_session)) -> UserProfileResponse:
     data = UserProfileResponse.model_validate(user).model_dump()
     data["interests_json"] = coerce_interests_list(data.get("interests_json"))
+    data["completed_challenges"] = _completed_challenges_count(session, int(user.id or 0))
+    data["completed_challenges_current_level"] = _completed_challenges_count_for_level(
+        session,
+        int(user.id or 0),
+        _resolve_user_english_level(user),
+    )
     return UserProfileResponse.model_validate(data)
 
 
@@ -167,5 +210,13 @@ def profile_setup(
     sync_user_enrollments(session, user)
     session.commit()
     session.refresh(user)
-    return UserProfileResponse.model_validate(user)
+    data = UserProfileResponse.model_validate(user).model_dump()
+    data["interests_json"] = coerce_interests_list(data.get("interests_json"))
+    data["completed_challenges"] = _completed_challenges_count(session, int(user.id or 0))
+    data["completed_challenges_current_level"] = _completed_challenges_count_for_level(
+        session,
+        int(user.id or 0),
+        _resolve_user_english_level(user),
+    )
+    return UserProfileResponse.model_validate(data)
 

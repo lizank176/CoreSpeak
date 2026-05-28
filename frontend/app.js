@@ -511,6 +511,8 @@ const CORESPEAK_PAGE_I18N = {
       dailySub: "Completa tu desafío hoy",
       streakTitle: "Racha",
       streakDays: "{n} días consecutivos",
+      xpTitle: "Puntos",
+      xpTotal: "{n} XP acumulados",
       agendaTitle: "Agenda",
       agendaSub: "Palabras y significados",
       myCourses: "Mis cursos",
@@ -666,6 +668,8 @@ const CORESPEAK_PAGE_I18N = {
       dailySub: "Complete your challenge today",
       streakTitle: "Streak",
       streakDays: "{n} days in a row",
+      xpTitle: "Points",
+      xpTotal: "{n} XP earned",
       agendaTitle: "Notebook",
       agendaSub: "Words and meanings",
       myCourses: "My courses",
@@ -821,6 +825,8 @@ const CORESPEAK_PAGE_I18N = {
       dailySub: "Complétez votre défi aujourd’hui",
       streakTitle: "Série",
       streakDays: "{n} jours d’affilée",
+      xpTitle: "Points",
+      xpTotal: "{n} XP cumulés",
       agendaTitle: "Agenda",
       agendaSub: "Mots et sens",
       myCourses: "Mes cours",
@@ -975,6 +981,8 @@ const CORESPEAK_PAGE_I18N = {
       dailySub: "Schließe heute deine Aufgabe ab",
       streakTitle: "Serie",
       streakDays: "{n} Tage in Folge",
+      xpTitle: "Punkte",
+      xpTotal: "{n} XP gesamt",
       agendaTitle: "Notizbuch",
       agendaSub: "Wörter und Bedeutungen",
       myCourses: "Meine Kurse",
@@ -1128,6 +1136,8 @@ const CORESPEAK_PAGE_I18N = {
       dailySub: "Виконай завдання сьогодні",
       streakTitle: "Серія",
       streakDays: "{n} днів поспіль",
+      xpTitle: "Бали",
+      xpTotal: "{n} XP загалом",
       agendaTitle: "Щоденник",
       agendaSub: "Слова та значення",
       myCourses: "Мої курси",
@@ -1790,6 +1800,42 @@ function setProfileSetupError(message, kind) {
 }
 
 const CEFR_LEVELS = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
+const PROFILE_LEVEL_QUIZ = [
+  {
+    id: "q1",
+    prompt: "1. Choose the correct sentence:",
+    options: ["She live in Madrid.", "She lives in Madrid.", "She living in Madrid."],
+    correctIndex: 1,
+  },
+  {
+    id: "q2",
+    prompt: "2. Complete the sentence: Yesterday we ___ to the cinema.",
+    options: ["go", "went", "gone"],
+    correctIndex: 1,
+  },
+  {
+    id: "q3",
+    prompt: "3. Complete the sentence: If I have time tonight, I __ you.",
+    options: ["will call", "called", "would called"],
+    correctIndex: 0,
+  },
+  {
+    id: "q4",
+    prompt: "4. Complete the sentence: By the time I arrived, they ___ dinner.",
+    options: ["finished", "had finished", "have finished"],
+    correctIndex: 1,
+  },
+  {
+    id: "q5",
+    prompt: "5. Choose the best meaning: Hardly had the meeting started when the fire alarm went off.",
+    options: [
+      "The meeting had not started yet when the alarm rang.",
+      "The meeting started long after the alarm rang.",
+      "The meeting had just started when the alarm rang.",
+    ],
+    correctIndex: 2,
+  },
+];
 
 const MAX_PROFILE_INTERESTS = 10;
 let profileInterestCatalog = [];
@@ -1884,6 +1930,93 @@ function normalizeCefrLevelInput(raw) {
     .trim()
     .toUpperCase();
   return CEFR_LEVELS.has(u) ? u : "A1";
+}
+
+function renderProfileLevelQuiz() {
+  const wrap = document.getElementById("setup-level-quiz");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  PROFILE_LEVEL_QUIZ.forEach(function (question) {
+    const fieldset = document.createElement("fieldset");
+    fieldset.className = "border rounded-3 p-3 bg-white";
+
+    const legend = document.createElement("legend");
+    legend.className = "float-none w-auto px-1 mb-2 fs-6 fw-semibold";
+    legend.textContent = question.prompt;
+    fieldset.appendChild(legend);
+
+    question.options.forEach(function (option, idx) {
+      const row = document.createElement("div");
+      row.className = "form-check mb-2";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.className = "form-check-input setup-level-quiz-option";
+      input.name = question.id;
+      input.id = question.id + "-" + idx;
+      input.value = String(idx);
+
+      const label = document.createElement("label");
+      label.className = "form-check-label";
+      label.setAttribute("for", input.id);
+      label.textContent = option;
+
+      row.appendChild(input);
+      row.appendChild(label);
+      fieldset.appendChild(row);
+    });
+
+    wrap.appendChild(fieldset);
+  });
+}
+
+function getProfileQuizSuggestedLevel() {
+  let score = 0;
+  for (let i = 0; i < PROFILE_LEVEL_QUIZ.length; i++) {
+    const question = PROFILE_LEVEL_QUIZ[i];
+    const selected = document.querySelector('input[name="' + question.id + '"]:checked');
+    if (!selected) {
+      return { error: "Responde todas las preguntas del mini test para calcular tu nivel." };
+    }
+    if (Number(selected.value) === Number(question.correctIndex)) {
+      score += 1;
+    }
+  }
+
+  if (score <= 1) return { score, level: "A1" };
+  if (score === 2) return { score, level: "A2" };
+  if (score === 3) return { score, level: "B1" };
+  if (score === 4) return { score, level: "B2" };
+  return { score, level: "C1" };
+}
+
+function initProfileLevelQuiz() {
+  const wrap = document.getElementById("setup-level-quiz");
+  const btn = document.getElementById("setup-level-quiz-btn");
+  const msg = document.getElementById("setup-level-quiz-msg");
+  const levelSel = document.getElementById("setup-english-level");
+  if (!wrap || !btn || !levelSel) return;
+
+  renderProfileLevelQuiz();
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    setAlertMessage(msg, text, kind === "err" ? "err" : kind === "ok" ? "ok" : "info", false);
+  }
+
+  btn.addEventListener("click", function () {
+    const result = getProfileQuizSuggestedLevel();
+    if (result.error) {
+      showMsg(result.error, "err");
+      return;
+    }
+    levelSel.value = result.level;
+    showMsg(
+      "Nivel recomendado: " +
+        result.level +
+        ". Hemos actualizado el selector para que la IA genere ejercicios acordes a tu nivel.",
+      "ok"
+    );
+  });
 }
 
 /** Rellena el formulario de perfil con datos de /api/auth/me si el usuario vuelve a esta página. */
@@ -2214,7 +2347,8 @@ async function loadMyProgress() {
   }
   const xpEl = document.getElementById("stat-xp");
   if (xpEl) {
-    xpEl.textContent = String(xpNum);
+    const tpl = (u.dashboard && u.dashboard.xpTotal) || "{n} XP acumulados";
+    xpEl.textContent = tpl.replace("{n}", String(xpNum));
   }
 }
 
@@ -2750,6 +2884,48 @@ async function initConfigExtraLanguages() {
       msg.className = "alert alert-success py-2 px-3 small";
       msg.textContent = "Idiomas actualizados correctamente.";
       msg.classList.remove("d-none");
+    }
+  });
+}
+
+function initConfigPasswordChange() {
+  const btn = document.getElementById("config-change-password-btn");
+  const msg = document.getElementById("config-account-msg");
+  if (!btn) return;
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    setAlertMessage(msg, text, kind === "err" ? "err" : kind === "ok" ? "ok" : "info", false);
+  }
+
+  btn.addEventListener("click", async function () {
+    const auth = requireAuth();
+    if (!auth) return;
+    btn.disabled = true;
+    showMsg("Preparando la página para cambiar tu contraseña…", "info");
+    try {
+      const res = await fetch(apiUrl("/api/users/me/password-reset-link"), {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + auth.token,
+        },
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok) {
+        showMsg(
+          formatApiErrorDetail(data) || data.detail || "No se pudo abrir la página para cambiar la contraseña.",
+          "err"
+        );
+        btn.disabled = false;
+        return;
+      }
+      showMsg("Redirigiéndote a la página de cambio de contraseña…", "ok");
+      window.location.href = String(data.reset_url || "restablecer_contrasena.html");
+    } catch (e) {
+      showMsg("No se pudo conectar con el servidor.", "err");
+      btn.disabled = false;
     }
   });
 }
@@ -3408,6 +3584,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
   if (document.getElementById("profile-setup-form")) {
+    initProfileLevelQuiz();
     void initProfileSetupForm();
     document.getElementById("profile-setup-form").addEventListener("submit", (ev) => {
       ev.preventDefault();
@@ -3476,6 +3653,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (document.getElementById("config-extra-langs-save")) {
     void initConfigExtraLanguages();
+  }
+  if (document.getElementById("config-change-password-btn")) {
+    initConfigPasswordChange();
   }
 
   if (document.getElementById("agenda-tbody")) {

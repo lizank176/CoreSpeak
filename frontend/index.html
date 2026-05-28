@@ -24,6 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="a11y.css">
   <style>
     html {
       overflow-x: hidden;
@@ -41,29 +42,39 @@
         max-height: min(calc(100dvh - 15rem), 720px);
       }
     }
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid #a78bfa;
+      outline-offset: 2px;
+    }
   </style>
 </head>
 <body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans text-slate-100 antialiased">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <div class="mx-auto flex min-h-screen min-w-0 w-full max-w-4xl flex-col px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-8 sm:pt-4">
+  <main id="main-content" tabindex="-1" class="flex min-h-0 min-w-0 flex-1 flex-col outline-none">
     <!-- Gamificación -->
     <div class="mb-3 min-w-0 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
       <div class="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
         <div class="flex items-center gap-2 min-w-0">
-          <span id="streak-badge" class="flex shrink-0 items-center gap-1 rounded-xl bg-orange-500/20 px-2.5 py-1.5 text-sm font-bold text-orange-200 ring-1 ring-orange-500/30 transition-shadow" title="Racha de días seguidos">
+          <span id="streak-badge" class="flex shrink-0 items-center gap-1 rounded-xl bg-orange-500/20 px-2.5 py-1.5 text-sm font-bold text-orange-200 ring-1 ring-orange-500/30 transition-shadow" aria-labelledby="streak-count">
             <span aria-hidden="true" class="text-lg leading-none">🔥</span>
             <span id="streak-count">0</span>
+            <span class="sr-only">días consecutivos de racha</span>
           </span>
           <div class="min-w-0">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500">Nivel <span id="level-num" class="text-sky-300">1</span></div>
-            <div class="truncate text-xs text-slate-400"><span id="lang-label">—</span> · <span id="xp-label">0</span> XP</div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-400">Nivel <span id="level-num" class="text-sky-300">A1</span></div>
+            <div class="truncate text-xs text-slate-300"><span id="lang-label">—</span> · <span id="xp-label">0</span> XP</div>
           </div>
         </div>
-        <a href="dashboard.html" class="ml-auto shrink-0 text-xs text-sky-400/90 hover:text-sky-300 sm:ml-0">Panel →</a>
+        <a href="dashboard.html" class="ml-auto shrink-0 text-xs text-sky-300 hover:text-sky-200 sm:ml-0" aria-label="Volver al panel principal">Panel →</a>
       </div>
-      <div class="h-2 overflow-hidden rounded-full bg-slate-800">
-        <div id="xp-bar" class="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-500 ease-out" style="width: 0%"></div>
+      <span id="xp-progress-label" class="sr-only">Progreso hacia el siguiente nivel CEFR</span>
+      <div class="h-2 overflow-hidden rounded-full bg-slate-800" role="presentation">
+        <div id="xp-bar" class="h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-500 ease-out" style="width: 0%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="xp-progress-label" aria-describedby="xp-subline"></div>
       </div>
-      <p id="xp-subline" class="mt-1 text-center text-[11px] text-slate-500"></p>
+      <p id="xp-subline" class="mt-1 text-center text-[11px] text-slate-300"></p>
     </div>
 
     <header class="mb-2 flex items-center justify-between gap-3">
@@ -78,27 +89,49 @@
       </div>
     </div>
 
-    <div id="status-line" class="mb-2 min-h-[1.25rem] text-center text-sm text-amber-300/90"></div>
-    <div id="toast-line" class="mb-2 hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-200"></div>
+    <div id="status-line" class="mb-2 min-h-[1.25rem] text-center text-sm text-amber-200" role="status" aria-live="polite"></div>
+    <div id="toast-line" class="mb-2 hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-200" role="status" aria-live="polite"></div>
 
-    <main id="chat-thread" class="chat-thread-shell flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl bg-transparent px-1 py-3 sm:px-2" aria-live="polite"></main>
+    <section id="chat-thread" class="chat-thread-shell flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl bg-transparent px-1 py-3 sm:px-2" aria-live="polite" aria-label="Conversación del reto diario"></section>
+
+    <div id="premium-actions" class="mb-3 hidden flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3" role="region" aria-labelledby="premium-actions-title">
+      <h2 id="premium-actions-title" class="sr-only">Acciones Premium del reto diario</h2>
+      <div>
+        <p class="mb-1 text-sm font-semibold text-amber-200">Ventaja Premium</p>
+        <p class="text-xs text-amber-100/80">Desde este mismo chat puedes generar retos nuevos y preguntar dudas por voz o por texto.</p>
+      </div>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button type="button" id="premium-new-challenge"
+          class="rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20 disabled:opacity-50">
+          Nuevo reto
+        </button>
+        <button type="button" id="premium-tutor-btn"
+          class="rounded-xl bg-white/10 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-white/15 disabled:opacity-50">
+          Preguntar al tutor IA
+        </button>
+      </div>
+    </div>
 
     <div class="mt-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-transparent p-2 backdrop-blur-[2px] sm:flex-row sm:items-stretch">
       <label class="sr-only" for="user-reply">Tu respuesta</label>
       <input id="user-reply" type="text" enterkeyhint="send" autocomplete="off" placeholder="Escribe tu respuesta…"
         class="min-w-0 w-full flex-1 rounded-xl border-0 bg-slate-800/80 px-3 py-3 text-[16px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 sm:px-4 sm:text-sm" />
       <button type="button" id="send-reply"
-        class="w-full shrink-0 rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50 sm:w-auto">
+        class="w-full shrink-0 rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50 sm:w-auto min-h-[44px]">
         Enviar
       </button>
     </div>
+  </main>
   </div>
 
+  <script src="a11y.js"></script>
   <script>
     (function () {
       const TOKEN_KEY = "corespeak_token";
       const USER_ID_KEY = "corespeak_user_id";
-      const XP_CAP = 100;
+      const CHALLENGES_PER_LEVEL = 2;
+      const LEVEL_PROGRESS_CAP = 200;
+      const CEFR_SEQUENCE = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
       function getApiOrigin() {
         try {
@@ -139,45 +172,95 @@
         const bar = document.getElementById("xp-bar");
         const sub = document.getElementById("xp-subline");
         if (streak) streak.textContent = String(g.streak_days ?? 0);
-        if (level) level.textContent = String(g.current_level ?? 1);
+        if (level) level.textContent = String(g.current_level_code || "A1");
         if (xpLab) xpLab.textContent = String(g.total_xp ?? 0);
-        const xin = Number(g.xp_in_current_level ?? 0);
-        const pct = Math.min(100, Math.round((xin / XP_CAP) * 100));
-        if (bar) bar.style.width = pct + "%";
+        const progressUnits = Number(g.level_progress_units ?? 0);
+        const pct = Math.min(100, Math.round((progressUnits / LEVEL_PROGRESS_CAP) * 100));
+        if (bar) {
+          bar.style.width = pct + "%";
+          bar.setAttribute("aria-valuenow", String(pct));
+        }
         if (sub) {
-          const need = g.xp_to_next_level != null ? g.xp_to_next_level : XP_CAP - xin;
-          sub.textContent = need ? need + " XP hasta el siguiente nivel" : "";
+          if (!g.next_level_code) {
+            sub.textContent = "Nivel máximo alcanzado";
+          } else {
+            const needChallenges = Number(g.challenges_to_next_level ?? CHALLENGES_PER_LEVEL);
+            sub.textContent = needChallenges === 1
+              ? "1 reto hasta " + g.next_level_code
+              : needChallenges + " retos hasta " + g.next_level_code;
+          }
         }
       }
 
-      /** Convierte /api/auth/me (xp_total + streak_days) al formato applyGamificación (cap 100 XP / nivel ficticio UI). */
+      function normalizeCefr(raw) {
+        const value = String(raw || "A1").trim().toUpperCase();
+        return CEFR_SEQUENCE.indexOf(value) >= 0 ? value : "A1";
+      }
+
+      function nextCefrLevel(raw) {
+        const level = normalizeCefr(raw);
+        const idx = CEFR_SEQUENCE.indexOf(level);
+        if (idx < 0 || idx >= CEFR_SEQUENCE.length - 1) return null;
+        return CEFR_SEQUENCE[idx + 1];
+      }
+
+      /** Convierte /api/auth/me en progreso de nivel CEFR basado en retos completados. */
       function gamificationFromProfile(me) {
         if (!me || me.xp_total == null) return null;
         const total = Math.max(0, Math.floor(Number(me.xp_total) || 0));
-        const lvl = Math.floor(total / XP_CAP) + 1;
-        const xin = total % XP_CAP;
+        const currentLevel = preferredLevelFromProfile(me);
+        const nextLevel = nextCefrLevel(currentLevel);
+        const completedInLevel = Math.max(0, Math.floor(Number(me.completed_challenges_current_level) || 0));
+        const clampedCompleted = Math.min(CHALLENGES_PER_LEVEL, completedInLevel);
         return {
           streak_days: Math.max(0, Math.floor(Number(me.streak_days) || 0)),
-          current_level: lvl,
+          current_level_code: currentLevel,
+          next_level_code: nextLevel,
           total_xp: total,
-          xp_in_current_level: xin,
-          xp_to_next_level: XP_CAP - xin,
+          level_progress_units: nextLevel ? clampedCompleted * (LEVEL_PROGRESS_CAP / CHALLENGES_PER_LEVEL) : LEVEL_PROGRESS_CAP,
+          challenges_to_next_level: nextLevel ? Math.max(0, CHALLENGES_PER_LEVEL - clampedCompleted) : 0,
         };
+      }
+
+      function preferredLevelFromProfile(me) {
+        const levels = me && typeof me.current_levels_json === "object" && me.current_levels_json
+          ? me.current_levels_json
+          : {};
+        const raw = levels.en || levels.english || Object.values(levels)[0] || "A1";
+        return String(raw || "A1").trim().toUpperCase();
+      }
+
+      function syncPremiumActions(me) {
+        const wrap = document.getElementById("premium-actions");
+        const isPremium = !!(me && me.is_premium === true);
+        window.__premiumTutor = window.__premiumTutor || {};
+        window.__premiumTutor.isPremium = isPremium;
+        window.__premiumTutor.profile = me || null;
+        if (!wrap) return;
+        wrap.classList.toggle("hidden", !isPremium);
+        wrap.classList.toggle("flex", isPremium);
+        if (!isPremium && window.__premiumTutor.mode === "tutor") {
+          window.__premiumTutor.mode = "challenge";
+        }
+        updateComposerUi();
       }
 
       async function refreshGamificationFromServer() {
         const token = localStorage.getItem(TOKEN_KEY);
-        if (!token) return;
+        if (!token) return null;
         try {
           const res = await fetch(apiUrl("/api/auth/me"), {
             headers: { Authorization: "Bearer " + token },
           });
-          if (!res.ok) return;
+          if (!res.ok) return null;
           const me = await res.json().catch(() => null);
           const g = gamificationFromProfile(me);
           applyGamification(g);
+          syncPremiumActions(me);
+          return me;
         } catch (_e) {
           /* silenciar red */
+          return null;
         }
       }
 
@@ -245,15 +328,143 @@
         }, 2000);
       }
 
-      window.__dailyChallenge = { id: null, loaded: false, submitted: false };
+      window.__dailyChallenge = {
+        id: null,
+        loaded: false,
+        submitted: false,
+        scenario: "",
+        task_prompt: "",
+        expected_solution_hint: "",
+      };
+      window.__premiumTutor = {
+        isPremium: false,
+        profile: null,
+        mode: "challenge",
+        history: [],
+        recognition: null,
+        isListening: false,
+      };
 
-      async function loadChallenge() {
+      function speechRecognitionCtor() {
+        return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+      }
+
+      function speechLocaleForProfile(profile) {
+        const ui = String((profile && profile.ui_language) || "es").trim().toLowerCase();
+        if (ui === "en") return "en-US";
+        if (ui === "fr") return "fr-FR";
+        if (ui === "de") return "de-DE";
+        if (ui === "uk") return "uk-UA";
+        return "es-ES";
+      }
+
+      function updateTutorButton() {
+        const btn = document.getElementById("premium-tutor-btn");
+        if (!btn) return;
+        if (window.__premiumTutor.isListening) {
+          btn.textContent = "Escuchando...";
+        } else if (window.__premiumTutor.mode === "tutor") {
+          btn.textContent = speechRecognitionCtor() ? "Escuchar otra duda" : "Preguntar otra duda";
+        } else {
+          btn.textContent = "Preguntar al tutor IA";
+        }
+      }
+
+      function updateComposerUi() {
+        const input = document.getElementById("user-reply");
+        const sendBtn = document.getElementById("send-reply");
+        if (!input || !sendBtn) return;
+        if (window.__premiumTutor.mode === "tutor") {
+          input.placeholder = speechRecognitionCtor()
+            ? "Habla o escribe tu duda sobre este reto…"
+            : "Escribe tu duda sobre este reto…";
+          sendBtn.textContent = "Enviar duda";
+          sendBtn.disabled = false;
+        } else {
+          input.placeholder = "Escribe tu respuesta…";
+          sendBtn.textContent = "Enviar";
+          sendBtn.disabled = !!window.__dailyChallenge.submitted;
+        }
+        updateTutorButton();
+      }
+
+      function stopTutorListening(resetStatus) {
+        const status = document.getElementById("status-line");
+        const rec = window.__premiumTutor.recognition;
+        window.__premiumTutor.recognition = null;
+        if (rec) {
+          try { rec.onend = null; } catch (_e) {}
+          try { rec.stop(); } catch (_e) {}
+        }
+        window.__premiumTutor.isListening = false;
+        if (resetStatus && status && window.__premiumTutor.mode === "tutor") {
+          status.textContent = "Tutor IA listo para ayudarte con este reto.";
+        }
+        updateTutorButton();
+      }
+
+      function resetTutorState() {
+        stopTutorListening(false);
+        window.__premiumTutor.mode = "challenge";
+        window.__premiumTutor.history = [];
+        updateComposerUi();
+      }
+
+      function tutorContextTopic() {
+        const parts = [];
+        if (window.__dailyChallenge.scenario) parts.push("Scenario: " + window.__dailyChallenge.scenario);
+        if (window.__dailyChallenge.task_prompt) parts.push("Task: " + window.__dailyChallenge.task_prompt);
+        if (window.__dailyChallenge.expected_solution_hint) parts.push("Hint: " + window.__dailyChallenge.expected_solution_hint);
+        return parts.join("\n");
+      }
+
+      function buildTutorBubbleText(resp) {
+        const parts = [];
+        if (resp && resp.chat_response) parts.push(String(resp.chat_response));
+        if (resp && resp.translation_hint) parts.push("Pista: " + String(resp.translation_hint));
+        if (resp && Array.isArray(resp.corrections) && resp.corrections.length) {
+          parts.push("Correcciones útiles:\n- " + resp.corrections.join("\n- "));
+        }
+        if (resp && Array.isArray(resp.new_vocabulary) && resp.new_vocabulary.length) {
+          parts.push("Vocabulario:\n- " + resp.new_vocabulary.join("\n- "));
+        }
+        if (resp && resp.next_micro_challenge) parts.push("Siguiente mini paso: " + String(resp.next_micro_challenge));
+        return parts.filter(Boolean).join("\n\n");
+      }
+
+      function setChallengeReadyState(data, pillText) {
+        const status = document.getElementById("status-line");
+        const pill = document.getElementById("priority-pill");
+        if (status) status.textContent = "";
+        window.__dailyChallenge.loaded = true;
+        window.__dailyChallenge.submitted = false;
+        window.__dailyChallenge.scenario = String((data && data.scenario) || "");
+        window.__dailyChallenge.task_prompt = String((data && data.task_prompt) || "");
+        window.__dailyChallenge.expected_solution_hint = String((data && data.expected_solution_hint) || "");
+        resetTutorState();
+
+        const lang = "en";
+        const langName = "English";
+        const ll = document.getElementById("lang-label");
+        if (ll) ll.textContent = langName;
+        setInputPlaceholder(lang);
+
+        window.__dailyChallenge.id = data.id || null;
+        if (pill) {
+          pill.classList.remove("hidden");
+          pill.textContent = pillText;
+        }
+      }
+
+      async function fetchChallenge(url, opts) {
         const auth = requireAuth();
         if (!auth) return;
+        const method = opts && opts.method ? opts.method : "GET";
+        const loadingText = opts && opts.loadingText ? opts.loadingText : "Generando tu reto personalizado…";
+        const pillText = opts && opts.pillText ? opts.pillText : "Reto diario";
 
         const status = document.getElementById("status-line");
         const toast = document.getElementById("toast-line");
-        const pill = document.getElementById("priority-pill");
         const thread = document.getElementById("chat-thread");
         if (toast) {
           toast.classList.add("hidden");
@@ -261,14 +472,16 @@
         }
         if (thread) thread.innerHTML = "";
         if (status) {
-          status.textContent = "Generando tu reto personalizado…";
+          status.textContent = loadingText;
           status.classList.remove("hidden");
         }
 
-        const url = apiUrl("/api/challenges/daily");
         let res;
         try {
-          res = await fetch(url, { headers: { Authorization: "Bearer " + auth.token } });
+          res = await fetch(url, {
+            method,
+            headers: { Authorization: "Bearer " + auth.token },
+          });
         } catch (e) {
           if (status) status.textContent = "No se pudo conectar con el servidor.";
           return;
@@ -291,22 +504,7 @@
           return;
         }
 
-        if (status) status.textContent = "";
-        window.__dailyChallenge.loaded = true;
-        window.__dailyChallenge.submitted = false;
-
-        const lang = "en";
-        const langName = "English";
-        const ll = document.getElementById("lang-label");
-        if (ll) ll.textContent = langName;
-
-        setInputPlaceholder(lang);
-
-        window.__dailyChallenge.id = data.id || null;
-        if (pill) {
-          pill.classList.remove("hidden");
-          pill.textContent = "Reto diario";
-        }
+        setChallengeReadyState(data, pillText);
         const msgs = [];
         if (data.scenario) msgs.push(String(data.scenario));
         if (data.task_prompt) msgs.push(String(data.task_prompt));
@@ -315,18 +513,66 @@
           await new Promise((r) => setTimeout(r, 220 + i * 80));
           appendTutorBubble(msgs[i]);
         }
-
-        const sendBtn = document.getElementById("send-reply");
-        if (sendBtn) sendBtn.disabled = false;
+        updateComposerUi();
       }
 
-      async function submitReply() {
+      async function loadChallenge() {
+        await fetchChallenge(apiUrl("/api/challenges/daily"), {
+          loadingText: "Generando tu reto personalizado…",
+          pillText: "Reto diario",
+        });
+      }
+
+      async function generatePremiumChallenge() {
+        const btn = document.getElementById("premium-new-challenge");
+        if (btn) btn.disabled = true;
+        try {
+          await fetchChallenge(apiUrl("/api/challenges/premium/generate"), {
+            method: "POST",
+            loadingText: "Preparando un nuevo reto Premium…",
+            pillText: "Reto Premium",
+          });
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      async function callTutorInDailyChat(userMessage) {
+        const auth = requireAuth();
+        if (!auth) return;
+        const level = preferredLevelFromProfile(window.__premiumTutor.profile);
+        const res = await fetch(apiUrl("/api/chat/tutor"), {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + auth.token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lang: "en",
+            level,
+            user_message: userMessage,
+            topic: tutorContextTopic(),
+            history: window.__premiumTutor.history,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const d = data.detail;
+          let msg = "No se pudo hablar con el tutor IA.";
+          if (typeof d === "string") msg = d;
+          else if (Array.isArray(d) && d.length) msg = d.map((x) => (x && (x.msg || x.message)) || String(x)).join(" ");
+          appendFeedbackBubble(msg, false);
+          return;
+        }
+        window.__premiumTutor.history.push({ role: "user", content: userMessage });
+        window.__premiumTutor.history.push({ role: "assistant", content: String(data.chat_response || "") });
+        appendTutorBubble(buildTutorBubbleText(data));
+      }
+
+      async function submitChallengeReply(t) {
         const auth = requireAuth();
         if (!auth) return;
         const input = document.getElementById("user-reply");
-        const t = (input && input.value || "").trim();
-        if (!t) return;
-
         if (!window.__dailyChallenge.loaded) {
           alert("Espera a que cargue el reto.");
           return;
@@ -394,14 +640,110 @@
 
         if (sendBtn) sendBtn.disabled = false;
         if (!repeat) window.__dailyChallenge.submitted = true;
-        if (window.__dailyChallenge.submitted) {
-          if (sendBtn) sendBtn.disabled = true;
-        }
+        updateComposerUi();
 
         await refreshGamificationFromServer();
       }
 
+      async function submitTutorReply(t) {
+        const input = document.getElementById("user-reply");
+        const sendBtn = document.getElementById("send-reply");
+        if (sendBtn) sendBtn.disabled = true;
+        appendUserBubble(t);
+        if (input) input.value = "";
+        try {
+          await callTutorInDailyChat(t);
+        } finally {
+          updateComposerUi();
+        }
+      }
+
+      async function submitReply() {
+        const input = document.getElementById("user-reply");
+        const t = (input && input.value || "").trim();
+        if (!t) return;
+        if (window.__premiumTutor.mode === "tutor") {
+          await submitTutorReply(t);
+          return;
+        }
+        await submitChallengeReply(t);
+      }
+
+      async function startTutorModeWithVoice() {
+        if (!window.__premiumTutor.isPremium) return;
+        if (window.__premiumTutor.isListening) {
+          stopTutorListening(true);
+          return;
+        }
+        const firstTutorOpen = window.__premiumTutor.mode !== "tutor" || window.__premiumTutor.history.length === 0;
+        window.__premiumTutor.mode = "tutor";
+        updateComposerUi();
+        const status = document.getElementById("status-line");
+        const input = document.getElementById("user-reply");
+        const SpeechRecognitionCtor = speechRecognitionCtor();
+
+        if (firstTutorOpen) {
+          appendTutorBubble(
+            SpeechRecognitionCtor
+              ? "Cuéntame tu duda sobre este reto. Te escucho y te responderé aquí mismo."
+              : "Cuéntame tu duda sobre este reto. Tu navegador no permite dictado aquí, así que escríbela abajo."
+          );
+        }
+
+        if (!SpeechRecognitionCtor) {
+          if (status) status.textContent = "Escribe tu duda y te respondo en este mismo chat.";
+          if (input) input.focus();
+          return;
+        }
+
+        const recognition = new SpeechRecognitionCtor();
+        let finalTranscript = "";
+        recognition.lang = speechLocaleForProfile(window.__premiumTutor.profile);
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+        recognition.onstart = function () {
+          window.__premiumTutor.isListening = true;
+          window.__premiumTutor.recognition = recognition;
+          if (status) status.textContent = "Te escucho... habla ahora.";
+          updateTutorButton();
+        };
+        recognition.onresult = function (event) {
+          let merged = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            merged += event.results[i][0].transcript || "";
+          }
+          if (merged.trim()) {
+            finalTranscript = merged.trim();
+            if (input) input.value = finalTranscript;
+          }
+        };
+        recognition.onerror = function () {
+          window.__premiumTutor.isListening = false;
+          window.__premiumTutor.recognition = null;
+          if (status) status.textContent = "No pude escuchar bien. Puedes intentarlo otra vez o escribir tu duda.";
+          updateTutorButton();
+        };
+        recognition.onend = async function () {
+          window.__premiumTutor.isListening = false;
+          window.__premiumTutor.recognition = null;
+          updateTutorButton();
+          const spoken = finalTranscript.trim();
+          if (!spoken) {
+            if (status) status.textContent = "No detecté ninguna frase. Puedes volver a pulsar o escribir la duda.";
+            return;
+          }
+          if (status) status.textContent = "Procesando tu duda...";
+          if (input) input.value = spoken;
+          await submitTutorReply(spoken);
+          if (status) status.textContent = "Tutor IA listo para ayudarte con este reto.";
+        };
+        recognition.start();
+      }
+
       document.getElementById("send-reply")?.addEventListener("click", () => void submitReply());
+      document.getElementById("premium-new-challenge")?.addEventListener("click", () => void generatePremiumChallenge());
+      document.getElementById("premium-tutor-btn")?.addEventListener("click", () => void startTutorModeWithVoice());
       document.getElementById("user-reply")?.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter") {
           ev.preventDefault();

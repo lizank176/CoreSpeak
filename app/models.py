@@ -44,6 +44,7 @@ class AppUser(SQLModel, table=True):
     occupation: Optional[str] = Field(default=None, max_length=120)
     interested_in_premium: bool = Field(default=False, index=True)
 
+    is_active: bool = Field(default=True, index=True)
     is_premium: bool = Field(default=False, index=True)
     subscription_id: Optional[str] = Field(default=None, max_length=255, index=True)
     subscription_status: str = Field(default="inactive", max_length=40, index=True)

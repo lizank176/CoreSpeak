@@ -101,7 +101,7 @@
             <!-- Sección de Tarjetas (Grid) -->
             <div class=" row g-4 config-card"> <!-- g-4 añade espacio entre las tarjetas -->    
                 <!-- Tarjeta 1: Reto diario -->
-                <div class="col-md-4">
+                <div class="col-md-6 col-xl-3">
                     <a href="index.html" class="dashboard-stat-link" aria-label="Reto diario: completa tu desafío de hoy">
                     <div class="card stat-card p-3">
                         <div class="d-flex align-items-center">
@@ -120,7 +120,7 @@
                 </div>
 
                 <!-- Tarjeta 2: Racha -->
-                <div class="col-md-4">
+                <div class="col-md-6 col-xl-3">
                     <div class="card stat-card p-3" role="region" aria-labelledby="stat-streak-heading">
                         <div class="d-flex align-items-center">
                             <div class="icon-circle bg-orange" aria-hidden="true">
@@ -137,8 +137,25 @@
                     </div>
                 </div>
 
-                <!-- Tarjeta 3: Agenda (vocabulario) -->
-                <div class="col-md-4">
+                <!-- Tarjeta 3: XP acumulados -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card stat-card p-3" role="region" aria-labelledby="stat-xp-heading">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-green" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M8 0a.5.5 0 0 1 .447.276l1.49 3.02 3.333.484a.5.5 0 0 1 .277.853l-2.411 2.35.57 3.319a.5.5 0 0 1-.725.527L8 9.263l-2.981 1.566a.5.5 0 0 1-.725-.527l.57-3.319-2.41-2.35a.5.5 0 0 1 .277-.853l3.332-.484L7.553.276A.5.5 0 0 1 8 0"/>
+                                </svg>
+                            </div>
+                            <div class="ms-3">
+                                <h2 id="stat-xp-heading" class="h5 mb-0 fw-bold" data-i18n="dashboard.xpTitle">Puntos</h2>
+                                <p class="text-secondary small mb-0" id="stat-xp" role="status" aria-live="polite">0 XP acumulados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 4: Agenda (vocabulario) -->
+                <div class="col-md-6 col-xl-3">
                     <a href="agenda.html" class="dashboard-stat-link" aria-label="Agenda de vocabulario: palabras y significados">
                     <div class="card stat-card p-3 agenda-card-teaser">
                         <div class="d-flex align-items-center">

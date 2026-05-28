@@ -105,6 +105,56 @@ def create_portal_session(
     return PortalResponse(portal_url=portal.url, message="Portal de cliente listo")
 
 
+@router.get("/checkout-session/{session_id}")
+def checkout_session_status(
+    session_id: str,
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> dict:
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Configura STRIPE_SECRET_KEY")
+
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"No se pudo consultar la sesión de Stripe: {exc}",
+        ) from exc
+
+    data = _stripe_to_plain_dict(checkout_session)
+    metadata = _stripe_to_plain_dict(data.get("metadata") or {})
+    session_user_id = int(str(metadata.get("user_id") or "0") or "0")
+    customer_id = str(data.get("customer") or "").strip() or None
+    customer_details = _stripe_to_plain_dict(data.get("customer_details") or {})
+    customer_email = str(customer_details.get("email") or data.get("customer_email") or "").strip() or None
+
+    owns_session = False
+    if session_user_id and session_user_id == int(user.id or 0):
+        owns_session = True
+    elif customer_id and user.customer_id and customer_id == user.customer_id:
+        owns_session = True
+    elif customer_email and customer_email.lower() == str(user.email or "").lower():
+        owns_session = True
+    if not owns_session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesión de pago no encontrada")
+
+    if str(data.get("payment_status") or "").lower() == "paid":
+        _apply_paid_checkout_to_user(session, user, data)
+
+    return {
+        "id": data.get("id"),
+        "status": data.get("status"),
+        "payment_status": data.get("payment_status"),
+        "customer_email": customer_email,
+        "customer_id": customer_id,
+        "subscription_id": data.get("subscription"),
+        "amount_total": data.get("amount_total"),
+        "currency": data.get("currency"),
+    }
+
+
 @router.post("/webhooks/stripe")
 async def stripe_webhook(
     request: Request,
@@ -147,30 +197,7 @@ async def stripe_webhook(
         if user_id:
             user = session.get(AppUser, user_id)
             if user:
-                paid_until = datetime.utcnow() + timedelta(days=30)
-                user.is_premium = True
-                user.subscription_id = data.get("subscription")
-                user.customer_id = data.get("customer")
-                user.subscription_status = "active"
-                user.expiry_date = paid_until
-                user.premium_grace_until = None
-                session.add(user)
-                sync_user_enrollments(session, user)
-                session.add(
-                    BillingRecord(
-                        user_id=user.id or 0,
-                        provider=PaymentProvider.STRIPE,
-                        subscription_id=user.subscription_id,
-                        customer_id=user.customer_id,
-                        amount_cents=int(data.get("amount_total", 0)),
-                        currency=(data.get("currency", "eur") or "eur").upper(),
-                        status="paid",
-                        paid_at=datetime.utcnow(),
-                        expires_at=paid_until,
-                        raw_payload_json=event,
-                    )
-                )
-                session.commit()
+                _apply_paid_checkout_to_user(session, user, data, raw_payload=event)
     elif event_type == "invoice.payment_failed":
         user_id = int(data.get("metadata", {}).get("user_id", "0"))
         user = session.get(AppUser, user_id) if user_id else None
@@ -198,6 +225,94 @@ async def stripe_webhook(
                 session.commit()
 
     return {"received": True, "event_type": event_type, "idempotent": False}
+
+
+def _apply_paid_checkout_to_user(
+    session: Session,
+    user: AppUser,
+    checkout_data: dict,
+    *,
+    raw_payload: dict | None = None,
+) -> None:
+    paid_until = datetime.utcnow() + timedelta(days=30)
+    subscription_id = str(checkout_data.get("subscription") or "").strip() or None
+    customer_id = str(checkout_data.get("customer") or "").strip() or None
+    amount_cents = int(checkout_data.get("amount_total") or 0)
+    currency = str(checkout_data.get("currency") or "eur").upper()
+
+    user.is_premium = True
+    user.subscription_id = subscription_id
+    user.customer_id = customer_id
+    user.subscription_status = "active"
+    user.expiry_date = paid_until
+    user.premium_grace_until = None
+    session.add(user)
+    sync_user_enrollments(session, user)
+
+    existing_record = None
+    if subscription_id:
+        existing_record = session.exec(
+            select(BillingRecord).where(
+                BillingRecord.user_id == int(user.id or 0),
+                BillingRecord.subscription_id == subscription_id,
+                BillingRecord.status == "paid",
+            )
+        ).first()
+    if existing_record is None and customer_id:
+        existing_record = session.exec(
+            select(BillingRecord).where(
+                BillingRecord.user_id == int(user.id or 0),
+                BillingRecord.customer_id == customer_id,
+                BillingRecord.amount_cents == amount_cents,
+                BillingRecord.status == "paid",
+            )
+        ).first()
+
+    if existing_record:
+        existing_record.expires_at = paid_until
+        existing_record.paid_at = existing_record.paid_at or datetime.utcnow()
+        existing_record.raw_payload_json = raw_payload or checkout_data
+        session.add(existing_record)
+    else:
+        session.add(
+            BillingRecord(
+                user_id=user.id or 0,
+                provider=PaymentProvider.STRIPE,
+                subscription_id=subscription_id,
+                customer_id=customer_id,
+                amount_cents=amount_cents,
+                currency=currency,
+                status="paid",
+                paid_at=datetime.utcnow(),
+                expires_at=paid_until,
+                raw_payload_json=raw_payload or checkout_data,
+            )
+        )
+
+    session.commit()
+
+
+def _stripe_to_plain_dict(value: object) -> dict:
+    plain = _stripe_to_plain(value)
+    return plain if isinstance(plain, dict) else {}
+
+
+def _stripe_to_plain(value: object) -> object:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        return {str(k): _stripe_to_plain(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_stripe_to_plain(item) for item in value]
+    if hasattr(value, "to_dict_recursive"):
+        try:
+            return _stripe_to_plain(value.to_dict_recursive())
+        except Exception:
+            pass
+    raw = getattr(value, "_data", None)
+    if isinstance(raw, dict):
+        return {str(k): _stripe_to_plain(v) for k, v in raw.items()}
+    return value
 
 
 @router.get("/history")

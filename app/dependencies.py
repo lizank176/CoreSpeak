@@ -45,6 +45,11 @@ def get_current_user(
         user = session.exec(select(AppUser).where(AppUser.email == sub)).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta está desactivada. Contacta con administración.",
+        )
     return user
 
 

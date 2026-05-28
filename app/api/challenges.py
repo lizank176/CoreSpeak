@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from app.cefr import normalize_cefr_level
+from app.cefr import next_cefr_level, normalize_cefr_level
 from app.challenge_text import (
     coerce_reference_for_eval,
     hint_for_student,
@@ -15,7 +15,7 @@ from app.challenge_text import (
 from app.constants import PRIMARY_COURSE_CODE, SCORE_DAILY_STRONG_SEMANTIC
 from app.date_utils import calendar_day_from_db
 from app.db import get_session
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_premium_or_grace
 from app.models import AppUser, ChallengeStatus, DailyChallenge
 from app.schemas import ChallengeResponse, ChallengeResultResponse, ChallengeSubmitRequest
 from app.interest_catalog import coerce_interests_list, first_interest_context_for_challenge_row
@@ -27,9 +27,96 @@ XP_MAX_DAILY = 100
 SCORE_STREAK_OK = 0.60
 SCORE_STREAK_RESET = 0.28
 XP_PARTICIPATION_SHARE = 0.10
+CEFR_LEVEL_UP_EVERY_COMPLETED = 2
 
 # Plantilla antigua (fallback fijo) — al detectarla, se regenera el reto del día.
 _LEGACY_BOOKSTORE_FALLBACK_PREFIX = "You're sitting in a quiet corner of your favorite bookstore"
+
+
+def _resolve_user_level(user: AppUser) -> str:
+    raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
+    level_code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
+    if not level_code and raw_levels:
+        fv = next(iter(raw_levels.values()), None)
+        level_code = str(fv).strip() if fv is not None else None
+    return normalize_cefr_level(str(level_code) if level_code else "A1")
+
+
+def _build_and_store_challenge(session: Session, user: AppUser, *, variety_key: str) -> ChallengeResponse:
+    prev = session.exec(
+        select(DailyChallenge)
+        .where(DailyChallenge.user_id == user.id)
+        .order_by(DailyChallenge.challenge_date.desc())
+        .limit(20)
+    ).all()
+    recent_scenarios = [(r.scenario or "").strip() for r in prev if (r.scenario or "").strip()]
+
+    level_code = _resolve_user_level(user)
+    interest_ids = coerce_interests_list(user.interests_json)
+    generated = build_daily_challenge(
+        user_name=user.full_name,
+        level_code=level_code,
+        interests=interest_ids,
+        target_language="English",
+        native_language=user.native_language,
+        recent_scenarios=recent_scenarios,
+        variety_key=variety_key,
+    )
+    expected_ref = coerce_reference_for_eval(generated["expected_solution"])
+
+    challenge = DailyChallenge(
+        user_id=int(user.id or 0),
+        challenge_date=datetime.utcnow(),
+        language_code="en",
+        level_code=level_code,
+        interest_context=first_interest_context_for_challenge_row(interest_ids),
+        scenario=generated["scenario"],
+        task_prompt=generated["task_prompt"],
+        expected_solution=expected_ref,
+        xp_awarded=XP_MAX_DAILY,
+        status=ChallengeStatus.PENDING,
+    )
+    session.add(challenge)
+    session.commit()
+    session.refresh(challenge)
+    return ChallengeResponse(
+        id=int(challenge.id or 0),
+        scenario=challenge.scenario,
+        task_prompt=challenge.task_prompt,
+        expected_solution_hint=hint_for_student(challenge.expected_solution or ""),
+    )
+
+
+def _completed_challenges_at_level(session: Session, user_id: int, level_code: str) -> int:
+    return len(
+        session.exec(
+            select(DailyChallenge).where(
+                DailyChallenge.user_id == user_id,
+                DailyChallenge.status == ChallengeStatus.COMPLETED,
+                DailyChallenge.level_code == normalize_cefr_level(level_code),
+            )
+        ).all()
+    )
+
+
+def _maybe_promote_user_level(session: Session, user: AppUser, level_code: str) -> str | None:
+    current_level = _resolve_user_level(user)
+    current_level = normalize_cefr_level(current_level)
+    level_code = normalize_cefr_level(level_code)
+    if level_code != current_level:
+        return None
+    next_level = next_cefr_level(current_level)
+    if next_level == current_level:
+        return None
+    completed_at_level = _completed_challenges_at_level(session, int(user.id or 0), current_level)
+    if completed_at_level < CEFR_LEVEL_UP_EVERY_COMPLETED:
+        return None
+    levels = dict(user.current_levels_json or {})
+    levels[PRIMARY_COURSE_CODE] = next_level
+    user.current_levels_json = levels
+    user.updated_at = datetime.utcnow()
+    session.add(user)
+    return next_level
 
 
 def _xp_from_semantic_score(max_xp: int, score: float) -> int:
@@ -47,7 +134,11 @@ def get_daily_challenge(
     session: Session = Depends(get_session),
 ) -> ChallengeResponse:
     today = date.today()
-    rows = session.exec(select(DailyChallenge).where(DailyChallenge.user_id == user.id)).all()
+    rows = session.exec(
+        select(DailyChallenge)
+        .where(DailyChallenge.user_id == user.id)
+        .order_by(DailyChallenge.challenge_date.desc())
+    ).all()
     challenge_today: DailyChallenge | None = None
     for ch in rows:
         if calendar_day_from_db(ch.challenge_date) == today:
@@ -80,54 +171,22 @@ def get_daily_challenge(
             task_prompt=challenge_today.task_prompt,
             expected_solution_hint=hint_for_student(challenge_today.expected_solution or ""),
         )
-
-    prev = session.exec(
-        select(DailyChallenge)
-        .where(DailyChallenge.user_id == user.id)
-        .order_by(DailyChallenge.challenge_date.desc())
-        .limit(20)
-    ).all()
-    recent_scenarios = [(r.scenario or "").strip() for r in prev if (r.scenario or "").strip()]
-
-    raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
-    level_code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
-    if not level_code and raw_levels:
-        fv = next(iter(raw_levels.values()), None)
-        level_code = str(fv).strip() if fv is not None else None
-    level_code = normalize_cefr_level(str(level_code) if level_code else "A1")
-
-    interest_ids = coerce_interests_list(user.interests_json)
-    generated = build_daily_challenge(
-        user_name=user.full_name,
-        level_code=level_code,
-        interests=interest_ids,
-        target_language="English",
-        native_language=user.native_language,
-        recent_scenarios=recent_scenarios,
+    return _build_and_store_challenge(
+        session,
+        user,
         variety_key=f"{int(user.id or 0)}:{today.isoformat()}",
     )
-    expected_ref = coerce_reference_for_eval(generated["expected_solution"])
 
-    challenge = DailyChallenge(
-        user_id=int(user.id or 0),
-        challenge_date=datetime.utcnow(),
-        language_code="en",
-        level_code=level_code,
-        interest_context=first_interest_context_for_challenge_row(interest_ids),
-        scenario=generated["scenario"],
-        task_prompt=generated["task_prompt"],
-        expected_solution=expected_ref,
-        xp_awarded=XP_MAX_DAILY,
-        status=ChallengeStatus.PENDING,
-    )
-    session.add(challenge)
-    session.commit()
-    session.refresh(challenge)
-    return ChallengeResponse(
-        id=int(challenge.id or 0),
-        scenario=challenge.scenario,
-        task_prompt=challenge.task_prompt,
-        expected_solution_hint=hint_for_student(challenge.expected_solution or ""),
+
+@router.post("/premium/generate", response_model=ChallengeResponse)
+def generate_premium_challenge(
+    user: AppUser = Depends(require_premium_or_grace),
+    session: Session = Depends(get_session),
+) -> ChallengeResponse:
+    return _build_and_store_challenge(
+        session,
+        user,
+        variety_key=f"{int(user.id or 0)}:{datetime.utcnow().isoformat(timespec='microseconds')}:premium",
     )
 
 
@@ -177,6 +236,7 @@ def submit_answer(
     now = datetime.utcnow()
     today = now.date()
     streak_message: str | None = None
+    level_up_message: str | None = None
     if score >= SCORE_STREAK_OK:
         if user.last_active_at is None:
             user.streak_days = 1
@@ -200,6 +260,9 @@ def submit_answer(
 
     user.xp_total += xp_earned
     user.last_active_at = now
+    promoted_to = _maybe_promote_user_level(session, user, challenge.level_code or normalize_cefr_level(None))
+    if promoted_to:
+        level_up_message = f"Has subido al nivel {promoted_to}. El siguiente reto será más avanzado."
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -207,6 +270,8 @@ def submit_answer(
     feedback_text = feedback
     if streak_message:
         feedback_text = f"{feedback}\n\n{streak_message}" if feedback else streak_message
+    if level_up_message:
+        feedback_text = f"{feedback_text}\n\n{level_up_message}" if feedback_text else level_up_message
 
     return ChallengeResultResponse(
         is_correct_semantically=is_strong,

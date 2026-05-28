@@ -12,6 +12,7 @@ from app.api.admin import router as admin_router
 from app.api.agenda import router as agenda_router
 from app.api.auth import router as auth_router
 from app.api.billing import router as billing_router
+from app.api.chat import router as chat_router
 from app.api.challenges import router as challenge_router
 from app.api.courses import catalog_router, router as courses_router, users_router
 from app.config import settings
@@ -91,6 +92,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_router)
     app.include_router(agenda_router)
     app.include_router(challenge_router)
+    app.include_router(chat_router)
     app.include_router(billing_router)
     app.include_router(courses_router)
     app.include_router(catalog_router)

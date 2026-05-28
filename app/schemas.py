@@ -72,6 +72,8 @@ class UserProfileResponse(BaseModel):
     expiry_date: datetime | None
     streak_days: int
     xp_total: int
+    completed_challenges: int = 0
+    completed_challenges_current_level: int = 0
     consent_timestamp: datetime
 
 
@@ -178,6 +180,33 @@ class ChallengeResultResponse(BaseModel):
     streak_message: str | None = None
     # Enviar true si el reto ya estaba calificado: no se suma XP; evita toasts "correcto +0 XP".
     repeat_submission: bool = False
+
+
+class TutorChatMessage(BaseModel):
+    role: str = Field(min_length=1, max_length=20)
+    content: str = Field(min_length=1, max_length=4000)
+
+
+class TutorChatRequest(BaseModel):
+    lang: str = Field(default="en", min_length=2, max_length=12)
+    level: str = Field(default="B1", min_length=2, max_length=4)
+    user_message: str = Field(min_length=1, max_length=3000)
+    topic: str | None = Field(default=None, max_length=2500)
+    history: list[TutorChatMessage] = Field(default_factory=list, max_length=16)
+
+    @field_validator("level")
+    @classmethod
+    def normalize_level(cls, value: str) -> str:
+        return normalize_cefr_level(value)
+
+
+class TutorChatResponse(BaseModel):
+    chat_response: str
+    translation_hint: str | None = None
+    explanation: str | None = None
+    next_micro_challenge: str | None = None
+    corrections: list[str] = Field(default_factory=list)
+    new_vocabulary: list[str] = Field(default_factory=list)
 
 
 class CheckoutRequest(BaseModel):

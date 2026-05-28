@@ -20,6 +20,8 @@ def billing_pricing_payload() -> dict[str, dict]:
             "features": [
                 "Idiomas ilimitados",
                 "Feedback IA detallado",
+                "Retos diarios ilimitados",
+                "Tutor IA para preguntas y dudas",
                 "Retos avanzados y contenido exclusivo",
                 "Historial de facturación",
             ],
