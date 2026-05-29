@@ -75,17 +75,23 @@ def create_app() -> FastAPI:
 
         return await call_next(request)
 
+    project_root = Path(__file__).resolve().parents[1]
+    frontend_dir = project_root / "frontend"
+
     # La raíz abre la app web; monitores y Render deben usar /api/health.
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:
         return RedirectResponse(url="/ui/index.html", status_code=307)
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon_ico():
+        from fastapi.responses import FileResponse
+        favicon_path = frontend_dir / "img" / "favicon-corespeak.png"
+        return FileResponse(str(favicon_path), media_type="image/png")
+
     @app.get("/api/health")
     def api_health() -> dict[str, str]:
         return {"status": "ok", "api": "ready"}
-
-    project_root = Path(__file__).resolve().parents[1]
-    frontend_dir = project_root / "frontend"
     templates_dir = project_root / "templates"
     jinja_templates = Jinja2Templates(directory=str(templates_dir))
     app.include_router(auth_router)
@@ -116,4 +122,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-

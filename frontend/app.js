@@ -143,24 +143,82 @@ function applyPageI18n(lang) {
   });
 }
 
-function langSelectOptionsHtml() {
-  const opts = [
+function getUiLangOptions() {
+  return [
     { v: "es", t: "Español" },
     { v: "en", t: "English" },
     { v: "fr", t: "Français" },
     { v: "uk", t: "Українська" },
   ];
+}
+
+function uiLangLabel(value) {
+  const v = normalizeUiLang(value);
+  const found = getUiLangOptions().find((o) => o.v === v);
+  return found ? found.t : "Español";
+}
+
+function langSelectOptionsHtml() {
+  const opts = getUiLangOptions();
   return opts.map((o) => '<option value="' + o.v + '">' + o.t + "</option>").join("");
 }
 
 function injectLanguageSelectors(currentLang) {
+  const applySelectVisual = (sel) => {
+    if (!sel) return;
+    sel.style.minWidth = "8.15rem";
+    sel.style.height = "2.1rem";
+    sel.style.borderRadius = "8px";
+    sel.style.border = "1px solid #d6d8dd";
+    sel.style.backgroundColor = "#ffffff";
+    sel.style.color = "#1f2937";
+    sel.style.fontWeight = "400";
+    sel.style.padding = "0.2rem 1.9rem 0.2rem 0.65rem";
+    sel.style.appearance = "none";
+    sel.style.webkitAppearance = "none";
+    sel.style.mozAppearance = "none";
+    sel.style.backgroundImage =
+      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5.25 7 9l4-3.75' fill='none' stroke='%234b5563' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
+    sel.style.backgroundRepeat = "no-repeat";
+    sel.style.backgroundPosition = "right 0.62rem center";
+    sel.style.backgroundSize = "14px 14px";
+    sel.style.boxShadow = "none";
+    if (!sel.dataset.corespeakFocusBound) {
+      sel.addEventListener("focus", () => {
+        sel.style.borderColor = "#b08ce8";
+        sel.style.boxShadow = "0 0 0 0.14rem rgba(168,85,247,0.14)";
+      });
+      sel.addEventListener("blur", () => {
+        sel.style.borderColor = "#d6d8dd";
+        sel.style.boxShadow = "none";
+      });
+      sel.dataset.corespeakFocusBound = "1";
+    }
+  };
+
+  const styleLabelShell = (label) => {
+    if (!label) return;
+    label.style.background = "#f5f6f8";
+    label.style.border = "1px solid #d7dae0";
+    label.style.borderRadius = "8px";
+    label.style.padding = "0.34rem 0.46rem";
+    label.style.boxShadow = "0 1px 3px rgba(15, 23, 42, 0.08)";
+    label.style.backdropFilter = "none";
+  };
+
+  const styleLabelText = (sp) => {
+    if (!sp) return;
+    sp.style.fontWeight = "500";
+    sp.style.color = "#4b5563";
+  };
+
   const mkSelect = () => {
     const sel = document.createElement("select");
     sel.className = "form-select form-select-sm corespeak-ui-lang-select";
     sel.setAttribute("aria-label", "Interface language");
-    sel.style.maxWidth = "7.75rem";
     sel.innerHTML = langSelectOptionsHtml();
     sel.value = normalizeUiLang(currentLang);
+    applySelectVisual(sel);
     return sel;
   };
 
@@ -174,6 +232,7 @@ function injectLanguageSelectors(currentLang) {
     const sp = document.createElement("span");
     sp.className = "d-none d-lg-inline text-muted small";
     sp.setAttribute("data-i18n", "nav.uiLang");
+    styleLabelText(sp);
     label.appendChild(sp);
     label.appendChild(mkSelect());
     li.appendChild(label);
@@ -189,6 +248,7 @@ function injectLanguageSelectors(currentLang) {
     const sp = document.createElement("span");
     sp.className = "text-muted d-none d-sm-inline";
     sp.setAttribute("data-i18n", "nav.uiLang");
+    styleLabelText(sp);
     label.appendChild(sp);
     label.appendChild(mkSelect());
     wrap.appendChild(label);
@@ -199,27 +259,148 @@ function injectLanguageSelectors(currentLang) {
     const bar = document.createElement("div");
     bar.className = "position-fixed top-0 end-0 p-2 p-md-3 d-none d-lg-block";
     bar.style.zIndex = "1080";
-    const label = document.createElement("label");
-    label.className = "d-flex align-items-center gap-2 mb-0 small bg-white shadow-sm rounded px-2 py-1 border";
-    const sp = document.createElement("span");
-    sp.setAttribute("data-i18n", "nav.uiLang");
-    label.appendChild(sp);
-    label.appendChild(mkSelect());
-    bar.appendChild(label);
+
+    const dd = document.createElement("div");
+    dd.className = "corespeak-ui-lang-dropdown";
+    dd.style.width = "170px";
+    dd.style.color = "#f9fafb";
+    dd.style.fontSize = "0.96rem";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "corespeak-ui-lang-dd-btn";
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    btn.style.width = "100%";
+    btn.style.display = "flex";
+    btn.style.alignItems = "center";
+    btn.style.justifyContent = "space-between";
+    btn.style.gap = "0.55rem";
+    btn.style.padding = "0.62rem 0.74rem";
+    btn.style.borderRadius = "10px";
+    btn.style.border = "1.5px solid rgba(245, 247, 250, 0.95)";
+    btn.style.background =
+      "linear-gradient(90deg, rgba(184, 172, 214, 0.93) 0%, rgba(169, 190, 215, 0.93) 100%)";
+    btn.style.color = "#f9fafb";
+    btn.style.fontWeight = "600";
+    btn.style.lineHeight = "1.2";
+    btn.style.boxShadow = "0 5px 14px rgba(15, 23, 42, 0.16)";
+    btn.style.backdropFilter = "blur(0.5px)";
+
+    const left = document.createElement("span");
+    left.style.display = "inline-flex";
+    left.style.alignItems = "center";
+    left.style.gap = "0.55rem";
+    left.style.lineHeight = "1.2";
+
+    const icon = document.createElement("span");
+    icon.textContent = "◉";
+    icon.style.fontSize = "0.74rem";
+    icon.style.opacity = "0.95";
+
+    const current = document.createElement("span");
+    current.className = "corespeak-ui-lang-current";
+    current.textContent = uiLangLabel(currentLang);
+
+    left.appendChild(icon);
+    left.appendChild(current);
+
+    const caret = document.createElement("span");
+    caret.innerHTML =
+      "<svg width='13' height='13' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'><path d='M3 5.25L7 9L11 5.25' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+    caret.style.display = "inline-flex";
+    caret.style.alignItems = "center";
+    caret.style.justifyContent = "center";
+    caret.style.width = "14px";
+    caret.style.height = "14px";
+    caret.style.opacity = "0.96";
+
+    btn.appendChild(left);
+    btn.appendChild(caret);
+
+    const panel = document.createElement("div");
+    panel.className = "corespeak-ui-lang-dd-panel";
+    panel.hidden = true;
+    panel.style.marginTop = "0.55rem";
+    panel.style.padding = "0.58rem 0.72rem";
+    panel.style.borderRadius = "10px";
+    panel.style.border = "1.5px solid rgba(245, 247, 250, 0.95)";
+    panel.style.background =
+      "linear-gradient(180deg, rgba(176, 182, 201, 0.96) 0%, rgba(159, 172, 194, 0.96) 100%)";
+    panel.style.boxShadow = "0 7px 20px rgba(15, 23, 42, 0.22)";
+    panel.style.maxHeight = "270px";
+    panel.style.overflowY = "auto";
+
+    const radioName = "corespeak-ui-lang-radio-" + Date.now();
+    getUiLangOptions().forEach((opt) => {
+      const row = document.createElement("label");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.gap = "0.62rem";
+      row.style.padding = "0.3rem 0";
+      row.style.cursor = "pointer";
+      row.style.fontWeight = "600";
+      row.style.color = "#f8fafc";
+
+      const rd = document.createElement("input");
+      rd.type = "radio";
+      rd.name = radioName;
+      rd.value = opt.v;
+      rd.setAttribute("data-lang-value", opt.v);
+      rd.style.accentColor = "#8b5cf6";
+      rd.checked = normalizeUiLang(currentLang) === opt.v;
+      rd.addEventListener("change", () => {
+        if (!rd.checked) return;
+        void applyUiLanguageSelection(opt.v, null);
+        panel.hidden = true;
+        btn.setAttribute("aria-expanded", "false");
+      });
+
+      const tx = document.createElement("span");
+      tx.textContent = opt.t;
+
+      row.appendChild(rd);
+      row.appendChild(tx);
+      panel.appendChild(row);
+    });
+
+    btn.addEventListener("click", () => {
+      const open = panel.hidden;
+      panel.hidden = !open;
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    document.addEventListener("click", (ev) => {
+      if (!dd.contains(ev.target)) {
+        panel.hidden = true;
+        btn.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    dd.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") {
+        panel.hidden = true;
+        btn.setAttribute("aria-expanded", "false");
+        btn.focus();
+      }
+    });
+
+    dd.appendChild(btn);
+    dd.appendChild(panel);
+    bar.appendChild(dd);
     document.body.appendChild(bar);
   }
 
   document.querySelectorAll(".corespeak-ui-lang-select").forEach((sel) => {
     sel.value = normalizeUiLang(currentLang);
+    applySelectVisual(sel);
     sel.removeEventListener("change", corespeakLangSelectChange);
     sel.addEventListener("change", corespeakLangSelectChange);
   });
 }
 
-async function corespeakLangSelectChange(ev) {
-  const sel = ev.target;
-  if (!sel || !sel.classList.contains("corespeak-ui-lang-select")) return;
-  const v = normalizeUiLang(sel.value);
+async function applyUiLanguageSelection(value, sourceSel) {
+  const v = normalizeUiLang(value);
   localStorage.setItem(UI_LANG_STORAGE_KEY, v);
   window.__corespeak_ui_lang = v;
   document.documentElement.lang = v;
@@ -229,7 +410,15 @@ async function corespeakLangSelectChange(ev) {
   if (regUi) regUi.value = v;
 
   document.querySelectorAll(".corespeak-ui-lang-select").forEach((s) => {
-    if (s !== sel) s.value = v;
+    if (s !== sourceSel) s.value = v;
+  });
+
+  document.querySelectorAll(".corespeak-ui-lang-dropdown").forEach((dd) => {
+    const current = dd.querySelector(".corespeak-ui-lang-current");
+    if (current) current.textContent = uiLangLabel(v);
+    dd.querySelectorAll("input[data-lang-value]").forEach((rd) => {
+      rd.checked = normalizeUiLang(rd.value) === v;
+    });
   });
 
   const h = apiHeaders();
@@ -253,6 +442,12 @@ async function corespeakLangSelectChange(ev) {
   if (document.getElementById("course-lessons-list") && document.getElementById("course-title")) void loadDynamicCoursePage();
   if (document.getElementById("practice-question") || document.getElementById("chat-container")) void loadPracticeExercise();
   if (document.getElementById("agenda-tbody")) void renderAgendaTable();
+}
+
+async function corespeakLangSelectChange(ev) {
+  const sel = ev.target;
+  if (!sel || !sel.classList.contains("corespeak-ui-lang-select")) return;
+  await applyUiLanguageSelection(sel.value, sel);
 }
 
 async function initCoreSpeakUiLanguage() {
@@ -600,7 +795,7 @@ const CORESPEAK_PAGE_I18N = {
       lead: "Ingresa a tu cuenta para continuar aprendiendo",
       email: "Correo electrónico",
       password: "Contraseña",
-      submit: "Iniciar sesion",
+      submit: "Iniciar sesión",
       forgot: "¿Olvidaste tu contraseña?",
       noAccount: "¿No tienes cuenta?",
       register: "Regístrate aquí",
@@ -1508,7 +1703,7 @@ async function login() {
   const password = document.getElementById("login-password")?.value || "";
   const btn = document.getElementById("login-btn");
   const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
-  const defaultLabel = btn?.textContent?.trim() || "Iniciar sesion";
+  const defaultLabel = btn?.textContent?.trim() || "Iniciar sesión";
   if (a11y) a11y.setBusy(btn, true, "Iniciando sesión…", defaultLabel);
   setLoginFormMessage("Comprobando tus datos. Te llevaremos a tu panel en unos segundos…", "info");
 
@@ -4839,5 +5034,3 @@ async function loadLessonPage() {
   corespeakRenderCatalogExercises(exWrap, detail.exercises_json || "{}", lc);
   listEl.appendChild(exWrap);
 }
-
-
