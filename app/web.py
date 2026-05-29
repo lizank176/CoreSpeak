@@ -87,7 +87,11 @@ def create_app() -> FastAPI:
     def favicon_ico():
         from fastapi.responses import FileResponse
         favicon_path = frontend_dir / "img" / "favicon-corespeak.png"
-        return FileResponse(str(favicon_path), media_type="image/png")
+        return FileResponse(
+            str(favicon_path),
+            media_type="image/png",
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.get("/api/health")
     def api_health() -> dict[str, str]:
