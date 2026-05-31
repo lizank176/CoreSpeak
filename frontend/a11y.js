@@ -114,14 +114,81 @@
     }
   }
 
-  function initLogoImages() {
-    document.querySelectorAll(".dashboard-logo, .logo-img, img[src*='logo.png']").forEach(function (img) {
-      if (!(img instanceof HTMLImageElement)) return;
-      normalizeLogoSrc(img);
-      if (!(img.getAttribute("alt") || "").trim()) {
-        img.setAttribute("alt", "Icono de CoreSpeak");
+  function logoFailed(img) {
+    return img.complete && img.naturalWidth === 0;
+  }
+
+  function getLogoWrap(img) {
+    const parent = img.parentElement;
+    if (parent && parent.classList.contains("corespeak-logo-wrap")) {
+      return parent;
+    }
+    if (parent && parent.tagName === "A") {
+      parent.classList.add("corespeak-logo-wrap");
+      if (img.classList.contains("dashboard-logo")) {
+        parent.classList.add("corespeak-logo-wrap--nav");
       }
+      return parent;
+    }
+    const wrap = document.createElement("span");
+    wrap.className = "corespeak-logo-wrap d-inline-block";
+    if (img.classList.contains("dashboard-logo")) {
+      wrap.classList.add("corespeak-logo-wrap--nav");
+    }
+    img.parentNode.insertBefore(wrap, img);
+    wrap.appendChild(img);
+    return wrap;
+  }
+
+  function ensureLogoAltSpan(img, wrap) {
+    let span = wrap.querySelector(".corespeak-logo-alt");
+    if (!span) {
+      span = document.createElement("span");
+      span.className = "corespeak-logo-alt";
+      span.textContent = "Icono de CoreSpeak";
+      span.setAttribute("aria-hidden", "true");
+      img.insertAdjacentElement("afterend", span);
+    }
+    return span;
+  }
+
+  function showLogoFallback(wrap) {
+    wrap.classList.add("corespeak-logo--failed");
+  }
+
+  function showLogoImage(wrap) {
+    wrap.classList.remove("corespeak-logo--failed");
+  }
+
+  function bindLogo(img) {
+    if (!(img instanceof HTMLImageElement) || img.dataset.corespeakLogoBound === "1") return;
+    img.dataset.corespeakLogoBound = "1";
+    normalizeLogoSrc(img);
+    img.setAttribute("alt", "Icono de CoreSpeak");
+
+    const wrap = getLogoWrap(img);
+    ensureLogoAltSpan(img, wrap);
+
+    function check() {
+      if (logoFailed(img)) {
+        showLogoFallback(wrap);
+      } else if (img.complete && img.naturalWidth > 0) {
+        showLogoImage(wrap);
+      }
+    }
+
+    img.addEventListener("error", function () {
+      showLogoFallback(wrap);
     });
+    img.addEventListener("load", check);
+
+    check();
+    global.setTimeout(check, 400);
+    global.setTimeout(check, 1500);
+  }
+
+  function initLogoImages() {
+    document.querySelectorAll(".dashboard-logo, .logo-img, img[src*='logo.png']").forEach(bindLogo);
   }
 
   global.CoreSpeakA11y = {
