@@ -499,6 +499,8 @@ function uiLessonCoursePack(uiLang) {
       exerciseWrong: "Incorrecto",
       exerciseNeedAnswer: "Escribe o elige una respuesta.",
       exerciseNoValidConfig: "(Sin respuestas configuradas en el catálogo)",
+      exerciseXpEarned: "+{n} XP",
+      exerciseAlreadyDone: "Ya completaste este ejercicio.",
       exercisesHeading: "Ejercicios",
       courseErrorNetwork:
         "No se pudo conectar con el servidor. Abre la app desde la misma URL que la API (por ejemplo http://127.0.0.1:8000/ui/course.html) y comprueba que el backend está en marcha.",
@@ -543,6 +545,8 @@ function uiLessonCoursePack(uiLang) {
       exerciseWrong: "Incorrect",
       exerciseNeedAnswer: "Type or select an answer.",
       exerciseNoValidConfig: "(No correct answers configured)",
+      exerciseXpEarned: "+{n} XP",
+      exerciseAlreadyDone: "You already completed this exercise.",
       exercisesHeading: "Exercises",
       courseErrorNetwork:
         "Could not reach the server. Open the app from the same URL as the API (e.g. http://127.0.0.1:8000/ui/course.html) and make sure the backend is running.",
@@ -4321,7 +4325,24 @@ function corespeakExerciseBlockImagePath(b) {
   return String(p || "").trim();
 }
 
-function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
+function applyProgressStatsToDom(xpTotal, streakDays) {
+  const u = getUiPack(getCurrentUiLangSync());
+  const streakEl = document.getElementById("stat-streak");
+  if (streakEl && streakDays != null) {
+    const tpl = (u.dashboard && u.dashboard.streakDays) || "{n} días consecutivos";
+    streakEl.textContent = tpl.replace("{n}", String(streakDays));
+  }
+  const xpEl = document.getElementById("stat-xp");
+  if (xpEl && xpTotal != null) {
+    const tpl = (u.dashboard && u.dashboard.xpTotal) || "{n} XP acumulados";
+    xpEl.textContent = tpl.replace("{n}", String(xpTotal));
+  }
+}
+
+function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
+  const options = opts || {};
+  const lessonId = options.lessonId != null ? String(options.lessonId) : "";
+  const auth = options.auth || null;
   let data = {};
   try {
     data = JSON.parse(exercisesJson || "{}");
@@ -4460,7 +4481,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
     feedback.className = "small mt-2 fw-semibold";
     feedback.style.minHeight = "1.25rem";
 
-    btn.addEventListener("click", function () {
+    btn.addEventListener("click", async function () {
       let userVal = "";
       let userVals = [];
       if (inputEl) userVal = (inputEl.value || "").trim();
@@ -4478,6 +4499,59 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
         feedback.textContent = lc.exerciseNoValidConfig || "";
         return;
       }
+
+      btn.disabled = true;
+
+      if (lessonId && auth && auth.token) {
+        try {
+          const body = inputEl
+            ? { exercise_index: idx, answer: userVal }
+            : { exercise_index: idx, selected: userVals };
+          const res = await fetch(
+            apiUrl("/api/catalog/lessons/" + encodeURIComponent(lessonId) + "/exercises/submit"),
+            {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + auth.token,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body),
+            }
+          );
+          const data = await res.json().catch(function () { return {}; });
+          if (!res.ok) {
+            feedback.className = "small mt-2 text-danger";
+            feedback.textContent = formatApiErrorDetail(data) || lc.exerciseWrong || "Error";
+            btn.disabled = false;
+            return;
+          }
+          const ok = !!data.is_correct;
+          feedback.className = "small mt-2 fw-semibold " + (ok ? "text-success" : "text-danger");
+          let msg = data.feedback || (ok ? lc.exerciseCorrect : lc.exerciseWrong);
+          if (ok && data.xp_awarded > 0 && lc.exerciseXpEarned) {
+            msg = (lc.exerciseCorrect || "Correcto") + " " + lc.exerciseXpEarned.replace("{n}", String(data.xp_awarded));
+            if (data.streak_message) msg += " " + data.streak_message;
+          } else if (ok && data.repeat_submission) {
+            msg = lc.exerciseAlreadyDone || data.feedback || msg;
+          }
+          feedback.textContent = msg;
+          if (data.xp_total != null || data.streak_days != null) {
+            applyProgressStatsToDom(data.xp_total, data.streak_days);
+          }
+          if (ok) {
+            btn.disabled = true;
+            if (inputEl) inputEl.disabled = true;
+            choices.forEach(function (c) { c.disabled = true; });
+          } else {
+            btn.disabled = false;
+          }
+          return;
+        } catch (e) {
+          console.warn("submit lesson exercise", e);
+          btn.disabled = false;
+        }
+      }
+
       const ok = inputEl
         ? corespeakAnswerMatchesValid(userVal, valid)
         : isSingleChoice
@@ -4485,6 +4559,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
           : corespeakAnswerListMatchesValid(userVals, valid);
       feedback.className = "small mt-2 fw-semibold " + (ok ? "text-success" : "text-danger");
       feedback.textContent = ok ? lc.exerciseCorrect || "OK" : lc.exerciseWrong || "—";
+      btn.disabled = false;
     });
 
     body.appendChild(btn);
@@ -5056,6 +5131,9 @@ async function loadLessonPage() {
 
   const exWrap = document.createElement("div");
   exWrap.className = "lesson-catalog-exercises";
-  corespeakRenderCatalogExercises(exWrap, detail.exercises_json || "{}", lc);
+  corespeakRenderCatalogExercises(exWrap, detail.exercises_json || "{}", lc, {
+    lessonId: lessonIdRaw,
+    auth: auth,
+  });
   listEl.appendChild(exWrap);
 }

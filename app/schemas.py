@@ -183,6 +183,22 @@ class ChallengeResultResponse(BaseModel):
     repeat_submission: bool = False
 
 
+class LessonExerciseSubmitRequest(BaseModel):
+    exercise_index: int = Field(ge=0, le=500)
+    answer: str | None = Field(default=None, max_length=2000)
+    selected: list[str] = Field(default_factory=list, max_length=20)
+
+
+class LessonExerciseResultResponse(BaseModel):
+    is_correct: bool
+    xp_awarded: int
+    xp_total: int
+    streak_days: int
+    streak_message: str | None = None
+    repeat_submission: bool = False
+    feedback: str
+
+
 class TutorChatMessage(BaseModel):
     role: str = Field(min_length=1, max_length=20)
     content: str = Field(min_length=1, max_length=4000)

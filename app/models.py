@@ -149,6 +149,17 @@ class LessonAttempt(SQLModel, table=True):
     completed_at: datetime = Field(default_factory=datetime.utcnow, index=True)
 
 
+class LessonExerciseCompletion(SQLModel, table=True):
+    __tablename__ = "lesson_exercise_completions"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    lesson_id: int = Field(foreign_key="lessons.id", index=True)
+    exercise_index: int = Field(default=0, index=True)
+    xp_awarded: int = Field(default=0)
+    completed_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+
+
 class DailyChallenge(SQLModel, table=True):
     __tablename__ = "daily_challenges"
 

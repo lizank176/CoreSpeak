@@ -15,14 +15,25 @@ from app.constants import PRIMARY_COURSE_CODE
 from app.interest_catalog import interest_options_public_payload
 from app.db import get_session
 from app.dependencies import get_current_user, require_premium_or_grace
-from app.models import AppUser, CourseLevel, Enrollment, LanguageCourse, Lesson, LessonAttempt, UserRole
-from app.schemas import DisplayNamePatchRequest, EnglishLevelPatchRequest, ExtraLanguagesRequest, OnboardingSaveRequest
+from app.models import AppUser, CourseLevel, Enrollment, LanguageCourse, Lesson, LessonAttempt, LessonExerciseCompletion, UserRole
+from app.schemas import (
+    DisplayNamePatchRequest,
+    EnglishLevelPatchRequest,
+    ExtraLanguagesRequest,
+    LessonExerciseResultResponse,
+    LessonExerciseSubmitRequest,
+    OnboardingSaveRequest,
+)
 from app.security import create_password_reset_token
 from app.services.enrollment_service import sync_user_enrollments
+from app.services.exercise_validation import validate_catalog_block_answer
+from app.services.progress_service import apply_xp_and_streak
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 catalog_router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 users_router = APIRouter(prefix="/api/users", tags=["users"])
+
+XP_PER_LESSON_EXERCISE = 10
 
 
 @catalog_router.get("/interest-options")
@@ -186,6 +197,151 @@ def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[st
             blocks.append(block)
             continue
     return blocks
+
+
+def _exercise_points(content: dict[str, Any] | None, exercise_index: int) -> int:
+    if not isinstance(content, dict):
+        return XP_PER_LESSON_EXERCISE
+    exercises = content.get("exercises")
+    if not isinstance(exercises, list) or exercise_index >= len(exercises):
+        return XP_PER_LESSON_EXERCISE
+    item = exercises[exercise_index]
+    if not isinstance(item, dict):
+        return XP_PER_LESSON_EXERCISE
+    raw = item.get("points")
+    try:
+        return max(1, int(raw))
+    except (TypeError, ValueError):
+        return XP_PER_LESSON_EXERCISE
+
+
+def _lesson_blocks_for_user(lesson: Lesson) -> list[dict[str, Any]]:
+    return _catalog_blocks_from_content(lesson.content_json if isinstance(lesson.content_json, dict) else {})
+
+
+@catalog_router.post("/lessons/{lesson_id}/exercises/submit", response_model=LessonExerciseResultResponse)
+def submit_lesson_exercise(
+    lesson_id: int,
+    payload: LessonExerciseSubmitRequest,
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> LessonExerciseResultResponse:
+    lesson = session.get(Lesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Leccion no encontrada")
+    if lesson.is_premium and not user.is_premium:
+        raise HTTPException(status_code=402, detail="Leccion avanzada disponible para Premium")
+    if not _lesson_accessible_for_user(lesson, user):
+        raise HTTPException(status_code=402, detail="Leccion no disponible en tu plan")
+
+    course = session.get(LanguageCourse, lesson.course_id)
+    chosen_codes = {
+        str(code).strip().lower()
+        for code in user.target_languages_json.get("languages", [])
+        if str(code).strip()
+    }
+    if course and not user.is_premium and course.language_code.lower() not in chosen_codes:
+        raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
+
+    blocks = _lesson_blocks_for_user(lesson)
+    idx = int(payload.exercise_index)
+    if idx < 0 or idx >= len(blocks):
+        raise HTTPException(status_code=422, detail="Indice de ejercicio invalido")
+
+    block = blocks[idx]
+    is_correct = validate_catalog_block_answer(
+        block,
+        answer=payload.answer,
+        selected=payload.selected,
+    )
+
+    prior = session.exec(
+        select(LessonExerciseCompletion).where(
+            LessonExerciseCompletion.user_id == user.id,
+            LessonExerciseCompletion.lesson_id == lesson_id,
+            LessonExerciseCompletion.exercise_index == idx,
+        )
+    ).first()
+
+    if prior and prior.xp_awarded > 0:
+        feedback = "Correcto" if is_correct else "Incorrecto"
+        if is_correct:
+            feedback = "Ya habias completado este ejercicio. No se suma XP extra."
+        return LessonExerciseResultResponse(
+            is_correct=is_correct,
+            xp_awarded=0,
+            xp_total=int(user.xp_total or 0),
+            streak_days=int(user.streak_days or 0),
+            streak_message=None,
+            repeat_submission=True,
+            feedback=feedback,
+        )
+
+    xp_awarded = 0
+    streak_message: str | None = None
+    if is_correct:
+        points = _exercise_points(lesson.content_json if isinstance(lesson.content_json, dict) else {}, idx)
+        xp_awarded, streak_message = apply_xp_and_streak(
+            user,
+            xp_amount=points,
+            activity_score=1.0,
+            count_streak=True,
+        )
+        session.add(
+            LessonExerciseCompletion(
+                user_id=int(user.id or 0),
+                lesson_id=lesson_id,
+                exercise_index=idx,
+                xp_awarded=xp_awarded,
+            )
+        )
+        session.add(user)
+        session.flush()
+
+        completed_indices = {
+            row.exercise_index
+            for row in session.exec(
+                select(LessonExerciseCompletion).where(
+                    LessonExerciseCompletion.user_id == user.id,
+                    LessonExerciseCompletion.lesson_id == lesson_id,
+                )
+            ).all()
+        }
+        if len(completed_indices) >= len(blocks) and blocks:
+            existing_attempt = session.exec(
+                select(LessonAttempt).where(
+                    LessonAttempt.user_id == user.id,
+                    LessonAttempt.lesson_id == lesson_id,
+                )
+            ).first()
+            if not existing_attempt:
+                session.add(
+                    LessonAttempt(
+                        user_id=int(user.id or 0),
+                        lesson_id=lesson_id,
+                        score=len(blocks),
+                    )
+                )
+
+    session.commit()
+    session.refresh(user)
+
+    if is_correct:
+        feedback = f"Correcto. +{xp_awarded} XP."
+        if streak_message:
+            feedback = f"{feedback} {streak_message}"
+    else:
+        feedback = "Incorrecto. Intentalo de nuevo."
+
+    return LessonExerciseResultResponse(
+        is_correct=is_correct,
+        xp_awarded=xp_awarded,
+        xp_total=int(user.xp_total or 0),
+        streak_days=int(user.streak_days or 0),
+        streak_message=streak_message,
+        repeat_submission=False,
+        feedback=feedback,
+    )
 
 
 @users_router.patch("/me/display-name")
