@@ -80,7 +80,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/health")
     def api_health() -> dict[str, str]:
-        return {"status": "ok", "api": "ready", "build": "20260603q"}
+        return {"status": "ok", "api": "ready", "build": "20260603r"}
 
     if frontend_dir.exists():
         app_js_path = frontend_dir / "app.js"

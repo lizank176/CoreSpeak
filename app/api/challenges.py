@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
@@ -20,12 +20,12 @@ from app.models import AppUser, ChallengeStatus, DailyChallenge
 from app.schemas import ChallengeResponse, ChallengeResultResponse, ChallengeSubmitRequest
 from app.interest_catalog import coerce_interests_list, first_interest_context_for_challenge_row
 from app.services.ai.groq_service import build_daily_challenge, semantic_validate_answer
+from app.services.progress_service import award_xp, update_daily_streak
 
 router = APIRouter(prefix="/api/challenges", tags=["challenges"])
 
 XP_MAX_DAILY = 100
 SCORE_STREAK_OK = 0.60
-SCORE_STREAK_RESET = 0.28
 XP_PARTICIPATION_SHARE = 0.10
 CEFR_LEVEL_UP_EVERY_COMPLETED = 2
 
@@ -233,33 +233,16 @@ def submit_answer(
     challenge.updated_at = datetime.utcnow()
     session.add(challenge)
 
-    now = datetime.utcnow()
-    today = now.date()
-    streak_message: str | None = None
+    # Racha al enviar el reto (independiente del XP); XP según puntuación semántica.
+    streak_message = update_daily_streak(user)
+    award_xp(user, xp_earned)
     level_up_message: str | None = None
-    if score >= SCORE_STREAK_OK:
-        if user.last_active_at is None:
-            user.streak_days = 1
-        else:
-            last_day = calendar_day_from_db(user.last_active_at)
-            if last_day == today:
-                user.streak_days = max(1, user.streak_days)
-            elif last_day == (today - timedelta(days=1)):
-                user.streak_days += 1
-            else:
-                user.streak_days = 1
-        streak_message = f"Racha activa: {user.streak_days} día(s) consecutivos."
-    elif score < SCORE_STREAK_RESET:
-        user.streak_days = 0
-        streak_message = "La racha se reinicia. ¡Mañana lo intentamos de nuevo!"
-    elif xp_earned > 0:
+    if score < SCORE_STREAK_OK and xp_earned > 0:
         streak_message = (
-            f"Has ganado {xp_earned} XP. Con una respuesta más completa puedes obtener hasta "
-            f"{challenge.xp_awarded or XP_MAX_DAILY} XP y sumar día de racha."
+            f"{streak_message} Has ganado {xp_earned} XP. "
+            f"Con una respuesta más completa puedes obtener hasta "
+            f"{challenge.xp_awarded or XP_MAX_DAILY} XP."
         )
-
-    user.xp_total += xp_earned
-    user.last_active_at = now
     promoted_to = _maybe_promote_user_level(session, user, challenge.level_code or normalize_cefr_level(None))
     if promoted_to:
         level_up_message = f"Has subido al nivel {promoted_to}. El siguiente reto será más avanzado."

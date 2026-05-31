@@ -49,14 +49,9 @@ def apply_xp_and_streak(
     count_streak: bool = True,
 ) -> tuple[int, str | None]:
     """
-    Reto diario: XP según puntuación semántica; racha solo si la respuesta es suficientemente buena.
+    XP según puntuación; racha al registrar actividad (independiente del XP).
     """
     score = max(0.0, min(1.0, float(activity_score)))
     xp_earned = award_xp(user, int(xp_amount)) if score >= SCORE_STREAK_OK else 0
-    streak_message: str | None = None
-    if count_streak and score >= SCORE_STREAK_OK:
-        streak_message = update_daily_streak(user)
-    elif score >= SCORE_STREAK_OK:
-        user.last_active_at = datetime.utcnow()
-        user.updated_at = datetime.utcnow()
+    streak_message: str | None = update_daily_streak(user) if count_streak else None
     return xp_earned, streak_message

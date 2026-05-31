@@ -167,6 +167,19 @@
         return { token, userId: parseInt(String(userId).trim(), 10) };
       }
 
+      function saveProgressSnapshot(streakDays, xpTotal) {
+        try {
+          sessionStorage.setItem(
+            "corespeak_progress_snap",
+            JSON.stringify({
+              streak_days: streakDays,
+              xp_total: xpTotal,
+              ts: Date.now(),
+            })
+          );
+        } catch (e) {}
+      }
+
       function applyGamification(g) {
         if (!g) return;
         const streak = document.getElementById("streak-count");
@@ -260,6 +273,9 @@
           const g = gamificationFromProfile(me);
           applyGamification(g);
           syncPremiumActions(me);
+          if (me && (me.streak_days != null || me.xp_total != null)) {
+            saveProgressSnapshot(me.streak_days, me.xp_total);
+          }
           return me;
         } catch (_e) {
           /* silenciar red */
@@ -630,14 +646,18 @@
           if (repeat) {
             toast.textContent = "Este reto ya estaba hecho. No se añade XP otra vez.";
             toast.classList.remove("hidden");
-          } else if (xp > 0) {
-            const label = ok ? "Bien visto. " : "Progreso. ";
-            toast.textContent = label + "+" + String(xp) + " XP";
-            toast.classList.remove("hidden");
-            if (ok) flashStreak();
-          } else if (!ok) {
-            toast.textContent = "Mira el feedback y sigue practicando. +0 XP en este intento.";
-            toast.classList.remove("hidden");
+          } else {
+            const parts = [];
+            if (data.streak_message) parts.push(String(data.streak_message));
+            if (xp > 0) parts.push("+" + String(xp) + " XP");
+            if (parts.length) {
+              toast.textContent = parts.join(" · ");
+              toast.classList.remove("hidden");
+            } else if (!ok) {
+              toast.textContent = "Mira el feedback y sigue practicando.";
+              toast.classList.remove("hidden");
+            }
+            if (data.streak_days != null && Number(data.streak_days) > 0) flashStreak();
           }
         }
 
