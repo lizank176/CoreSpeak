@@ -625,6 +625,48 @@ def _lesson_sort_key(level_code: str, user_level: str, lesson_id: int, title: st
     return (tier, _cefr_index(lc), (title or "").lower(), lesson_id or 0)
 
 
+def _course_level_progress(
+    lessons: list[Lesson],
+    levels_by_id: dict[int, CourseLevel],
+    user_level: str,
+    completed_lesson_ids: set[int],
+    exercise_counts: dict[int, int] | None = None,
+) -> dict[str, Any]:
+    scoped = [
+        lesson
+        for lesson in lessons
+        if normalize_cefr_level(
+            (levels_by_id.get(lesson.level_id).level_code if levels_by_id.get(lesson.level_id) else "A1")
+        )
+        == normalize_cefr_level(user_level)
+    ]
+    if not scoped:
+        scoped = list(lessons)
+    total = len(scoped)
+    done = sum(1 for lesson in scoped if lesson.id and int(lesson.id) in completed_lesson_ids)
+    exercises_total = 0
+    exercises_completed = 0
+    counts = exercise_counts or {}
+    for lesson in scoped:
+        if not lesson.id:
+            continue
+        block_count = len(_lesson_blocks_for_user(lesson))
+        exercises_total += block_count
+        completed_for_lesson = counts.get(int(lesson.id), 0)
+        exercises_completed += min(completed_for_lesson, block_count) if block_count else 0
+    if exercises_total > 0:
+        percent = round((exercises_completed / exercises_total) * 100)
+    else:
+        percent = round((done / total) * 100) if total > 0 else 0
+    return {
+        "lessons_completed": done,
+        "lessons_total": total,
+        "exercises_completed": exercises_completed,
+        "exercises_total": exercises_total,
+        "progress_percent": percent,
+    }
+
+
 @catalog_router.get("/courses")
 def catalog_courses(
     lang: str | None = Query(default=None),
@@ -640,13 +682,60 @@ def catalog_courses(
     if lang:
         courses_query = courses_query.where(LanguageCourse.language_code == lang.lower().strip())
     courses = session.exec(courses_query).all()
+    course_ids = [course.id for course in courses if course.id]
+    levels_by_course: dict[int, dict[int, CourseLevel]] = {}
+    lessons_by_course: dict[int, list[Lesson]] = {}
+    all_lesson_ids: list[int] = []
+    if course_ids:
+        for course_id in course_ids:
+            levels_by_course[course_id] = {
+                lvl.id: lvl
+                for lvl in session.exec(
+                    select(CourseLevel).where(CourseLevel.course_id == course_id)
+                ).all()
+            }
+            lessons = session.exec(
+                select(Lesson).where(Lesson.course_id == course_id, Lesson.is_published == True)  # noqa: E712
+            ).all()
+            lessons_by_course[course_id] = lessons
+            all_lesson_ids.extend(int(lesson.id) for lesson in lessons if lesson.id)
+
+    completed_lesson_ids: set[int] = set()
+    exercise_counts: dict[int, int] = {}
+    if all_lesson_ids:
+        attempts = session.exec(
+            select(LessonAttempt).where(
+                LessonAttempt.user_id == user.id,
+                LessonAttempt.lesson_id.in_(all_lesson_ids),
+            )
+        ).all()
+        completed_lesson_ids = {int(a.lesson_id) for a in attempts if a.lesson_id is not None}
+        completions = session.exec(
+            select(LessonExerciseCompletion).where(
+                LessonExerciseCompletion.user_id == user.id,
+                LessonExerciseCompletion.lesson_id.in_(all_lesson_ids),
+            )
+        ).all()
+        for row in completions:
+            if row.lesson_id is None:
+                continue
+            lid = int(row.lesson_id)
+            exercise_counts[lid] = exercise_counts.get(lid, 0) + 1
+
     output: list[dict[str, Any]] = []
     for course in courses:
         if not course.id:
             continue
-        lessons = session.exec(select(Lesson).where(Lesson.course_id == course.id, Lesson.is_published == True)).all()  # noqa: E712
+        lessons = lessons_by_course.get(int(course.id), [])
         user_level = _user_cefr_level(user, course.language_code)
         has_premium = any(lesson.is_premium for lesson in lessons)
+        progress = _course_level_progress(
+            lessons,
+            levels_by_course.get(int(course.id), {}),
+            user_level,
+            completed_lesson_ids,
+            exercise_counts,
+        )
         output.append(
             {
                 "id": course.id,
@@ -655,6 +744,11 @@ def catalog_courses(
                 "cefr_level": user_level,
                 "user_cefr_level": user_level,
                 "lesson_count": len(lessons),
+                "lessons_completed": progress["lessons_completed"],
+                "lessons_total": progress["lessons_total"],
+                "exercises_completed": progress["exercises_completed"],
+                "exercises_total": progress["exercises_total"],
+                "progress_percent": progress["progress_percent"],
                 "is_premium": has_premium,
                 "accessible": user.is_premium or course.language_code.lower() in chosen_codes,
             }

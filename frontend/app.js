@@ -739,6 +739,8 @@ const CORESPEAK_PAGE_I18N = {
       otherCourses: "Otros cursos",
       courseSubtitle: "Comenzar curso",
       courseBtn: "Comenzar",
+      courseBtnContinue: "Continuar",
+      courseBtnReview: "Repasar",
       profileLoadError: "No se pudo cargar tu perfil. Recarga la página.",
       misSub1: "Cursos publicados en los idiomas que marcaste en el test inicial.",
       misSub2: "No hay idiomas objetivo en tu perfil, o aún no hay cursos publicados en esos idiomas.",
@@ -753,6 +755,7 @@ const CORESPEAK_PAGE_I18N = {
       catalogFetchError: "No se pudo cargar el catálogo de cursos. Recarga o vuelve a iniciar sesión.",
       courseLessonsOne: "1 lección",
       courseLessonsMany: "{n} lecciones",
+      courseProgressExercises: "{done} de {total} ejercicios · GER {level}",
     },
     retos: {
       back: "Volver",
@@ -920,6 +923,8 @@ const CORESPEAK_PAGE_I18N = {
       otherCourses: "Other courses",
       courseSubtitle: "Start course",
       courseBtn: "Start",
+      courseBtnContinue: "Continue",
+      courseBtnReview: "Review",
       profileLoadError: "Could not load your profile. Reload the page.",
       misSub1: "Only the languages you want to learn (initial test).",
       misSub2: "No target languages in your profile. Complete or update the test to fill this section.",
@@ -934,6 +939,7 @@ const CORESPEAK_PAGE_I18N = {
       catalogFetchError: "Could not load the course catalog. Reload or sign in again.",
       courseLessonsOne: "1 lesson",
       courseLessonsMany: "{n} lessons",
+      courseProgressExercises: "{done} of {total} exercises · CEFR {level}",
     },
     retos: {
       back: "Back",
@@ -1101,6 +1107,8 @@ const CORESPEAK_PAGE_I18N = {
       otherCourses: "Autres cours",
       courseSubtitle: "Commencer le cours",
       courseBtn: "Commencer",
+      courseBtnContinue: "Continuer",
+      courseBtnReview: "Réviser",
       profileLoadError: "Impossible de charger le profil. Rechargez la page.",
       misSub1: "Uniquement les langues que vous voulez apprendre (test initial).",
       misSub2: "Aucune langue cible dans votre profil. Complétez le test.",
@@ -1114,6 +1122,7 @@ const CORESPEAK_PAGE_I18N = {
       catalogFetchError: "Impossible de charger le catalogue. Rechargez ou reconnectez-vous.",
       courseLessonsOne: "1 leçon",
       courseLessonsMany: "{n} leçons",
+      courseProgressExercises: "{done} sur {total} exercices · CECR {level}",
     },
     retos: {
       back: "Retour",
@@ -1277,6 +1286,8 @@ const CORESPEAK_PAGE_I18N = {
       otherCourses: "Weitere Kurse",
       courseSubtitle: "Kurs starten",
       courseBtn: "Starten",
+      courseBtnContinue: "Weiter",
+      courseBtnReview: "Wiederholen",
       profileLoadError: "Profil konnte nicht geladen werden. Seite neu laden.",
       misSub1: "Nur die Sprachen, die du lernen willst (Ersttest).",
       misSub2: "Keine Zielsprachen im Profil. Bitte Test ausfüllen.",
@@ -1289,6 +1300,7 @@ const CORESPEAK_PAGE_I18N = {
       catalogFetchError: "Katalog konnte nicht geladen werden. Neu laden oder erneut anmelden.",
       courseLessonsOne: "1 Lektion",
       courseLessonsMany: "{n} Lektionen",
+      courseProgressExercises: "{done} von {total} Übungen · GER {level}",
     },
     retos: {
       back: "Zurück",
@@ -1452,6 +1464,8 @@ const CORESPEAK_PAGE_I18N = {
       otherCourses: "Інші курси",
       courseSubtitle: "Почати курс",
       courseBtn: "Почати",
+      courseBtnContinue: "Продовжити",
+      courseBtnReview: "Повторити",
       profileLoadError: "Не вдалося завантажити профіль. Перезавантажте сторінку.",
       misSub1: "Лише мови, які хочете вивчати (початковий тест).",
       misSub2: "Немає цільових мов у профілі. Пройдіть тест.",
@@ -1464,6 +1478,7 @@ const CORESPEAK_PAGE_I18N = {
       catalogFetchError: "Не вдалося завантажити каталог. Перезавантажте сторінку або увійдіть знову.",
       courseLessonsOne: "1 урок",
       courseLessonsMany: "{n} уроків",
+      courseProgressExercises: "{done} з {total} вправ · CEFR {level}",
     },
     retos: {
       back: "Назад",
@@ -2872,7 +2887,6 @@ function renderDashboardCatalogCourseCard(course) {
   const u = getUiPack(getCurrentUiLangSync());
   const d = u.dashboard || {};
   const lcCourse = uiLessonCoursePack(getCurrentUiLangSync());
-  const btnLabel = (d.courseBtn) || "Comenzar";
   const lang = String(course.lang_code || "")
     .toLowerCase()
     .trim();
@@ -2884,8 +2898,39 @@ function renderDashboardCatalogCourseCard(course) {
     nLessons === 1
       ? d.courseLessonsOne || "1 lección"
       : (d.courseLessonsMany || "{n} lecciones").replace("{n}", String(nLessons));
-  const cefr = (course.cefr_level || "").toString().toUpperCase().trim();
+  const cefr = (course.cefr_level || course.user_cefr_level || "").toString().toUpperCase().trim();
+  const lessonsDone =
+    course.lessons_completed != null ? Number(course.lessons_completed) : 0;
+  const lessonsTotal =
+    course.lessons_total != null ? Number(course.lessons_total) : nLessons;
+  const exercisesDone =
+    course.exercises_completed != null ? Number(course.exercises_completed) : 0;
+  const exercisesTotal =
+    course.exercises_total != null ? Number(course.exercises_total) : 0;
+  const progressPct =
+    course.progress_percent != null
+      ? Math.min(100, Math.max(0, Number(course.progress_percent)))
+      : exercisesTotal > 0
+        ? Math.min(100, Math.round((exercisesDone / exercisesTotal) * 100))
+        : lessonsTotal > 0
+          ? Math.min(100, Math.round((lessonsDone / lessonsTotal) * 100))
+          : 0;
+  const progressLine =
+    exercisesTotal > 0
+      ? (d.courseProgressExercises || "{done} de {total} ejercicios · GER {level}")
+          .replace("{done}", String(exercisesDone))
+          .replace("{total}", String(exercisesTotal))
+          .replace("{level}", cefr || "A1")
+      : lessonsTotal > 0
+        ? lcCourse.progressCompleted(lessonsDone, lessonsTotal, cefr || "A1")
+        : "";
   const subLine = [cefr, lessonsLine].filter(Boolean).join(" · ");
+  const btnLabel =
+    progressPct > 0 && progressPct < 100
+      ? d.courseBtnContinue || "Continuar"
+      : progressPct >= 100 && (exercisesTotal > 0 || lessonsTotal > 0)
+        ? d.courseBtnReview || "Repasar"
+        : (d.courseBtn) || "Comenzar";
 
   const col = document.createElement("div");
   col.className = "col-md-6 col-lg-4";
@@ -2912,6 +2957,12 @@ function renderDashboardCatalogCourseCard(course) {
   top.appendChild(titleEl);
   top.appendChild(subLang);
   top.appendChild(subMeta);
+  if (progressLine) {
+    const progressMeta = document.createElement("div");
+    progressMeta.className = "small text-primary fw-semibold mt-1";
+    progressMeta.textContent = progressLine;
+    top.appendChild(progressMeta);
+  }
 
   const bot = document.createElement("div");
   const progBg = document.createElement("div");
@@ -2919,18 +2970,22 @@ function renderDashboardCatalogCourseCard(course) {
   progBg.setAttribute("role", "progressbar");
   progBg.setAttribute("aria-valuemin", "0");
   progBg.setAttribute("aria-valuemax", "100");
-  progBg.setAttribute("aria-valuenow", "0");
-  progBg.setAttribute("aria-label", "Progreso del curso de " + langLabel);
+  progBg.setAttribute("aria-valuenow", String(progressPct));
+  progBg.setAttribute(
+    "aria-label",
+    progressLine || "Progreso del curso de " + langLabel + ": " + progressPct + " por ciento"
+  );
   const progFill = document.createElement("div");
   progFill.className = "progress-fill";
-  progFill.style.width = "0%";
+  progFill.style.width = progressPct + "%";
   progBg.appendChild(progFill);
 
   const linkLabel =
     (course.accessible ? btnLabel : lcCourse.premiumShort || "Premium") +
     ": " +
     titleText +
-    (subLine ? ", " + subLine : "");
+    (subLine ? ", " + subLine : "") +
+    (progressLine ? ", " + progressLine : "");
 
   const a = document.createElement("a");
   a.href = "course.html?lang=" + encodeURIComponent(lang);
@@ -2986,40 +3041,30 @@ async function loadDashboardCourses() {
       .filter(Boolean)
   );
   const isPremium = me.is_premium === true;
-  const list = [
-    {
-      id: 1,
-      lang_code: "uk",
-      title: "Ucraniano",
-      cefr_level: "A1",
-      lesson_count: 0,
-      accessible: isPremium || chosen.has("uk"),
-    },
-    {
-      id: 2,
-      lang_code: "en",
-      title: "Inglés",
-      cefr_level: "A1",
-      lesson_count: 0,
-      accessible: isPremium || chosen.has("en"),
-    },
-    {
-      id: 3,
-      lang_code: "fr",
-      title: "Francés",
-      cefr_level: "A1",
-      lesson_count: 0,
-      accessible: isPremium || chosen.has("fr"),
-    },
-    {
-      id: 4,
-      lang_code: "es",
-      title: "Español",
-      cefr_level: "A1",
-      lesson_count: 0,
-      accessible: isPremium || chosen.has("es"),
-    },
-  ];
+  let list = [];
+  try {
+    const res = await fetch(apiUrl("/api/catalog/courses"), {
+      headers: apiHeaders() || { Authorization: "Bearer " + auth.token },
+    });
+    if (res.ok) {
+      const rows = await res.json().catch(function () {
+        return [];
+      });
+      list = Array.isArray(rows) ? rows : [];
+    }
+  } catch (e) {
+    console.warn("loadDashboardCourses /api/catalog/courses", e);
+  }
+
+  if (list.length === 0) {
+    misRow.innerHTML =
+      '<div class="col-12"><p class="text-muted mb-0">' +
+      (d.catalogFetchError || "No se pudo cargar el catálogo de cursos.") +
+      "</p></div>";
+    if (otrosSection) otrosSection.style.display = "none";
+    return;
+  }
+
   const misCourses = list.filter(function (c) {
     return c && chosen.has(String(c.lang_code || "").toLowerCase().trim());
   });
@@ -4317,10 +4362,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadDashboardCourses();
     initDashboardPremiumCta();
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible") void loadMyProgress();
+      if (document.visibilityState === "visible") {
+        void loadMyProgress();
+        void loadDashboardCourses();
+      }
     });
     window.addEventListener("pageshow", function () {
       void loadMyProgress();
+      void loadDashboardCourses();
     });
     window.addEventListener("focus", function () {
       void loadMyProgress();
