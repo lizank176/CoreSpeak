@@ -4528,11 +4528,14 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
           const ok = !!data.is_correct;
           feedback.className = "small mt-2 fw-semibold " + (ok ? "text-success" : "text-danger");
           let msg = data.feedback || (ok ? lc.exerciseCorrect : lc.exerciseWrong);
-          if (ok && data.xp_awarded > 0 && lc.exerciseXpEarned) {
+          if (ok && data.xp_awarded > 0 && lc.exerciseXpEarned && !data.repeat_submission) {
             msg = (lc.exerciseCorrect || "Correcto") + " " + lc.exerciseXpEarned.replace("{n}", String(data.xp_awarded));
             if (data.streak_message) msg += " " + data.streak_message;
-          } else if (ok && data.repeat_submission) {
-            msg = lc.exerciseAlreadyDone || data.feedback || msg;
+          } else if (data.streak_message && !data.feedback) {
+            msg = (ok ? lc.exerciseCorrect : lc.exerciseWrong) + " " + data.streak_message;
+          }
+          if (ok && data.repeat_submission) {
+            msg = data.feedback || lc.exerciseAlreadyDone || msg;
           }
           feedback.textContent = msg;
           if (data.xp_total != null || data.streak_days != null) {

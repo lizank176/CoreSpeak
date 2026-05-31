@@ -27,7 +27,7 @@ from app.schemas import (
 from app.security import create_password_reset_token
 from app.services.enrollment_service import sync_user_enrollments
 from app.services.exercise_validation import validate_catalog_block_answer
-from app.services.progress_service import apply_xp_and_streak
+from app.services.progress_service import award_xp, update_daily_streak
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 catalog_router = APIRouter(prefix="/api/catalog", tags=["catalog"])
@@ -255,6 +255,10 @@ def submit_lesson_exercise(
         selected=payload.selected,
     )
 
+    has_answer = bool((payload.answer or "").strip()) or bool(payload.selected)
+    if not has_answer:
+        raise HTTPException(status_code=422, detail="Indica una respuesta antes de comprobar.")
+
     prior = session.exec(
         select(LessonExerciseCompletion).where(
             LessonExerciseCompletion.user_id == user.id,
@@ -263,30 +267,31 @@ def submit_lesson_exercise(
         )
     ).first()
 
+    streak_message = update_daily_streak(user)
+    session.add(user)
+
     if prior and prior.xp_awarded > 0:
+        session.commit()
+        session.refresh(user)
         feedback = "Correcto" if is_correct else "Incorrecto"
         if is_correct:
             feedback = "Ya habias completado este ejercicio. No se suma XP extra."
+        else:
+            feedback = f"{feedback} {streak_message}"
         return LessonExerciseResultResponse(
             is_correct=is_correct,
             xp_awarded=0,
             xp_total=int(user.xp_total or 0),
             streak_days=int(user.streak_days or 0),
-            streak_message=None,
+            streak_message=streak_message,
             repeat_submission=True,
             feedback=feedback,
         )
 
     xp_awarded = 0
-    streak_message: str | None = None
     if is_correct:
         points = _exercise_points(lesson.content_json if isinstance(lesson.content_json, dict) else {}, idx)
-        xp_awarded, streak_message = apply_xp_and_streak(
-            user,
-            xp_amount=points,
-            activity_score=1.0,
-            count_streak=True,
-        )
+        xp_awarded = award_xp(user, points)
         session.add(
             LessonExerciseCompletion(
                 user_id=int(user.id or 0),
@@ -327,11 +332,9 @@ def submit_lesson_exercise(
     session.refresh(user)
 
     if is_correct:
-        feedback = f"Correcto. +{xp_awarded} XP."
-        if streak_message:
-            feedback = f"{feedback} {streak_message}"
+        feedback = f"Correcto. +{xp_awarded} XP. {streak_message}"
     else:
-        feedback = "Incorrecto. Intentalo de nuevo."
+        feedback = f"Incorrecto. Intentalo de nuevo. {streak_message}"
 
     return LessonExerciseResultResponse(
         is_correct=is_correct,
