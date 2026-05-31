@@ -40,6 +40,26 @@
       border: 1px solid #dee2e6;
       background: #fff;
     }
+    .lesson-admin-msg {
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .lesson-admin-msg--err {
+      border-width: 2px;
+      border-left-width: 5px;
+      font-weight: 500;
+      box-shadow: 0 4px 14px rgba(220, 53, 69, 0.15);
+    }
+    .lesson-admin-msg--err strong {
+      font-size: 1rem;
+    }
+    .lesson-admin-msg--err ul {
+      margin-bottom: 0;
+    }
+    .lesson-admin-msg--ok,
+    .lesson-admin-msg--info {
+      border-width: 1px;
+    }
   </style>
 </head>
 <body data-corespeak-float-chat="off">
@@ -180,11 +200,11 @@
               <h3 class="h6 mb-3">Módulo multimedia</h3>
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="form-label">Vídeo (YouTube/Vimeo URL)</label>
-                  <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
+                  <label class="form-label">Vídeo (enlace de YouTube o vídeo)</label>
+                  <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=... o enlace de vídeo">
                   <div class="small text-muted mt-1">Se guarda como URL en base de datos.</div>
                   <div id="video-preview-wrap" class="mt-2 d-none">
-                    <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Video preview"></iframe>
+                    <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Vista previa del vídeo"></iframe>
                   </div>
                 </div>
 
@@ -224,7 +244,7 @@
                 <button id="btn-validate" type="button" class="btn btn-outline-secondary">Validar</button>
                 <button id="btn-save-lesson" type="button" class="btn btn-success">Guardar lección</button>
               </div>
-              <p id="lesson-msg" class="small mt-2 mb-0 text-muted"></p>
+              <div id="lesson-msg" class="lesson-admin-msg mt-3 mb-0 d-none" aria-live="polite"></div>
             </div>
           </section>
         </div>
@@ -256,11 +276,44 @@
   <script>
     (function () {
       function el(id) { return document.getElementById(id); }
-      function setMsg(text, variant) {
+      function setMsg(text, variant, title) {
         const msg = el("lesson-msg");
-        msg.textContent = text || "";
-        const tone = variant === "ok" ? "text-success" : variant === "info" ? "text-primary" : "text-danger";
-        msg.className = "small mt-2 mb-0 " + tone;
+        if (!msg) return;
+        const items = Array.isArray(text) ? text.filter(Boolean) : (text ? [String(text)] : []);
+        msg.textContent = "";
+        msg.innerHTML = "";
+        msg.removeAttribute("role");
+
+        if (!items.length) {
+          msg.className = "lesson-admin-msg mt-3 mb-0 d-none";
+          msg.setAttribute("aria-live", "polite");
+          return;
+        }
+
+        if (variant === "err") {
+          const heading = title || "Revisa estos puntos antes de continuar";
+          msg.className = "lesson-admin-msg lesson-admin-msg--err alert alert-danger mt-3 mb-0";
+          msg.setAttribute("role", "alert");
+          msg.setAttribute("aria-live", "assertive");
+          if (items.length === 1) {
+            msg.innerHTML =
+              "<strong class=\"d-block mb-1\">" + escapeHtml(heading) + "</strong>" +
+              "<span>" + escapeHtml(items[0]) + "</span>";
+          } else {
+            msg.innerHTML =
+              "<strong class=\"d-block mb-2\">" + escapeHtml(heading) + "</strong>" +
+              "<ul class=\"mb-0 ps-3\">" +
+              items.map(function (item) { return "<li>" + escapeHtml(item) + "</li>"; }).join("") +
+              "</ul>";
+          }
+          msg.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          return;
+        }
+
+        const alertClass = variant === "ok" ? "alert alert-success lesson-admin-msg--ok" : "alert alert-info lesson-admin-msg--info";
+        msg.className = "lesson-admin-msg mt-3 mb-0 " + alertClass;
+        msg.setAttribute("aria-live", "polite");
+        msg.textContent = items.join(" ");
       }
       function escapeHtml(str) {
         return String(str || "").replace(/[&<>"']/g, function (ch) {
@@ -751,7 +804,7 @@
           issues.unshift("El título de la lección es obligatorio.");
         }
         if (issues.length > 0) {
-          setMsg("No se puede guardar: " + issues.join(" "), "err");
+          setMsg(issues, "err", "No se puede guardar la lección");
           return;
         }
         const payload = buildLessonPayload();
@@ -918,7 +971,7 @@
         el("btn-validate").addEventListener("click", function () {
           const issues = validateExercises();
           if (issues.length) {
-            setMsg("Validación fallida: " + issues.join(" "), "err");
+            setMsg(issues, "err", "Validación fallida");
             return;
           }
           setMsg("Validación OK. Todo listo para guardar.", "ok");
