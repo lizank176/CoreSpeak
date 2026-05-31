@@ -860,6 +860,8 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionActiveUntil: "Premium activo hasta {date}.",
       subscriptionCancelScheduled: "Baja programada. Premium activo hasta {date}. No se te volverá a cobrar.",
       cancelSubscriptionBtn: "Darme de baja (no volver a cobrar)",
+      subscriptionNoBilling:
+        "Tu Premium no tiene suscripción de pago asociada. Si necesitas ayuda, contacta con soporte.",
       accountTitle: "Cuenta",
       accountSub: "Gestiona tu cuenta y privacidad",
       changePassword: "Cambiar contraseña",
@@ -1035,6 +1037,8 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionActiveUntil: "Premium active until {date}.",
       subscriptionCancelScheduled: "Cancellation scheduled. Premium until {date}. You will not be charged again.",
       cancelSubscriptionBtn: "Cancel subscription (stop billing)",
+      subscriptionNoBilling:
+        "Your Premium has no linked paid subscription. Contact support if you need help.",
       accountTitle: "Account",
       accountSub: "Manage your account and privacy",
       changePassword: "Change password",
@@ -1209,6 +1213,8 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionActiveUntil: "Premium actif jusqu’au {date}.",
       subscriptionCancelScheduled: "Résiliation programmée. Premium jusqu’au {date}. Aucun prélèvement futur.",
       cancelSubscriptionBtn: "Se désabonner (arrêter les paiements)",
+      subscriptionNoBilling:
+        "Votre Premium n’a pas d’abonnement payant associé. Contactez le support si besoin.",
       accountTitle: "Compte",
       accountSub: "Compte et confidentialité",
       changePassword: "Changer le mot de passe",
@@ -1382,6 +1388,8 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionActiveUntil: "Premium aktiv bis {date}.",
       subscriptionCancelScheduled: "Kündigung geplant. Premium bis {date}. Keine weiteren Abbuchungen.",
       cancelSubscriptionBtn: "Abo kündigen (keine weiteren Zahlungen)",
+      subscriptionNoBilling:
+        "Dein Premium hat kein verknüpftes Zahlungsabo. Kontaktiere den Support bei Bedarf.",
       accountTitle: "Konto",
       accountSub: "Konto und Datenschutz",
       changePassword: "Passwort ändern",
@@ -1555,6 +1563,8 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionActiveUntil: "Premium активний до {date}.",
       subscriptionCancelScheduled: "Скасування заплановано. Premium до {date}. Платежі більше не стягуватимуться.",
       cancelSubscriptionBtn: "Скасувати підписку (без нових платежів)",
+      subscriptionNoBilling:
+        "У вашому Premium немає пов’язаної платної підписки. Зверніться до підтримки за потреби.",
       accountTitle: "Обліковий запис",
       accountSub: "Обліковий запис і конфіденційність",
       changePassword: "Змінити пароль",
@@ -3311,13 +3321,14 @@ function _formatConfigDate(iso) {
 }
 
 async function initConfigSubscription() {
-  const card = document.getElementById("config-subscription-card");
+  const wrap = document.getElementById("config-subscription-wrap");
   const statusEl = document.getElementById("config-subscription-status");
   const cancelBtn = document.getElementById("config-cancel-subscription-btn");
+  const noteEl = document.getElementById("config-subscription-note");
   const msg = document.getElementById("config-account-msg");
   const modalEl = document.getElementById("config-cancel-subscription-modal");
   const confirmBtn = document.getElementById("config-cancel-subscription-confirm");
-  if (!card || !statusEl || !cancelBtn) return;
+  if (!wrap || !statusEl || !cancelBtn) return;
 
   const cfg = _configUiStrings();
 
@@ -3341,14 +3352,32 @@ async function initConfigSubscription() {
   } catch (e) {
     return;
   }
-  if (!subData || !subData.subscription_id) return;
+  if (!subData) return;
 
-  card.classList.remove("d-none");
+  const isPremium = !!subData.is_premium;
+  const hasBilling = !!(subData.subscription_id || subData.customer_id);
+  if (!isPremium && !hasBilling) return;
+
+  wrap.classList.remove("d-none");
+
+  if (noteEl) noteEl.classList.add("d-none");
+  cancelBtn.classList.remove("d-none");
+
   const until = _formatConfigDate(subData.expiry_date);
   if (subData.cancel_at_period_end || subData.subscription_status === "cancel_at_period_end") {
     const tpl = cfg.subscriptionCancelScheduled || "Baja programada. Premium activo hasta {date}.";
     statusEl.textContent = tpl.replace("{date}", until || "—");
     cancelBtn.classList.add("d-none");
+  } else if (!subData.subscription_id) {
+    statusEl.textContent = cfg.subscriptionActive || "Premium activo.";
+    cancelBtn.classList.add("d-none");
+    if (noteEl) {
+      noteEl.textContent =
+        cfg.subscriptionNoBilling ||
+        "Tu Premium no tiene suscripción de pago asociada. Si necesitas ayuda, contacta con soporte.";
+      noteEl.classList.remove("d-none");
+    }
+    return;
   } else if (until) {
     const tpl = cfg.subscriptionActiveUntil || "Premium activo hasta {date}.";
     statusEl.textContent = tpl.replace("{date}", until);
@@ -4176,7 +4205,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (document.getElementById("config-change-password-btn")) {
     initConfigPasswordChange();
   }
-  if (document.getElementById("config-subscription-card")) {
+  if (document.getElementById("config-subscription-wrap")) {
     void initConfigSubscription();
   }
   if (document.getElementById("config-delete-account-btn")) {

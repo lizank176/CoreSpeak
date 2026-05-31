@@ -18,31 +18,76 @@ from app.services.enrollment_service import sync_user_enrollments
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 
+def _resolve_stripe_subscription_id(session: Session, user: AppUser) -> str | None:
+    """Obtiene subscription_id de BD o, si falta, la suscripción activa del cliente en Stripe."""
+    existing = str(user.subscription_id or "").strip()
+    if existing:
+        return existing
+    customer_id = str(user.customer_id or "").strip()
+    if not customer_id or not settings.stripe_secret_key:
+        return None
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        listed = stripe.Subscription.list(customer=customer_id, status="all", limit=20)
+        items = listed.get("data") if hasattr(listed, "get") else getattr(listed, "data", [])
+        best_id: str | None = None
+        for raw in items or []:
+            sub_data = _stripe_to_plain_dict(raw)
+            status = str(sub_data.get("status") or "").lower()
+            sid = str(sub_data.get("id") or "").strip()
+            if not sid:
+                continue
+            if status in {"active", "trialing", "past_due"}:
+                best_id = sid
+                break
+            if status == "canceled" and sub_data.get("cancel_at_period_end"):
+                best_id = sid
+        if best_id:
+            user.subscription_id = best_id
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return best_id
+    except Exception:
+        return None
+    return None
+
+
+def _stripe_subscription_snapshot(user: AppUser) -> dict:
+    sub_id = str(user.subscription_id or "").strip()
+    if not sub_id or not settings.stripe_secret_key:
+        return {}
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        return _stripe_to_plain_dict(stripe.Subscription.retrieve(sub_id))
+    except Exception:
+        return {}
+
+
 @router.get("/pricing", response_model=PricingResponse)
 def pricing() -> PricingResponse:
     return PricingResponse(**billing_pricing_payload())
 
 
 @router.get("/subscription-status", response_model=SubscriptionStatusResponse)
-def subscription_status(user: AppUser = Depends(get_current_user)) -> SubscriptionStatusResponse:
+def subscription_status(
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> SubscriptionStatusResponse:
+    _resolve_stripe_subscription_id(session, user)
     status_value = user.subscription_status or "inactive"
     if user.is_premium and status_value == "inactive":
         status_value = "active"
     cancel_at_period_end = status_value in {"cancel_at_period_end", "canceled"}
     expiry_date = user.expiry_date
-    if user.subscription_id and settings.stripe_secret_key and status_value in {"active", "cancel_at_period_end"}:
-        try:
-            stripe.api_key = settings.stripe_secret_key
-            sub = stripe.Subscription.retrieve(user.subscription_id)
-            sub_data = _stripe_to_plain_dict(sub)
-            cancel_at_period_end = bool(sub_data.get("cancel_at_period_end"))
-            if cancel_at_period_end:
-                status_value = "cancel_at_period_end"
-            period_end = sub_data.get("current_period_end")
-            if period_end:
-                expiry_date = datetime.utcfromtimestamp(int(period_end))
-        except Exception:
-            pass
+    sub_data = _stripe_subscription_snapshot(user)
+    if sub_data:
+        cancel_at_period_end = bool(sub_data.get("cancel_at_period_end"))
+        if cancel_at_period_end:
+            status_value = "cancel_at_period_end"
+        period_end = sub_data.get("current_period_end")
+        if period_end:
+            expiry_date = datetime.utcfromtimestamp(int(period_end))
     return SubscriptionStatusResponse(
         is_premium=user.is_premium,
         subscription_status=status_value,
@@ -59,7 +104,8 @@ def cancel_subscription(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CancelSubscriptionResponse:
-    if not user.subscription_id:
+    subscription_id = _resolve_stripe_subscription_id(session, user)
+    if not subscription_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No tienes una suscripción de pago activa. Si Premium te lo concedió un administrador, contacta con soporte.",
@@ -72,7 +118,7 @@ def cancel_subscription(
 
     stripe.api_key = settings.stripe_secret_key
     try:
-        sub = stripe.Subscription.modify(user.subscription_id, cancel_at_period_end=True)
+        sub = stripe.Subscription.modify(subscription_id, cancel_at_period_end=True)
         sub_data = _stripe_to_plain_dict(sub)
     except Exception as exc:
         raise HTTPException(
@@ -86,6 +132,7 @@ def cancel_subscription(
         access_until = datetime.utcfromtimestamp(int(period_end))
         user.expiry_date = access_until
     user.subscription_status = "cancel_at_period_end"
+    user.subscription_id = subscription_id
     session.add(user)
     session.commit()
 
