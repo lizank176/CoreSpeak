@@ -4267,7 +4267,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Si es course.html, carga el catálogo editorial (/api/catalog) por idioma.
   if (document.getElementById("course-lessons-list")) {
-    loadDynamicCoursePage();
+    void loadDynamicCoursePage();
+    window.addEventListener("pageshow", function (ev) {
+      if (ev.persisted || sessionStorage.getItem("corespeak_course_refresh") === "1") {
+        try {
+          sessionStorage.removeItem("corespeak_course_refresh");
+        } catch (e) {
+          /* ignore */
+        }
+        void loadDynamicCoursePage();
+      }
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") void loadDynamicCoursePage();
+    });
   }
 
   // Si es lesson.html, carga apartados por lección.
@@ -4978,6 +4991,11 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
           if (data.xp_total != null || data.streak_days != null) {
             applyProgressStatsToDom(data.xp_total, data.streak_days);
           }
+          try {
+            sessionStorage.setItem("corespeak_course_refresh", "1");
+          } catch (e) {
+            /* ignore */
+          }
           if (ok && !data.repeat_submission) {
             btn.disabled = true;
             if (inputEl) inputEl.disabled = true;
@@ -5018,6 +5036,20 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     card.appendChild(body);
     container.appendChild(card);
   });
+}
+
+function computeCourseLevelProgress(lessons, userLevel) {
+  const ul = String(userLevel || "A1").toUpperCase().trim();
+  const rows = Array.isArray(lessons) ? lessons : [];
+  let scoped = rows.filter(function (le) {
+    return String(le && le.cefr_level || "A1").toUpperCase().trim() === ul;
+  });
+  if (scoped.length === 0) scoped = rows;
+  const total = scoped.length;
+  const done = scoped.filter(function (le) {
+    return !!(le && le.is_completed);
+  }).length;
+  return { done: done, total: total, level: ul };
 }
 
 async function loadDynamicCoursePage() {
@@ -5095,6 +5127,9 @@ async function loadDynamicCoursePage() {
 
   let totalLessons = 0;
   let openLessons = 0;
+  let progressDone = 0;
+  let progressTotal = 0;
+  let progressLevel = "A1";
   const accessible = list.filter((c) => c && c.accessible);
   const lessonResults = await Promise.all(
     accessible.map(async function (c) {
@@ -5113,25 +5148,33 @@ async function loadDynamicCoursePage() {
   list.forEach(function (c) {
     if (!c || !c.accessible) return;
     const les = lessonsByCourseId[c.id] || [];
+    const userLevel = (c.user_cefr_level || c.cefr_level || "A1").toString().toUpperCase().trim();
+    const levelProgress = computeCourseLevelProgress(les, userLevel);
+    if (list.length === 1 || progressTotal === 0) {
+      progressDone = levelProgress.done;
+      progressTotal = levelProgress.total;
+      progressLevel = levelProgress.level;
+    } else {
+      progressDone += levelProgress.done;
+      progressTotal += levelProgress.total;
+    }
     totalLessons += les.length;
     les.forEach(function (le) {
       if (le && le.accessible) openLessons += 1;
     });
   });
 
-  const level =
-    list.length === 1 && list[0].cefr_level
-      ? String(list[0].cefr_level).toUpperCase()
-      : "—";
+  const level = progressLevel || "A1";
 
   const progressTextEl = document.getElementById("course-progress-text");
   if (progressTextEl) {
-    progressTextEl.textContent = lc.progressCompleted(0, Math.max(totalLessons, 0), level);
+    progressTextEl.textContent = lc.progressCompleted(progressDone, Math.max(progressTotal, 0), level);
   }
 
   const progressWrap = document.querySelector(".course-intro .progress");
   const progressBarEl = document.getElementById("course-progress-bar");
-  const pct = totalLessons > 0 ? 5 : 0;
+  const pct =
+    progressTotal > 0 ? Math.min(100, Math.round((progressDone / progressTotal) * 100)) : 0;
   if (progressBarEl) {
     progressBarEl.style.width = pct + "%";
   }
@@ -5203,16 +5246,32 @@ async function loadDynamicCoursePage() {
       return;
     }
 
-    const levelForLinks = (course.cefr_level || "B1").toString().toUpperCase().trim();
+    const levelForLinks = (course.user_cefr_level || course.cefr_level || "A1").toString().toUpperCase().trim();
 
     lessons.forEach(function (lesson) {
       const card = document.createElement("div");
       card.className = "card lesson-card mb-3";
 
       const isLocked = !lesson.accessible;
-      const iconClass = isLocked ? "icon-locked" : "icon-active";
+      const iconClass = isLocked ? "icon-locked" : lesson.is_completed ? "icon-completed" : "icon-active";
       const titleMuted = isLocked ? " text-muted" : "";
       const descMuted = isLocked ? " text-muted" : "";
+      const lessonLevel = (lesson.cefr_level || levelForLinks).toString().toUpperCase().trim();
+      const exDone = lesson.exercises_completed != null ? Number(lesson.exercises_completed) : 0;
+      const exTotal = lesson.exercises_total != null ? Number(lesson.exercises_total) : 0;
+      let progressHint = "";
+      if (lesson.is_completed) {
+        progressHint = '<span class="badge bg-success-subtle text-success ms-2">' + (lc.lessonCompleted || "Completada") + "</span>";
+      } else if (exTotal > 0 && exDone > 0) {
+        progressHint =
+          '<span class="small text-muted ms-2">' +
+          exDone +
+          "/" +
+          exTotal +
+          " " +
+          (lc.exercisesHeading || "ejercicios") +
+          "</span>";
+      }
 
       const rightAction = isLocked
         ? '<span class="badge-locked">' + lc.locked + "</span>"
@@ -5224,13 +5283,13 @@ async function loadDynamicCoursePage() {
             "&course_id=" +
             encodeURIComponent(String(course.id)) +
             "&level=" +
-            encodeURIComponent(levelForLinks) +
+            encodeURIComponent(lessonLevel) +
             '">' +
             '<button type="button" class="btn btn-primary-gradient">' +
             '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill me-1" viewBox="0 0 16 16">' +
             '<path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>' +
             "</svg>" +
-            lc.start +
+            (lesson.is_completed ? (lc.review || lc.start) : lc.start) +
             "</button></a>"
           );
 
@@ -5242,17 +5301,25 @@ async function loadDynamicCoursePage() {
         '">' +
         (isLocked
           ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-lock-fill" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2"/></svg>'
-          : '<div class="inner-circle"></div>') +
+          : lesson.is_completed
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-check-lg" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>'
+            : '<div class="inner-circle"></div>') +
         "</div>" +
         '<div class="ms-3">' +
-        '<h6 class="lesson-title' +
+        '<div class="d-flex align-items-center flex-wrap gap-1">' +
+        '<h6 class="lesson-title mb-0' +
         titleMuted +
         '">' +
         (lesson.title || "—") +
         "</h6>" +
+        '<span class="badge bg-light text-primary border">' +
+        lessonLevel +
+        "</span>" +
+        progressHint +
+        "</div>" +
         '<p class="lesson-desc' +
         descMuted +
-        '">' +
+        ' mb-0 mt-1">' +
         (lesson.description || "") +
         "</p>" +
         "</div>" +

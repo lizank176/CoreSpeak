@@ -177,6 +177,11 @@ body {
     opacity: 0.7;
 }
 
+/* Icono completado */
+.icon-completed {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
 /* Botón Comenzar (Degradado) */
 .btn-primary-gradient {
     background: linear-gradient(90deg, #a855f7, #06b6d4); /* Morado a Cyan */

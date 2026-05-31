@@ -9,7 +9,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 
-from app.cefr import normalize_cefr_level
+from app.cefr import CEFR_SEQUENCE, normalize_cefr_level
 from app.config import settings
 from app.constants import PRIMARY_COURSE_CODE
 from app.interest_catalog import interest_options_public_payload
@@ -576,6 +576,31 @@ def _lesson_accessible_for_user(lesson: Lesson, user: AppUser) -> bool:
     return user.is_premium or not lesson.is_premium
 
 
+def _user_cefr_level(user: AppUser, lang_code: str | None = None) -> str:
+    raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
+    code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
+    if lang_code:
+        alt = raw_levels.get(lang_code.lower().strip())
+        if alt:
+            code = alt
+    return normalize_cefr_level(str(code) if code else "A1")
+
+
+def _cefr_index(level_code: str) -> int:
+    level = normalize_cefr_level(level_code)
+    try:
+        return CEFR_SEQUENCE.index(level)
+    except ValueError:
+        return 0
+
+
+def _lesson_sort_key(level_code: str, user_level: str, lesson_id: int, title: str) -> tuple[int, int, str, int]:
+    ul = normalize_cefr_level(user_level)
+    lc = normalize_cefr_level(level_code)
+    tier = 0 if lc == ul else 1
+    return (tier, _cefr_index(lc), (title or "").lower(), lesson_id or 0)
+
+
 @catalog_router.get("/courses")
 def catalog_courses(
     lang: str | None = Query(default=None),
@@ -596,18 +621,15 @@ def catalog_courses(
         if not course.id:
             continue
         lessons = session.exec(select(Lesson).where(Lesson.course_id == course.id, Lesson.is_published == True)).all()  # noqa: E712
-        level = session.exec(
-            select(CourseLevel)
-            .where(CourseLevel.course_id == course.id)
-            .order_by(CourseLevel.position.asc())
-        ).first()
+        user_level = _user_cefr_level(user, course.language_code)
         has_premium = any(lesson.is_premium for lesson in lessons)
         output.append(
             {
                 "id": course.id,
                 "lang_code": course.language_code,
                 "title": course.language_name,
-                "cefr_level": level.level_code if level else "A1",
+                "cefr_level": user_level,
+                "user_cefr_level": user_level,
                 "lesson_count": len(lessons),
                 "is_premium": has_premium,
                 "accessible": user.is_premium or course.language_code.lower() in chosen_codes,
@@ -633,13 +655,43 @@ def catalog_course_lessons(
     if not user.is_premium and course.language_code.lower() not in chosen_codes:
         raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
 
+    user_level = _user_cefr_level(user, course.language_code)
+    levels_by_id = {
+        lvl.id: lvl
+        for lvl in session.exec(select(CourseLevel).where(CourseLevel.course_id == course_id)).all()
+    }
     lessons = session.exec(
-        select(Lesson)
-        .where(Lesson.course_id == course_id, Lesson.is_published == True)  # noqa: E712
-        .order_by(Lesson.id.asc())
+        select(Lesson).where(Lesson.course_id == course_id, Lesson.is_published == True)  # noqa: E712
     ).all()
+    lesson_ids = [lesson.id for lesson in lessons if lesson.id]
+    completed_lesson_ids: set[int] = set()
+    exercise_counts: dict[int, int] = {}
+    if lesson_ids:
+        attempts = session.exec(
+            select(LessonAttempt).where(
+                LessonAttempt.user_id == user.id,
+                LessonAttempt.lesson_id.in_(lesson_ids),
+            )
+        ).all()
+        completed_lesson_ids = {int(a.lesson_id) for a in attempts if a.lesson_id is not None}
+        completions = session.exec(
+            select(LessonExerciseCompletion).where(
+                LessonExerciseCompletion.user_id == user.id,
+                LessonExerciseCompletion.lesson_id.in_(lesson_ids),
+            )
+        ).all()
+        for row in completions:
+            if row.lesson_id is None:
+                continue
+            lid = int(row.lesson_id)
+            exercise_counts[lid] = exercise_counts.get(lid, 0) + 1
+
     rows: list[dict[str, Any]] = []
     for lesson in lessons:
+        level = levels_by_id.get(lesson.level_id)
+        level_code = normalize_cefr_level(level.level_code if level else "A1")
+        exercises_total = len(_lesson_blocks_for_user(lesson))
+        exercises_completed = exercise_counts.get(int(lesson.id or 0), 0)
         rows.append(
             {
                 "id": lesson.id,
@@ -647,8 +699,20 @@ def catalog_course_lessons(
                 "description": lesson.description,
                 "accessible": _lesson_accessible_for_user(lesson, user),
                 "is_premium": lesson.is_premium,
+                "cefr_level": level_code,
+                "is_completed": int(lesson.id or 0) in completed_lesson_ids,
+                "exercises_completed": exercises_completed,
+                "exercises_total": exercises_total,
             }
         )
+    rows.sort(
+        key=lambda row: _lesson_sort_key(
+            str(row.get("cefr_level") or "A1"),
+            user_level,
+            int(row.get("id") or 0),
+            str(row.get("title") or ""),
+        )
+    )
     return rows
 
 
