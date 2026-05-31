@@ -83,7 +83,10 @@
   <div class="flex min-h-screen w-full min-w-0">
     <aside id="challenge-history-sidebar" class="flex shrink-0 flex-col border-r border-white/10 bg-slate-950/95 backdrop-blur-md lg:relative lg:translate-x-0" aria-label="Historial de retos">
       <div class="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-3">
-        <a href="dashboard.html" class="text-xs text-sky-300 hover:text-sky-200" aria-label="Volver al panel">← Panel</a>
+        <a href="dashboard.html" class="inline-flex items-center gap-1.5 text-xs text-sky-300 hover:text-sky-200" aria-label="Volver al panel">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></svg>
+          <span>Volver</span>
+        </a>
         <button type="button" id="history-sidebar-close" class="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/5 lg:hidden" aria-label="Cerrar historial">✕</button>
       </div>
       <div class="px-3 py-3">
@@ -114,7 +117,10 @@
             <div class="truncate text-xs text-slate-300"><span id="lang-label">—</span> · <span id="xp-label">0</span> XP</div>
           </div>
         </div>
-        <a href="dashboard.html" class="ml-auto shrink-0 text-xs text-sky-300 hover:text-sky-200 sm:ml-0" aria-label="Volver al panel principal">Panel →</a>
+        <a href="dashboard.html" class="ml-auto inline-flex shrink-0 items-center gap-1.5 text-xs text-sky-300 hover:text-sky-200 sm:ml-0" aria-label="Volver al panel">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></svg>
+          <span>Volver</span>
+        </a>
       </div>
       <span id="xp-progress-label" class="sr-only">Progreso hacia el siguiente nivel CEFR</span>
       <div class="h-2 overflow-hidden rounded-full bg-slate-800" role="presentation">
