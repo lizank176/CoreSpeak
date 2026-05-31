@@ -4755,9 +4755,12 @@ async function loadLessonPage() {
   const lessonIdRaw = (params.get("lesson_id") || "").trim();
 
   const backLink = document.getElementById("lesson-back-link");
+  const backLabel = document.getElementById("lesson-back-label");
   if (backLink) {
-    backLink.textContent = lc.back;
     backLink.setAttribute("href", "course.html?lang=" + encodeURIComponent(lang));
+  }
+  if (backLabel) {
+    backLabel.textContent = lc.back;
   }
   const adminWrap = document.getElementById("lesson-admin-actions");
   const adminMsg = document.getElementById("lesson-admin-msg");
