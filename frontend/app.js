@@ -2516,6 +2516,25 @@ function readProgressSnapshot() {
   }
 }
 
+async function recordLearningActivity(auth) {
+  if (!auth || !auth.token) return null;
+  try {
+    const res = await fetch(apiUrl("/api/users/me/activity"), {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + auth.token,
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
+    if (!res.ok) return null;
+    return await res.json().catch(function () { return null; });
+  } catch (e) {
+    console.warn("recordLearningActivity", e);
+    return null;
+  }
+}
+
 async function loadMyProgress() {
   const auth = requireAuth();
   if (!auth) return;
@@ -2577,6 +2596,13 @@ async function loadMyProgress() {
   const xpFromProgress = p != null ? _coerceCount(p.total_xp) : null;
   const xpFromMe = meAuth != null ? _coerceCount(meAuth.xp_total) : null;
   let xpNum = xpFromProgress != null ? xpFromProgress : xpFromMe != null ? xpFromMe : 0;
+
+  if (meAuth) {
+    const meStreak = _coerceCount(meAuth.streak_days);
+    const meXp = _coerceCount(meAuth.xp_total);
+    if (meStreak != null) streakNum = meStreak;
+    if (meXp != null) xpNum = meXp;
+  }
 
   const snap = readProgressSnapshot();
   if (snap) {
@@ -4548,6 +4574,10 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
       btn.disabled = true;
 
       if (lessonId && auth && auth.token) {
+        const activity = await recordLearningActivity(auth);
+        if (activity) {
+          applyProgressStatsToDom(activity.xp_total, activity.streak_days);
+        }
         try {
           const body = inputEl
             ? { exercise_index: idx, answer: userVal }

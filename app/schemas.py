@@ -199,6 +199,12 @@ class LessonExerciseResultResponse(BaseModel):
     feedback: str
 
 
+class LearningActivityResponse(BaseModel):
+    streak_days: int
+    xp_total: int
+    streak_message: str
+
+
 class TutorChatMessage(BaseModel):
     role: str = Field(min_length=1, max_length=20)
     content: str = Field(min_length=1, max_length=4000)

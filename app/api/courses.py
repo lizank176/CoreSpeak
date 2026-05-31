@@ -22,6 +22,7 @@ from app.schemas import (
     ExtraLanguagesRequest,
     LessonExerciseResultResponse,
     LessonExerciseSubmitRequest,
+    LearningActivityResponse,
     OnboardingSaveRequest,
 )
 from app.security import create_password_reset_token
@@ -219,6 +220,47 @@ def _lesson_blocks_for_user(lesson: Lesson) -> list[dict[str, Any]]:
     return _catalog_blocks_from_content(lesson.content_json if isinstance(lesson.content_json, dict) else {})
 
 
+def _commit_user_streak(user: AppUser, session: Session) -> str:
+    streak_message = update_daily_streak(user)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return streak_message
+
+
+def _safe_prior_completion(
+    session: Session,
+    user_id: int,
+    lesson_id: int,
+    exercise_index: int,
+) -> LessonExerciseCompletion | None:
+    try:
+        return session.exec(
+            select(LessonExerciseCompletion).where(
+                LessonExerciseCompletion.user_id == user_id,
+                LessonExerciseCompletion.lesson_id == lesson_id,
+                LessonExerciseCompletion.exercise_index == exercise_index,
+            )
+        ).first()
+    except Exception:
+        session.rollback()
+        return None
+
+
+@users_router.post("/me/activity", response_model=LearningActivityResponse)
+def record_learning_activity(
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> LearningActivityResponse:
+    """Marca actividad de aprendizaje hoy (actualiza racha). Independiente del XP."""
+    streak_message = _commit_user_streak(user, session)
+    return LearningActivityResponse(
+        streak_days=int(user.streak_days or 0),
+        xp_total=int(user.xp_total or 0),
+        streak_message=streak_message,
+    )
+
+
 @catalog_router.post("/lessons/{lesson_id}/exercises/submit", response_model=LessonExerciseResultResponse)
 def submit_lesson_exercise(
     lesson_id: int,
@@ -259,20 +301,11 @@ def submit_lesson_exercise(
     if not has_answer:
         raise HTTPException(status_code=422, detail="Indica una respuesta antes de comprobar.")
 
-    prior = session.exec(
-        select(LessonExerciseCompletion).where(
-            LessonExerciseCompletion.user_id == user.id,
-            LessonExerciseCompletion.lesson_id == lesson_id,
-            LessonExerciseCompletion.exercise_index == idx,
-        )
-    ).first()
+    streak_message = _commit_user_streak(user, session)
 
-    streak_message = update_daily_streak(user)
-    session.add(user)
+    prior = _safe_prior_completion(session, int(user.id or 0), lesson_id, idx)
 
     if prior and prior.xp_awarded > 0:
-        session.commit()
-        session.refresh(user)
         feedback = "Correcto" if is_correct else "Incorrecto"
         if is_correct:
             feedback = "Ya habias completado este ejercicio. No se suma XP extra."
@@ -292,44 +325,48 @@ def submit_lesson_exercise(
     if is_correct:
         points = _exercise_points(lesson.content_json if isinstance(lesson.content_json, dict) else {}, idx)
         xp_awarded = award_xp(user, points)
-        session.add(
-            LessonExerciseCompletion(
-                user_id=int(user.id or 0),
-                lesson_id=lesson_id,
-                exercise_index=idx,
-                xp_awarded=xp_awarded,
-            )
-        )
         session.add(user)
-        session.flush()
+        session.commit()
+        session.refresh(user)
+        try:
+            session.add(
+                LessonExerciseCompletion(
+                    user_id=int(user.id or 0),
+                    lesson_id=lesson_id,
+                    exercise_index=idx,
+                    xp_awarded=xp_awarded,
+                )
+            )
+            session.flush()
 
-        completed_indices = {
-            row.exercise_index
-            for row in session.exec(
-                select(LessonExerciseCompletion).where(
-                    LessonExerciseCompletion.user_id == user.id,
-                    LessonExerciseCompletion.lesson_id == lesson_id,
-                )
-            ).all()
-        }
-        if len(completed_indices) >= len(blocks) and blocks:
-            existing_attempt = session.exec(
-                select(LessonAttempt).where(
-                    LessonAttempt.user_id == user.id,
-                    LessonAttempt.lesson_id == lesson_id,
-                )
-            ).first()
-            if not existing_attempt:
-                session.add(
-                    LessonAttempt(
-                        user_id=int(user.id or 0),
-                        lesson_id=lesson_id,
-                        score=len(blocks),
+            completed_indices = {
+                row.exercise_index
+                for row in session.exec(
+                    select(LessonExerciseCompletion).where(
+                        LessonExerciseCompletion.user_id == user.id,
+                        LessonExerciseCompletion.lesson_id == lesson_id,
                     )
-                )
-
-    session.commit()
-    session.refresh(user)
+                ).all()
+            }
+            if len(completed_indices) >= len(blocks) and blocks:
+                existing_attempt = session.exec(
+                    select(LessonAttempt).where(
+                        LessonAttempt.user_id == user.id,
+                        LessonAttempt.lesson_id == lesson_id,
+                    )
+                ).first()
+                if not existing_attempt:
+                    session.add(
+                        LessonAttempt(
+                            user_id=int(user.id or 0),
+                            lesson_id=lesson_id,
+                            score=len(blocks),
+                        )
+                    )
+            session.commit()
+            session.refresh(user)
+        except Exception:
+            session.rollback()
 
     if is_correct:
         feedback = f"Correcto. +{xp_awarded} XP. {streak_message}"

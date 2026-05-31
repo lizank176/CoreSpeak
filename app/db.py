@@ -255,8 +255,48 @@ def ensure_lesson_exercise_completions_table() -> None:
         from app import models  # noqa: F401
 
         SQLModel.metadata.create_all(engine)
-    except Exception:
-        pass
+        inspector = sa_inspect(engine)
+        if "lesson_exercise_completions" in inspector.get_table_names():
+            logger.info("Tabla lesson_exercise_completions creada via metadata")
+            return
+        is_sqlite = engine.dialect.name == "sqlite"
+        with engine.connect() as conn:
+            if is_sqlite:
+                conn.execute(
+                    text(
+                        """
+                        CREATE TABLE IF NOT EXISTS lesson_exercise_completions (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            user_id INTEGER NOT NULL,
+                            lesson_id INTEGER NOT NULL,
+                            exercise_index INTEGER NOT NULL DEFAULT 0,
+                            xp_awarded INTEGER NOT NULL DEFAULT 0,
+                            completed_at DATETIME NOT NULL
+                        )
+                        """
+                    )
+                )
+            else:
+                conn.execute(
+                    text(
+                        """
+                        CREATE TABLE IF NOT EXISTS lesson_exercise_completions (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            user_id INT NOT NULL,
+                            lesson_id INT NOT NULL,
+                            exercise_index INT NOT NULL DEFAULT 0,
+                            xp_awarded INT NOT NULL DEFAULT 0,
+                            completed_at DATETIME NOT NULL,
+                            INDEX ix_lec_user (user_id),
+                            INDEX ix_lec_lesson (lesson_id)
+                        )
+                        """
+                    )
+                )
+            conn.commit()
+        logger.info("Tabla lesson_exercise_completions creada via SQL explícito")
+    except Exception as exc:
+        logger.warning("No se pudo asegurar lesson_exercise_completions: %s", exc)
 
 
 def seed_default_courses() -> None:
@@ -307,4 +347,3 @@ def seed_default_levels() -> None:
                     )
                 )
         session.commit()
-

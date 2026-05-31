@@ -78,6 +78,23 @@ def create_app() -> FastAPI:
     project_root = Path(__file__).resolve().parents[1]
     frontend_dir = project_root / "frontend"
 
+    @app.get("/api/health")
+    def api_health() -> dict[str, str]:
+        return {"status": "ok", "api": "ready", "build": "20260603q"}
+
+    if frontend_dir.exists():
+        app_js_path = frontend_dir / "app.js"
+
+        @app.get("/ui/app.js", include_in_schema=False)
+        def ui_app_js():
+            from fastapi.responses import FileResponse
+
+            return FileResponse(
+                str(app_js_path),
+                media_type="application/javascript",
+                headers={"Cache-Control": "no-cache, must-revalidate"},
+            )
+
     # La raíz abre la app web; monitores y Render deben usar /api/health.
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:
@@ -93,9 +110,6 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "no-store"},
         )
 
-    @app.get("/api/health")
-    def api_health() -> dict[str, str]:
-        return {"status": "ok", "api": "ready"}
     templates_dir = project_root / "templates"
     jinja_templates = Jinja2Templates(directory=str(templates_dir))
     app.include_router(auth_router)
