@@ -6,6 +6,10 @@
   const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+  const CORESPEAK_BRAND_LABEL = "CoreSpeak, plataforma para aprender idiomas";
+  const CORESPEAK_HOME_LABEL = "Ir al inicio de CoreSpeak";
+  const GENERIC_ALTS = new Set(["corespeak logo", "corespeak", "logo", "logo corespeak"]);
+
   function getFocusable(container) {
     if (!container) return [];
     return Array.from(container.querySelectorAll(FOCUSABLE)).filter((el) => {
@@ -107,45 +111,120 @@
     }
   }
 
-  const CORESPEAK_BRAND_LABEL = "CoreSpeak, plataforma para aprender idiomas";
+  function isBrandLogo(img) {
+    if (!(img instanceof HTMLImageElement)) return false;
+    if (img.classList.contains("dashboard-logo") || img.classList.contains("logo-img")) return true;
+    return /logo\.png/i.test(img.getAttribute("src") || "");
+  }
 
-  function initBrandedImages() {
-    document.querySelectorAll("img[alt='CoreSpeak Logo']").forEach(function (img) {
-      if (!(img instanceof HTMLImageElement)) return;
-      const link = img.closest("a");
-      if (link) {
-        if (!link.getAttribute("aria-label")) {
-          link.setAttribute("aria-label", "Ir al inicio de CoreSpeak");
-        }
+  function isDecorativeImage(img) {
+    if (!(img instanceof HTMLImageElement)) return true;
+    if (img.getAttribute("aria-hidden") === "true") return true;
+    if (img.classList.contains("password-eye-icon")) return true;
+    const alt = img.getAttribute("alt");
+    return alt === "";
+  }
+
+  function normalizeBrandImage(img) {
+    const link = img.closest("a");
+    if (link && !link.getAttribute("aria-label")) {
+      link.setAttribute("aria-label", CORESPEAK_HOME_LABEL);
+    }
+    const altRaw = (img.getAttribute("alt") || "").trim();
+    const altNorm = altRaw.toLowerCase();
+    if (link) {
+      if (!altRaw || GENERIC_ALTS.has(altNorm)) {
         img.setAttribute("alt", "");
-      } else {
-        img.setAttribute("alt", CORESPEAK_BRAND_LABEL);
       }
-    });
+      return;
+    }
+    if (!altRaw || GENERIC_ALTS.has(altNorm)) {
+      img.setAttribute("alt", CORESPEAK_BRAND_LABEL);
+    }
+  }
 
-    document.querySelectorAll(".dashboard-logo, .logo-img").forEach(function (img) {
-      if (!(img instanceof HTMLImageElement)) return;
-      const link = img.closest("a");
-      if (link && !link.getAttribute("aria-label")) {
-        link.setAttribute("aria-label", "Ir al inicio de CoreSpeak");
+  function createBrandFallback(img) {
+    const fallback = document.createElement("span");
+    fallback.className =
+      "corespeak-brand-fallback" +
+      (img.classList.contains("dashboard-logo") ? " corespeak-brand-fallback--nav" : "");
+    fallback.textContent = "CoreSpeak";
+    fallback.setAttribute("role", "img");
+    fallback.setAttribute("aria-label", CORESPEAK_BRAND_LABEL);
+    return fallback;
+  }
+
+  function createContentFallback(altText) {
+    const fallback = document.createElement("span");
+    fallback.className = "corespeak-img-fallback";
+    fallback.textContent = altText;
+    fallback.setAttribute("role", "img");
+    fallback.setAttribute("aria-label", altText);
+    return fallback;
+  }
+
+  function bindImageFallback(img) {
+    if (!(img instanceof HTMLImageElement)) return;
+    if (img.dataset.corespeakImgBound === "1") return;
+    img.dataset.corespeakImgBound = "1";
+
+    img.addEventListener("error", function onImgError() {
+      img.removeEventListener("error", onImgError);
+      if (isBrandLogo(img)) {
+        img.replaceWith(createBrandFallback(img));
+        return;
       }
-      if (img.getAttribute("alt") === "CoreSpeak Logo") {
-        img.setAttribute("alt", link ? "" : CORESPEAK_BRAND_LABEL);
-      }
-      if (img.dataset.corespeakBrandBound === "1") return;
-      img.dataset.corespeakBrandBound = "1";
-      img.addEventListener("error", function onBrandImgError() {
-        img.removeEventListener("error", onBrandImgError);
-        const fallback = document.createElement("span");
-        fallback.className =
-          "corespeak-brand-fallback" +
-          (img.classList.contains("dashboard-logo") ? " corespeak-brand-fallback--nav" : "");
-        fallback.textContent = "CoreSpeak";
-        fallback.setAttribute("role", "img");
-        fallback.setAttribute("aria-label", CORESPEAK_BRAND_LABEL);
-        img.replaceWith(fallback);
+      const altText = (img.getAttribute("alt") || "").trim();
+      if (!altText || isDecorativeImage(img)) return;
+      img.replaceWith(createContentFallback(altText));
+    });
+  }
+
+  function ensureImageAlt(img) {
+    if (!(img instanceof HTMLImageElement)) return;
+    if (img.hasAttribute("alt")) return;
+    if (isBrandLogo(img)) {
+      normalizeBrandImage(img);
+      return;
+    }
+    img.setAttribute("alt", "Imagen de CoreSpeak");
+  }
+
+  function enhanceImage(img) {
+    if (!(img instanceof HTMLImageElement)) return;
+    ensureImageAlt(img);
+    if (isBrandLogo(img)) {
+      normalizeBrandImage(img);
+    }
+    bindImageFallback(img);
+  }
+
+  function enhanceImages(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    const imgs = root instanceof HTMLImageElement ? [root] : scope.querySelectorAll("img");
+    imgs.forEach(enhanceImage);
+  }
+
+  function initAccessibleImages() {
+    enhanceImages(document);
+  }
+
+  function observeDynamicImages() {
+    if (!global.MutationObserver || !document.body) return;
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node instanceof HTMLImageElement) {
+            enhanceImage(node);
+            return;
+          }
+          if (node instanceof Element) {
+            enhanceImages(node);
+          }
+        });
       });
     });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   global.CoreSpeakA11y = {
@@ -155,26 +234,28 @@
     getFocusable,
     initLogoutButtons,
     setBusy,
-    initBrandedImages,
+    enhanceImage,
+    enhanceImages,
+    initAccessibleImages,
+    initBrandedImages: initAccessibleImages,
   };
-})(typeof window !== "undefined" ? window : globalThis);
 
-document.addEventListener("DOMContentLoaded", function () {
-  if (window.CoreSpeakA11y && typeof window.CoreSpeakA11y.initBrandedImages === "function") {
-    window.CoreSpeakA11y.initBrandedImages();
-  }
-  const skip = document.querySelector(".skip-link");
-  if (skip) {
-    skip.addEventListener("click", function (ev) {
-      const targetId = (skip.getAttribute("href") || "").replace(/^#/, "");
-      const main = document.getElementById(targetId);
-      if (main) {
-        ev.preventDefault();
-        if (!main.hasAttribute("tabindex")) {
-          main.setAttribute("tabindex", "-1");
+  document.addEventListener("DOMContentLoaded", function () {
+    initAccessibleImages();
+    observeDynamicImages();
+    const skip = document.querySelector(".skip-link");
+    if (skip) {
+      skip.addEventListener("click", function (ev) {
+        const targetId = (skip.getAttribute("href") || "").replace(/^#/, "");
+        const main = document.getElementById(targetId);
+        if (main) {
+          ev.preventDefault();
+          if (!main.hasAttribute("tabindex")) {
+            main.setAttribute("tabindex", "-1");
+          }
+          main.focus();
         }
-        main.focus();
-      }
-    });
-  }
-});
+      });
+    }
+  });
+})(typeof window !== "undefined" ? window : globalThis);

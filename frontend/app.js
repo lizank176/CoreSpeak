@@ -4371,7 +4371,9 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc) {
       imgWrap.className = "text-center mb-3";
       const img = document.createElement("img");
       img.src = corespeakLessonMediaSrc(exImgPath);
-      img.alt = "";
+      img.alt = qText
+        ? "Ilustración del ejercicio: " + qText
+        : "Ilustración del ejercicio";
       img.className = "lesson-exercise-photo";
       img.width = 120;
       img.height = 120;
