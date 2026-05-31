@@ -854,6 +854,24 @@ const CORESPEAK_PAGE_I18N = {
       surname: "Apellido",
       email: "Correo electrónico",
       birth: "Fecha de nacimiento",
+      subscriptionTitle: "Suscripción Premium",
+      subscriptionSub: "Gestiona tu plan de pago",
+      subscriptionActive: "Premium activo.",
+      subscriptionActiveUntil: "Premium activo hasta {date}.",
+      subscriptionCancelScheduled: "Baja programada. Premium activo hasta {date}. No se te volverá a cobrar.",
+      cancelSubscriptionBtn: "Darme de baja (no volver a cobrar)",
+      accountTitle: "Cuenta",
+      accountSub: "Gestiona tu cuenta y privacidad",
+      changePassword: "Cambiar contraseña",
+      deleteAccount: "Eliminar cuenta",
+      cancelModalTitle: "Darse de baja de Premium",
+      cancelModalBody:
+        "¿Seguro? Dejarás de pagar en la próxima renovación. Mantendrás Premium hasta el final del periodo ya pagado.",
+      deleteModalTitle: "Eliminar cuenta",
+      deleteModalBody:
+        "¿Estás seguro? Se borrarán tu perfil, progreso y datos. Esta acción no se puede deshacer.",
+      modalCancel: "Cancelar",
+      modalAccept: "Aceptar",
     },
   },
   en: {
@@ -1011,6 +1029,24 @@ const CORESPEAK_PAGE_I18N = {
       surname: "Last name",
       email: "Email",
       birth: "Date of birth",
+      subscriptionTitle: "Premium subscription",
+      subscriptionSub: "Manage your paid plan",
+      subscriptionActive: "Premium active.",
+      subscriptionActiveUntil: "Premium active until {date}.",
+      subscriptionCancelScheduled: "Cancellation scheduled. Premium until {date}. You will not be charged again.",
+      cancelSubscriptionBtn: "Cancel subscription (stop billing)",
+      accountTitle: "Account",
+      accountSub: "Manage your account and privacy",
+      changePassword: "Change password",
+      deleteAccount: "Delete account",
+      cancelModalTitle: "Cancel Premium",
+      cancelModalBody:
+        "Are you sure? You will not be charged on renewal. You keep Premium until the end of the paid period.",
+      deleteModalTitle: "Delete account",
+      deleteModalBody:
+        "Are you sure? Your profile, progress and data will be deleted. This cannot be undone.",
+      modalCancel: "Cancel",
+      modalAccept: "Accept",
     },
   },
   fr: {
@@ -1167,6 +1203,24 @@ const CORESPEAK_PAGE_I18N = {
       surname: "Nom",
       email: "E-mail",
       birth: "Date de naissance",
+      subscriptionTitle: "Abonnement Premium",
+      subscriptionSub: "Gérez votre plan payant",
+      subscriptionActive: "Premium actif.",
+      subscriptionActiveUntil: "Premium actif jusqu’au {date}.",
+      subscriptionCancelScheduled: "Résiliation programmée. Premium jusqu’au {date}. Aucun prélèvement futur.",
+      cancelSubscriptionBtn: "Se désabonner (arrêter les paiements)",
+      accountTitle: "Compte",
+      accountSub: "Compte et confidentialité",
+      changePassword: "Changer le mot de passe",
+      deleteAccount: "Supprimer le compte",
+      cancelModalTitle: "Se désabonner du Premium",
+      cancelModalBody:
+        "Confirmer ? Vous ne serez plus facturé au renouvellement. Premium reste actif jusqu’à la fin de la période payée.",
+      deleteModalTitle: "Supprimer le compte",
+      deleteModalBody:
+        "Confirmer ? Profil, progression et données seront supprimés. Action irréversible.",
+      modalCancel: "Annuler",
+      modalAccept: "Accepter",
     },
   },
   de: {
@@ -1322,6 +1376,24 @@ const CORESPEAK_PAGE_I18N = {
       surname: "Nachname",
       email: "E-Mail",
       birth: "Geburtsdatum",
+      subscriptionTitle: "Premium-Abo",
+      subscriptionSub: "Zahlungsplan verwalten",
+      subscriptionActive: "Premium aktiv.",
+      subscriptionActiveUntil: "Premium aktiv bis {date}.",
+      subscriptionCancelScheduled: "Kündigung geplant. Premium bis {date}. Keine weiteren Abbuchungen.",
+      cancelSubscriptionBtn: "Abo kündigen (keine weiteren Zahlungen)",
+      accountTitle: "Konto",
+      accountSub: "Konto und Datenschutz",
+      changePassword: "Passwort ändern",
+      deleteAccount: "Konto löschen",
+      cancelModalTitle: "Premium kündigen",
+      cancelModalBody:
+        "Sicher? Keine Abbuchung bei Verlängerung. Premium bleibt bis Periodenende aktiv.",
+      deleteModalTitle: "Konto löschen",
+      deleteModalBody:
+        "Sicher? Profil, Fortschritt und Daten werden gelöscht. Nicht rückgängig zu machen.",
+      modalCancel: "Abbrechen",
+      modalAccept: "Bestätigen",
     },
   },
   uk: {
@@ -1477,6 +1549,24 @@ const CORESPEAK_PAGE_I18N = {
       surname: "Прізвище",
       email: "Пошта",
       birth: "Дата народження",
+      subscriptionTitle: "Підписка Premium",
+      subscriptionSub: "Керуйте платним планом",
+      subscriptionActive: "Premium активний.",
+      subscriptionActiveUntil: "Premium активний до {date}.",
+      subscriptionCancelScheduled: "Скасування заплановано. Premium до {date}. Платежі більше не стягуватимуться.",
+      cancelSubscriptionBtn: "Скасувати підписку (без нових платежів)",
+      accountTitle: "Обліковий запис",
+      accountSub: "Обліковий запис і конфіденційність",
+      changePassword: "Змінити пароль",
+      deleteAccount: "Видалити обліковий запис",
+      cancelModalTitle: "Скасувати Premium",
+      cancelModalBody:
+        "Підтвердити? Платежі при поновленні не будуть. Premium до кінця оплаченого періоду.",
+      deleteModalTitle: "Видалити обліковий запис",
+      deleteModalBody:
+        "Підтвердити? Профіль, прогрес і дані будуть видалені. Це незворотно.",
+      modalCancel: "Скасувати",
+      modalAccept: "Прийняти",
     },
   },
 };
@@ -3204,6 +3294,158 @@ function initConfigPasswordChange() {
   });
 }
 
+function _configUiStrings() {
+  const pack = getUiPack(getCurrentUiLangSync());
+  return pack.config || {};
+}
+
+function _formatConfigDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(getCurrentUiLangSync() === "en" ? "en-GB" : "es-ES");
+  } catch (e) {
+    return "";
+  }
+}
+
+async function initConfigSubscription() {
+  const card = document.getElementById("config-subscription-card");
+  const statusEl = document.getElementById("config-subscription-status");
+  const cancelBtn = document.getElementById("config-cancel-subscription-btn");
+  const msg = document.getElementById("config-account-msg");
+  const modalEl = document.getElementById("config-cancel-subscription-modal");
+  const confirmBtn = document.getElementById("config-cancel-subscription-confirm");
+  if (!card || !statusEl || !cancelBtn) return;
+
+  const cfg = _configUiStrings();
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    setAlertMessage(msg, text, kind === "err" ? "err" : kind === "ok" ? "ok" : "info", false);
+  }
+
+  const auth = requireAuth();
+  if (!auth) return;
+
+  let subData = null;
+  try {
+    const res = await fetch(apiUrl("/api/billing/subscription-status"), {
+      headers: { Authorization: "Bearer " + auth.token },
+    });
+    if (!res.ok) return;
+    subData = await res.json().catch(function () {
+      return null;
+    });
+  } catch (e) {
+    return;
+  }
+  if (!subData || !subData.subscription_id) return;
+
+  card.classList.remove("d-none");
+  const until = _formatConfigDate(subData.expiry_date);
+  if (subData.cancel_at_period_end || subData.subscription_status === "cancel_at_period_end") {
+    const tpl = cfg.subscriptionCancelScheduled || "Baja programada. Premium activo hasta {date}.";
+    statusEl.textContent = tpl.replace("{date}", until || "—");
+    cancelBtn.classList.add("d-none");
+  } else if (until) {
+    const tpl = cfg.subscriptionActiveUntil || "Premium activo hasta {date}.";
+    statusEl.textContent = tpl.replace("{date}", until);
+  } else {
+    statusEl.textContent = cfg.subscriptionActive || "Premium activo.";
+  }
+
+  let modal = null;
+  if (modalEl && typeof bootstrap !== "undefined") {
+    modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  }
+
+  cancelBtn.addEventListener("click", function () {
+    if (modal) modal.show();
+  });
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", async function () {
+      confirmBtn.disabled = true;
+      showMsg("Procesando la baja…", "info");
+      try {
+        const res = await fetch(apiUrl("/api/billing/cancel-subscription"), {
+          method: "POST",
+          headers: { Authorization: "Bearer " + auth.token },
+        });
+        const data = await res.json().catch(function () {
+          return {};
+        });
+        if (!res.ok) {
+          showMsg(formatApiErrorDetail(data) || data.detail || "No se pudo procesar la baja.", "err");
+          confirmBtn.disabled = false;
+          return;
+        }
+        if (modal) modal.hide();
+        showMsg(data.message || "Baja confirmada.", "ok");
+        cancelBtn.classList.add("d-none");
+        const accessUntil = _formatConfigDate(data.access_until);
+        const tpl = cfg.subscriptionCancelScheduled || "Baja programada. Premium activo hasta {date}.";
+        statusEl.textContent = tpl.replace("{date}", accessUntil || "—");
+      } catch (e) {
+        showMsg("No se pudo conectar con el servidor.", "err");
+      } finally {
+        confirmBtn.disabled = false;
+      }
+    });
+  }
+}
+
+function initConfigDeleteAccount() {
+  const btn = document.getElementById("config-delete-account-btn");
+  const msg = document.getElementById("config-account-msg");
+  const modalEl = document.getElementById("config-delete-account-modal");
+  const confirmBtn = document.getElementById("config-delete-account-confirm");
+  if (!btn || !modalEl || !confirmBtn) return;
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    setAlertMessage(msg, text, kind === "err" ? "err" : kind === "ok" ? "ok" : "info", false);
+  }
+
+  let modal = null;
+  if (typeof bootstrap !== "undefined") {
+    modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  }
+
+  btn.addEventListener("click", function () {
+    if (modal) modal.show();
+  });
+
+  confirmBtn.addEventListener("click", async function () {
+    const auth = requireAuth();
+    if (!auth) return;
+    confirmBtn.disabled = true;
+    showMsg("Eliminando tu cuenta…", "info");
+    try {
+      const res = await fetch(apiUrl("/api/users/me/account"), {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + auth.token },
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok) {
+        showMsg(formatApiErrorDetail(data) || data.detail || "No se pudo eliminar la cuenta.", "err");
+        confirmBtn.disabled = false;
+        return;
+      }
+      if (modal) modal.hide();
+      clearAuthStorage();
+      window.location.replace("inicio_session.html?deleted=1");
+    } catch (e) {
+      showMsg("No se pudo conectar con el servidor.", "err");
+      confirmBtn.disabled = false;
+    }
+  });
+}
+
 function setOnboardingMessage(message, kind) {
   const el = document.getElementById("onboarding-msg");
   if (!el) return;
@@ -3933,6 +4175,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (document.getElementById("config-change-password-btn")) {
     initConfigPasswordChange();
+  }
+  if (document.getElementById("config-subscription-card")) {
+    void initConfigSubscription();
+  }
+  if (document.getElementById("config-delete-account-btn")) {
+    initConfigDeleteAccount();
   }
 
   if (document.getElementById("agenda-tbody")) {

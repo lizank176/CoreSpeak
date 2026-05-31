@@ -163,25 +163,76 @@
             </div>
         </div>
 
-        <!-- Tarjeta 3: Cuenta -->
+        <!-- Tarjeta 3: Suscripción Premium -->
+        <div class="card settings-card mb-4 d-none" id="config-subscription-card">
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <h5 class="mb-1 fw-semibold" data-i18n="config.subscriptionTitle">Suscripción Premium</h5>
+                    <p class="text-muted small mb-0" data-i18n="config.subscriptionSub">Gestiona tu plan de pago</p>
+                </div>
+                <p id="config-subscription-status" class="small text-secondary mb-3" role="status"></p>
+                <button id="config-cancel-subscription-btn" type="button" class="btn btn-outline-danger w-100" data-i18n="config.cancelSubscriptionBtn">Darme de baja (no volver a cobrar)</button>
+            </div>
+        </div>
+
+        <!-- Tarjeta 4: Cuenta -->
         <div class="card settings-card mb-5">
             <div class="card-body p-4">
                 <div class="mb-4">
-                    <h5 class="mb-1 fw-semibold">Cuenta</h5>
-                    <p class="text-muted small mb-0">Gestiona tu cuenta y privacidad</p>
+                    <h5 class="mb-1 fw-semibold" data-i18n="config.accountTitle">Cuenta</h5>
+                    <p class="text-muted small mb-0" data-i18n="config.accountSub">Gestiona tu cuenta y privacidad</p>
                 </div>
                 <div id="config-account-msg" class="alert py-2 px-3 small d-none mb-3" role="status" aria-live="polite"></div>
 
                 <div class="d-grid gap-3">
-                    <button id="config-change-password-btn" type="button" class="btn btn-light border text-start py-2 px-3 bg-white">Cambiar contraseña</button>
-                    <button class="btn btn-light border text-start py-2 px-3 bg-white">Privacidad y datos</button>
-                    <button class="btn btn-light border text-start py-2 px-3 bg-white text-danger">Eliminar cuenta</button>
+                    <button id="config-change-password-btn" type="button" class="btn btn-light border text-start py-2 px-3 bg-white" data-i18n="config.changePassword">Cambiar contraseña</button>
+                    <button id="config-delete-account-btn" type="button" class="btn btn-light border text-start py-2 px-3 bg-white text-danger" data-i18n="config.deleteAccount">Eliminar cuenta</button>
                 </div>
             </div>
         </div>
 
     </main>
+
+    <!-- Confirmación: darse de baja Premium -->
+    <div class="modal fade" id="config-cancel-subscription-modal" tabindex="-1" aria-labelledby="config-cancel-subscription-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="config-cancel-subscription-title" data-i18n="config.cancelModalTitle">Darse de baja de Premium</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" data-i18n="config.cancelModalBody">
+                    ¿Seguro? Dejarás de pagar en la próxima renovación. Mantendrás Premium hasta el final del periodo ya pagado.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal" id="config-cancel-subscription-dismiss" data-i18n="config.modalCancel">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="config-cancel-subscription-confirm" data-i18n="config.modalAccept">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmación: eliminar cuenta -->
+    <div class="modal fade" id="config-delete-account-modal" tabindex="-1" aria-labelledby="config-delete-account-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="config-delete-account-title" data-i18n="config.deleteModalTitle">Eliminar cuenta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" data-i18n="config.deleteModalBody">
+                    ¿Estás seguro? Se borrarán tu perfil, progreso y datos. Esta acción no se puede deshacer.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal" id="config-delete-account-dismiss" data-i18n="config.modalCancel">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="config-delete-account-confirm" data-i18n="config.modalAccept">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="a11y.js?v=20260602"></script>
-    <script src="app.js?v=20260603q"></script>
+    <script src="app.js?v=20260604a"></script>
 </body>
 </html>

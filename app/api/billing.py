@@ -12,7 +12,7 @@ from app.db import get_session
 from app.dependencies import get_current_user, require_premium_or_grace
 from app.models import AppUser, BillingRecord, PaymentProvider, StripeWebhookEvent
 from app.pricing_plans import billing_pricing_payload
-from app.schemas import CheckoutRequest, CheckoutResponse, PortalResponse, PricingResponse, SubscriptionStatusResponse
+from app.schemas import CheckoutRequest, CheckoutResponse, CancelSubscriptionResponse, PortalResponse, PricingResponse, SubscriptionStatusResponse
 from app.services.enrollment_service import sync_user_enrollments
 
 router = APIRouter(prefix="/api/billing", tags=["billing"])
@@ -28,13 +28,76 @@ def subscription_status(user: AppUser = Depends(get_current_user)) -> Subscripti
     status_value = user.subscription_status or "inactive"
     if user.is_premium and status_value == "inactive":
         status_value = "active"
+    cancel_at_period_end = status_value in {"cancel_at_period_end", "canceled"}
+    expiry_date = user.expiry_date
+    if user.subscription_id and settings.stripe_secret_key and status_value in {"active", "cancel_at_period_end"}:
+        try:
+            stripe.api_key = settings.stripe_secret_key
+            sub = stripe.Subscription.retrieve(user.subscription_id)
+            sub_data = _stripe_to_plain_dict(sub)
+            cancel_at_period_end = bool(sub_data.get("cancel_at_period_end"))
+            if cancel_at_period_end:
+                status_value = "cancel_at_period_end"
+            period_end = sub_data.get("current_period_end")
+            if period_end:
+                expiry_date = datetime.utcfromtimestamp(int(period_end))
+        except Exception:
+            pass
     return SubscriptionStatusResponse(
         is_premium=user.is_premium,
         subscription_status=status_value,
         subscription_id=user.subscription_id,
         customer_id=user.customer_id,
-        expiry_date=user.expiry_date,
+        expiry_date=expiry_date,
         premium_grace_until=user.premium_grace_until,
+        cancel_at_period_end=cancel_at_period_end,
+    )
+
+
+@router.post("/cancel-subscription", response_model=CancelSubscriptionResponse)
+def cancel_subscription(
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> CancelSubscriptionResponse:
+    if not user.subscription_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No tienes una suscripción de pago activa. Si Premium te lo concedió un administrador, contacta con soporte.",
+        )
+    if not settings.stripe_secret_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="El sistema de pagos no está configurado. Contacta con soporte para darte de baja.",
+        )
+
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        sub = stripe.Subscription.modify(user.subscription_id, cancel_at_period_end=True)
+        sub_data = _stripe_to_plain_dict(sub)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"No se pudo cancelar la suscripción: {exc}",
+        ) from exc
+
+    access_until = user.expiry_date
+    period_end = sub_data.get("current_period_end")
+    if period_end:
+        access_until = datetime.utcfromtimestamp(int(period_end))
+        user.expiry_date = access_until
+    user.subscription_status = "cancel_at_period_end"
+    session.add(user)
+    session.commit()
+
+    until_text = access_until.strftime("%d/%m/%Y") if access_until else "el final del periodo pagado"
+    return CancelSubscriptionResponse(
+        message=(
+            f"Baja confirmada. No se te volverá a cobrar. "
+            f"Mantienes Premium hasta {until_text}."
+        ),
+        cancel_at_period_end=True,
+        access_until=access_until,
+        subscription_status=user.subscription_status,
     )
 
 

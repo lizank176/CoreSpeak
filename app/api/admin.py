@@ -23,6 +23,7 @@ from app.models import (
     UserRole,
 )
 from app.security import create_password_reset_token
+from app.services.user_account_service import delete_user_account
 from app.schemas import CreateLessonRequest
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -156,22 +157,7 @@ def delete_user(
 ) -> dict:
     user = _get_user_or_404(user_id, session)
     _ensure_admin_user_can_be_modified(admin, user, session, becoming_inactive=True)
-
-    for lesson in session.exec(select(Lesson).where(Lesson.created_by_admin_id == user.id)).all():
-        lesson.created_by_admin_id = None
-        session.add(lesson)
-    for row in session.exec(select(Enrollment).where(Enrollment.user_id == user.id)).all():
-        session.delete(row)
-    for row in session.exec(select(LessonAttempt).where(LessonAttempt.user_id == user.id)).all():
-        session.delete(row)
-    for row in session.exec(select(DailyChallenge).where(DailyChallenge.user_id == user.id)).all():
-        session.delete(row)
-    for row in session.exec(select(BillingRecord).where(BillingRecord.user_id == user.id)).all():
-        session.delete(row)
-    for row in session.exec(select(AgendaWord).where(AgendaWord.user_id == user.id)).all():
-        session.delete(row)
-    session.delete(user)
-    session.commit()
+    delete_user_account(session, user)
     return {"user_id": user_id, "message": "Usuario eliminado."}
 
 

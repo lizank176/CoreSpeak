@@ -17,6 +17,7 @@ from app.db import get_session
 from app.dependencies import get_current_user, require_premium_or_grace
 from app.models import AppUser, CourseLevel, Enrollment, LanguageCourse, Lesson, LessonAttempt, LessonExerciseCompletion, UserRole
 from app.schemas import (
+    DeleteAccountResponse,
     DisplayNamePatchRequest,
     EnglishLevelPatchRequest,
     ExtraLanguagesRequest,
@@ -28,6 +29,7 @@ from app.schemas import (
 from app.security import create_password_reset_token
 from app.services.enrollment_service import sync_user_enrollments
 from app.services.exercise_validation import validate_catalog_block_answer
+from app.services.user_account_service import delete_user_account
 from app.services.progress_service import award_xp, update_daily_streak
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
@@ -535,6 +537,24 @@ def my_progress(user: AppUser = Depends(get_current_user)) -> dict[str, Any]:
         "racha_actual": int(user.streak_days or 0),
         "total_xp": int(user.xp_total or 0),
     }
+
+
+@users_router.delete("/me/account", response_model=DeleteAccountResponse)
+def delete_my_account(
+    user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> DeleteAccountResponse:
+    if user.role == UserRole.ADMIN:
+        other_admins = session.exec(
+            select(AppUser).where(AppUser.role == UserRole.ADMIN, AppUser.id != user.id, AppUser.is_active == True)
+        ).all()
+        if not other_admins:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No puedes eliminar la única cuenta de administrador activa.",
+            )
+    delete_user_account(session, user)
+    return DeleteAccountResponse(message="Tu cuenta ha sido eliminada.")
 
 
 @users_router.get("/{user_id}/progress")

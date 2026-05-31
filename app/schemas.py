@@ -259,4 +259,16 @@ class SubscriptionStatusResponse(BaseModel):
     customer_id: str | None
     expiry_date: datetime | None
     premium_grace_until: datetime | None
+    cancel_at_period_end: bool = False
+
+
+class CancelSubscriptionResponse(BaseModel):
+    message: str
+    cancel_at_period_end: bool = True
+    access_until: datetime | None = None
+    subscription_status: str
+
+
+class DeleteAccountResponse(BaseModel):
+    message: str
 
