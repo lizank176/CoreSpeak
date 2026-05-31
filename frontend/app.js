@@ -857,6 +857,10 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionTitle: "Suscripción Premium",
       subscriptionSub: "Gestiona tu plan de pago",
       subscriptionActive: "Premium activo.",
+      subscriptionFree: "Estás en el plan gratuito.",
+      subscriptionLoadError: "No se pudo cargar el estado de la suscripción. Recarga la página.",
+      manageSubscriptionBtn: "Gestionar suscripción",
+      manageSubscriptionLead: "Abre el portal seguro de Stripe para ver facturas, cambiar tarjeta o darte de baja.",
       subscriptionActiveUntil: "Premium activo hasta {date}.",
       subscriptionCancelScheduled: "Baja programada. Premium activo hasta {date}. No se te volverá a cobrar.",
       cancelSubscriptionBtn: "Darme de baja (no volver a cobrar)",
@@ -1034,6 +1038,10 @@ const CORESPEAK_PAGE_I18N = {
       subscriptionTitle: "Premium subscription",
       subscriptionSub: "Manage your paid plan",
       subscriptionActive: "Premium active.",
+      subscriptionFree: "You are on the free plan.",
+      subscriptionLoadError: "Could not load subscription status. Reload the page.",
+      manageSubscriptionBtn: "Manage subscription",
+      manageSubscriptionLead: "Open Stripe’s secure portal to view invoices, update your card, or cancel.",
       subscriptionActiveUntil: "Premium active until {date}.",
       subscriptionCancelScheduled: "Cancellation scheduled. Premium until {date}. You will not be charged again.",
       cancelSubscriptionBtn: "Cancel subscription (stop billing)",
@@ -3324,17 +3332,23 @@ async function initConfigSubscription() {
   const wrap = document.getElementById("config-subscription-wrap");
   const statusEl = document.getElementById("config-subscription-status");
   const cancelBtn = document.getElementById("config-cancel-subscription-btn");
+  const manageBtn = document.getElementById("config-manage-subscription-btn");
   const noteEl = document.getElementById("config-subscription-note");
   const msg = document.getElementById("config-account-msg");
   const modalEl = document.getElementById("config-cancel-subscription-modal");
   const confirmBtn = document.getElementById("config-cancel-subscription-confirm");
-  if (!wrap || !statusEl || !cancelBtn) return;
+  if (!wrap || !statusEl) return;
 
   const cfg = _configUiStrings();
 
   function showMsg(text, kind) {
     if (!msg) return;
     setAlertMessage(msg, text, kind === "err" ? "err" : kind === "ok" ? "ok" : "info", false);
+  }
+
+  function setButtonsVisible(manage, cancel) {
+    if (manageBtn) manageBtn.classList.toggle("d-none", !manage);
+    if (cancelBtn) cancelBtn.classList.toggle("d-none", !cancel);
   }
 
   const auth = requireAuth();
@@ -3345,44 +3359,79 @@ async function initConfigSubscription() {
     const res = await fetch(apiUrl("/api/billing/subscription-status"), {
       headers: { Authorization: "Bearer " + auth.token },
     });
-    if (!res.ok) return;
-    subData = await res.json().catch(function () {
-      return null;
-    });
+    if (res.ok) {
+      subData = await res.json().catch(function () {
+        return null;
+      });
+    } else {
+      const errBody = await res.json().catch(function () {
+        return {};
+      });
+      statusEl.textContent =
+        formatApiErrorDetail(errBody) ||
+        errBody.detail ||
+        cfg.subscriptionLoadError ||
+        "No se pudo cargar el estado de la suscripción.";
+      setButtonsVisible(true, false);
+    }
   } catch (e) {
+    statusEl.textContent = cfg.subscriptionLoadError || "No se pudo cargar el estado de la suscripción.";
+    setButtonsVisible(true, false);
+  }
+
+  if (!subData) {
+    if (manageBtn && !manageBtn.dataset.corespeakBound) {
+      manageBtn.dataset.corespeakBound = "1";
+      manageBtn.addEventListener("click", function () {
+        void openBillingPortal(auth, showMsg);
+      });
+    }
     return;
   }
-  if (!subData) return;
-
-  const isPremium = !!subData.is_premium;
-  const hasBilling = !!(subData.subscription_id || subData.customer_id);
-  if (!isPremium && !hasBilling) return;
-
-  wrap.classList.remove("d-none");
 
   if (noteEl) noteEl.classList.add("d-none");
-  cancelBtn.classList.remove("d-none");
 
   const until = _formatConfigDate(subData.expiry_date);
+  const isPremium = !!subData.is_premium;
+  const canManage = subData.can_manage_portal !== false && !!(subData.customer_id || isPremium);
+  const canCancel =
+    subData.can_cancel !== false &&
+    !!subData.subscription_id &&
+    !subData.cancel_at_period_end &&
+    subData.subscription_status !== "cancel_at_period_end";
+
   if (subData.cancel_at_period_end || subData.subscription_status === "cancel_at_period_end") {
     const tpl = cfg.subscriptionCancelScheduled || "Baja programada. Premium activo hasta {date}.";
     statusEl.textContent = tpl.replace("{date}", until || "—");
-    cancelBtn.classList.add("d-none");
-  } else if (!subData.subscription_id) {
+    setButtonsVisible(canManage, false);
+  } else if (!isPremium && !subData.customer_id && !subData.subscription_id) {
+    statusEl.textContent = cfg.subscriptionFree || "Estás en el plan gratuito.";
+    setButtonsVisible(true, false);
+  } else if (!subData.subscription_id && isPremium) {
     statusEl.textContent = cfg.subscriptionActive || "Premium activo.";
-    cancelBtn.classList.add("d-none");
+    setButtonsVisible(canManage, false);
     if (noteEl) {
       noteEl.textContent =
         cfg.subscriptionNoBilling ||
-        "Tu Premium no tiene suscripción de pago asociada. Si necesitas ayuda, contacta con soporte.";
+        "Tu Premium no tiene suscripción de pago asociada. Usa «Gestionar suscripción» o contacta con soporte.";
       noteEl.classList.remove("d-none");
     }
-    return;
   } else if (until) {
     const tpl = cfg.subscriptionActiveUntil || "Premium activo hasta {date}.";
     statusEl.textContent = tpl.replace("{date}", until);
+    setButtonsVisible(canManage, canCancel);
   } else {
-    statusEl.textContent = cfg.subscriptionActive || "Premium activo.";
+    statusEl.textContent = isPremium
+      ? cfg.subscriptionActive || "Premium activo."
+      : cfg.manageSubscriptionLead || "Gestiona tu suscripción en el portal seguro de Stripe.";
+    setButtonsVisible(canManage || !!subData.customer_id, canCancel);
+  }
+
+  if (manageBtn && !manageBtn.dataset.corespeakBound) {
+    manageBtn.dataset.corespeakBound = "1";
+    manageBtn.addEventListener("click", function () {
+      void openBillingPortal(auth, showMsg);
+    });
   }
 
   let modal = null;
@@ -3390,11 +3439,15 @@ async function initConfigSubscription() {
     modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   }
 
-  cancelBtn.addEventListener("click", function () {
-    if (modal) modal.show();
-  });
+  if (cancelBtn && !cancelBtn.dataset.corespeakBound) {
+    cancelBtn.dataset.corespeakBound = "1";
+    cancelBtn.addEventListener("click", function () {
+      if (modal) modal.show();
+    });
+  }
 
-  if (confirmBtn) {
+  if (confirmBtn && !confirmBtn.dataset.corespeakBound) {
+    confirmBtn.dataset.corespeakBound = "1";
     confirmBtn.addEventListener("click", async function () {
       confirmBtn.disabled = true;
       showMsg("Procesando la baja…", "info");
@@ -3407,13 +3460,17 @@ async function initConfigSubscription() {
           return {};
         });
         if (!res.ok) {
-          showMsg(formatApiErrorDetail(data) || data.detail || "No se pudo procesar la baja.", "err");
+          const detail = formatApiErrorDetail(data) || data.detail || "No se pudo procesar la baja.";
+          showMsg(detail, "err");
+          if (String(detail).toLowerCase().indexOf("suscripción") !== -1 && manageBtn) {
+            showMsg(detail + " Prueba «Gestionar suscripción».", "err");
+          }
           confirmBtn.disabled = false;
           return;
         }
         if (modal) modal.hide();
         showMsg(data.message || "Baja confirmada.", "ok");
-        cancelBtn.classList.add("d-none");
+        setButtonsVisible(canManage, false);
         const accessUntil = _formatConfigDate(data.access_until);
         const tpl = cfg.subscriptionCancelScheduled || "Baja programada. Premium activo hasta {date}.";
         statusEl.textContent = tpl.replace("{date}", accessUntil || "—");
@@ -3423,6 +3480,36 @@ async function initConfigSubscription() {
         confirmBtn.disabled = false;
       }
     });
+  }
+}
+
+async function openBillingPortal(auth, showMsg) {
+  if (!auth || !auth.token) return;
+  const btn = document.getElementById("config-manage-subscription-btn");
+  if (btn) btn.disabled = true;
+  if (showMsg) showMsg("Abriendo el portal de gestión…", "info");
+  try {
+    const res = await fetch(apiUrl("/api/billing/portal"), {
+      method: "POST",
+      headers: { Authorization: "Bearer " + auth.token },
+    });
+    const data = await res.json().catch(function () {
+      return {};
+    });
+    if (!res.ok || !data.portal_url) {
+      if (showMsg) {
+        showMsg(
+          formatApiErrorDetail(data) || data.detail || "No se pudo abrir el portal de gestión.",
+          "err"
+        );
+      }
+      if (btn) btn.disabled = false;
+      return;
+    }
+    window.location.href = String(data.portal_url);
+  } catch (e) {
+    if (showMsg) showMsg("No se pudo conectar con el servidor.", "err");
+    if (btn) btn.disabled = false;
   }
 }
 

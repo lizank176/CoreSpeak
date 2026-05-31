@@ -18,12 +18,46 @@ from app.services.enrollment_service import sync_user_enrollments
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 
+def _resolve_stripe_customer_id(session: Session, user: AppUser) -> str | None:
+    """Obtiene customer_id de BD o lo busca en Stripe por email del usuario."""
+    existing = str(user.customer_id or "").strip()
+    if existing:
+        return existing
+    if not settings.stripe_secret_key:
+        return None
+    stripe.api_key = settings.stripe_secret_key
+    email = str(user.email or "").strip().lower()
+    if not email:
+        return None
+    try:
+        listed = stripe.Customer.list(email=email, limit=10)
+        items = listed.get("data") if hasattr(listed, "get") else getattr(listed, "data", [])
+        for raw in items or []:
+            cid = str(_stripe_to_plain_dict(raw).get("id") or "").strip()
+            if cid:
+                user.customer_id = cid
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                return cid
+    except Exception:
+        return None
+    return None
+
+
+def _sync_billing_from_stripe(session: Session, user: AppUser) -> None:
+    _resolve_stripe_customer_id(session, user)
+    _resolve_stripe_subscription_id(session, user)
+
+
 def _resolve_stripe_subscription_id(session: Session, user: AppUser) -> str | None:
     """Obtiene subscription_id de BD o, si falta, la suscripción activa del cliente en Stripe."""
     existing = str(user.subscription_id or "").strip()
     if existing:
         return existing
     customer_id = str(user.customer_id or "").strip()
+    if not customer_id:
+        customer_id = _resolve_stripe_customer_id(session, user) or ""
     if not customer_id or not settings.stripe_secret_key:
         return None
     stripe.api_key = settings.stripe_secret_key
@@ -40,8 +74,6 @@ def _resolve_stripe_subscription_id(session: Session, user: AppUser) -> str | No
             if status in {"active", "trialing", "past_due"}:
                 best_id = sid
                 break
-            if status == "canceled" and sub_data.get("cancel_at_period_end"):
-                best_id = sid
         if best_id:
             user.subscription_id = best_id
             session.add(user)
@@ -74,7 +106,7 @@ def subscription_status(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> SubscriptionStatusResponse:
-    _resolve_stripe_subscription_id(session, user)
+    _sync_billing_from_stripe(session, user)
     status_value = user.subscription_status or "inactive"
     if user.is_premium and status_value == "inactive":
         status_value = "active"
@@ -96,6 +128,8 @@ def subscription_status(
         expiry_date=expiry_date,
         premium_grace_until=user.premium_grace_until,
         cancel_at_period_end=cancel_at_period_end,
+        can_manage_portal=bool(user.customer_id),
+        can_cancel=bool(user.subscription_id) and not cancel_at_period_end,
     )
 
 
@@ -104,7 +138,8 @@ def cancel_subscription(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CancelSubscriptionResponse:
-    subscription_id = _resolve_stripe_subscription_id(session, user)
+    _sync_billing_from_stripe(session, user)
+    subscription_id = user.subscription_id or _resolve_stripe_subscription_id(session, user)
     if not subscription_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -199,16 +234,22 @@ def create_checkout(
 @router.post("/portal", response_model=PortalResponse)
 def create_portal_session(
     user: AppUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ) -> PortalResponse:
     if not settings.stripe_secret_key:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Configura STRIPE_SECRET_KEY")
-    if not user.customer_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario sin customer_id de Stripe")
+    customer_id = _resolve_stripe_customer_id(session, user)
+    if not customer_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No encontramos pagos de Stripe vinculados a tu cuenta. Si te cobran, contacta con soporte indicando tu email.",
+        )
     stripe.api_key = settings.stripe_secret_key
+    return_url = f"{settings.app_base_url.rstrip('/')}/ui/configuracion.html"
     try:
         portal = stripe.billing_portal.Session.create(
-            customer=user.customer_id,
-            return_url=f"{settings.app_base_url}/ui/dashboard.html",
+            customer=customer_id,
+            return_url=return_url,
         )
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Stripe portal error: {exc}") from exc

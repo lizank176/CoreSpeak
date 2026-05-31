@@ -260,6 +260,8 @@ class SubscriptionStatusResponse(BaseModel):
     expiry_date: datetime | None
     premium_grace_until: datetime | None
     cancel_at_period_end: bool = False
+    can_manage_portal: bool = False
+    can_cancel: bool = False
 
 
 class CancelSubscriptionResponse(BaseModel):
