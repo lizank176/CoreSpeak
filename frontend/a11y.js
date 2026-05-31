@@ -154,13 +154,33 @@
     return fallback;
   }
 
-  function createContentFallback(altText) {
+  function createContentFallback(altText, img) {
     const fallback = document.createElement("span");
     fallback.className = "corespeak-img-fallback";
+    if (img && img.closest && img.closest(".flag-img-wrapper")) {
+      fallback.classList.add("corespeak-img-fallback--circle");
+    }
     fallback.textContent = altText;
     fallback.setAttribute("role", "img");
     fallback.setAttribute("aria-label", altText);
     return fallback;
+  }
+
+  function imageLoadFailed(img) {
+    return !!(img && img.complete && img.naturalWidth === 0);
+  }
+
+  function applyImageFallback(img) {
+    if (!(img instanceof HTMLImageElement) || !img.isConnected) return;
+    if (img.dataset.corespeakFallbackApplied === "1") return;
+    img.dataset.corespeakFallbackApplied = "1";
+    if (isBrandLogo(img)) {
+      img.replaceWith(createBrandFallback(img));
+      return;
+    }
+    const altText = (img.getAttribute("alt") || "").trim();
+    if (!altText || isDecorativeImage(img)) return;
+    img.replaceWith(createContentFallback(altText, img));
   }
 
   function bindImageFallback(img) {
@@ -170,14 +190,29 @@
 
     img.addEventListener("error", function onImgError() {
       img.removeEventListener("error", onImgError);
-      if (isBrandLogo(img)) {
-        img.replaceWith(createBrandFallback(img));
-        return;
-      }
-      const altText = (img.getAttribute("alt") || "").trim();
-      if (!altText || isDecorativeImage(img)) return;
-      img.replaceWith(createContentFallback(altText));
+      applyImageFallback(img);
     });
+
+    if (imageLoadFailed(img)) {
+      applyImageFallback(img);
+    }
+  }
+
+  function normalizeBrandLogoSrc(img) {
+    const src = (img.getAttribute("src") || "").trim();
+    if (/^img\/logo\.png/i.test(src)) {
+      img.setAttribute("src", "/ui/" + src.replace(/^\/+/, ""));
+    }
+  }
+
+  function prepareBrandLogo(img) {
+    if (!isBrandLogo(img)) return;
+    normalizeBrandLogoSrc(img);
+    normalizeBrandImage(img);
+    const link = img.closest("a");
+    if (link) {
+      link.classList.add("corespeak-brand-link");
+    }
   }
 
   function ensureImageAlt(img) {
@@ -194,7 +229,7 @@
     if (!(img instanceof HTMLImageElement)) return;
     ensureImageAlt(img);
     if (isBrandLogo(img)) {
-      normalizeBrandImage(img);
+      prepareBrandLogo(img);
     }
     bindImageFallback(img);
   }
@@ -243,6 +278,9 @@
   document.addEventListener("DOMContentLoaded", function () {
     initAccessibleImages();
     observeDynamicImages();
+    window.addEventListener("load", function () {
+      initAccessibleImages();
+    });
     const skip = document.querySelector(".skip-link");
     if (skip) {
       skip.addEventListener("click", function (ev) {
