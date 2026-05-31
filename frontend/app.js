@@ -2487,6 +2487,35 @@ function applyAdminNavVisibility(isAdmin) {
   }
 }
 
+const PROGRESS_SNAP_KEY = "corespeak_progress_snap";
+
+function saveProgressSnapshot(streakDays, xpTotal) {
+  try {
+    sessionStorage.setItem(
+      PROGRESS_SNAP_KEY,
+      JSON.stringify({
+        streak_days: streakDays,
+        xp_total: xpTotal,
+        ts: Date.now(),
+      })
+    );
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+function readProgressSnapshot() {
+  try {
+    const raw = sessionStorage.getItem(PROGRESS_SNAP_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || Date.now() - (data.ts || 0) > 30 * 60 * 1000) return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function loadMyProgress() {
   const auth = requireAuth();
   if (!auth) return;
@@ -2511,13 +2540,18 @@ async function loadMyProgress() {
     String(meAuth?.role || "").toLowerCase() === "admin";
   applyAdminNavVisibility(isAdmin);
 
-  const res = await fetch(apiUrl("/api/users/" + auth.userId + "/progress"), { headers });
+  const res = await fetch(apiUrl("/api/users/me/progress"), { headers });
   let p = null;
   if (res.ok) {
     p = await res.json().catch(() => null);
     if (p && p.nombre) {
       const fromProgress = String(p.nombre).trim();
       if (fromProgress && !displayName) displayName = fromProgress;
+    }
+  } else if (res.status === 404) {
+    const legacy = await fetch(apiUrl("/api/users/" + auth.userId + "/progress"), { headers });
+    if (legacy.ok) {
+      p = await legacy.json().catch(() => null);
     }
   }
 
@@ -2538,11 +2572,21 @@ async function loadMyProgress() {
 
   const streakFromProgress = p != null ? _coerceCount(p.racha_actual) : null;
   const streakFromMe = meAuth != null ? _coerceCount(meAuth.streak_days) : null;
-  const streakNum = streakFromProgress != null ? streakFromProgress : streakFromMe != null ? streakFromMe : 0;
+  let streakNum = streakFromProgress != null ? streakFromProgress : streakFromMe != null ? streakFromMe : 0;
 
   const xpFromProgress = p != null ? _coerceCount(p.total_xp) : null;
   const xpFromMe = meAuth != null ? _coerceCount(meAuth.xp_total) : null;
-  const xpNum = xpFromProgress != null ? xpFromProgress : xpFromMe != null ? xpFromMe : 0;
+  let xpNum = xpFromProgress != null ? xpFromProgress : xpFromMe != null ? xpFromMe : 0;
+
+  const snap = readProgressSnapshot();
+  if (snap) {
+    if (snap.streak_days != null && _coerceCount(snap.streak_days) > streakNum) {
+      streakNum = _coerceCount(snap.streak_days);
+    }
+    if (snap.xp_total != null && _coerceCount(snap.xp_total) > xpNum) {
+      xpNum = _coerceCount(snap.xp_total);
+    }
+  }
 
   const streakEl = document.getElementById("stat-streak");
   if (streakEl) {
@@ -3806,8 +3850,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible") void loadMyProgress();
     });
-    window.addEventListener("pageshow", function (ev) {
-      if (ev.persisted) void loadMyProgress();
+    window.addEventListener("pageshow", function () {
+      void loadMyProgress();
+    });
+    window.addEventListener("focus", function () {
+      void loadMyProgress();
     });
   }
 
@@ -4326,6 +4373,9 @@ function corespeakExerciseBlockImagePath(b) {
 }
 
 function applyProgressStatsToDom(xpTotal, streakDays) {
+  if (streakDays != null || xpTotal != null) {
+    saveProgressSnapshot(streakDays, xpTotal);
+  }
   const u = getUiPack(getCurrentUiLangSync());
   const streakEl = document.getElementById("stat-streak");
   if (streakEl && streakDays != null) {
@@ -4494,11 +4544,6 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
         feedback.textContent = lc.exerciseNeedAnswer || "";
         return;
       }
-      if (valid.length === 0) {
-        feedback.className = "small mt-2 text-muted";
-        feedback.textContent = lc.exerciseNoValidConfig || "";
-        return;
-      }
 
       btn.disabled = true;
 
@@ -4521,27 +4566,25 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
           const data = await res.json().catch(function () { return {}; });
           if (!res.ok) {
             feedback.className = "small mt-2 text-danger";
-            feedback.textContent = formatApiErrorDetail(data) || lc.exerciseWrong || "Error";
+            feedback.textContent =
+              formatApiErrorDetail(data) ||
+              data.detail ||
+              "No se pudo guardar el progreso. Recarga la página (Ctrl+F5) e inténtalo de nuevo.";
             btn.disabled = false;
             return;
           }
           const ok = !!data.is_correct;
           feedback.className = "small mt-2 fw-semibold " + (ok ? "text-success" : "text-danger");
-          let msg = data.feedback || (ok ? lc.exerciseCorrect : lc.exerciseWrong);
-          if (ok && data.xp_awarded > 0 && lc.exerciseXpEarned && !data.repeat_submission) {
-            msg = (lc.exerciseCorrect || "Correcto") + " " + lc.exerciseXpEarned.replace("{n}", String(data.xp_awarded));
-            if (data.streak_message) msg += " " + data.streak_message;
-          } else if (data.streak_message && !data.feedback) {
-            msg = (ok ? lc.exerciseCorrect : lc.exerciseWrong) + " " + data.streak_message;
+          feedback.textContent =
+            data.feedback ||
+            (ok ? lc.exerciseCorrect || "Correcto" : lc.exerciseWrong || "Incorrecto");
+          if (data.streak_message && data.feedback && data.feedback.indexOf(data.streak_message) === -1) {
+            feedback.textContent += " " + data.streak_message;
           }
-          if (ok && data.repeat_submission) {
-            msg = data.feedback || lc.exerciseAlreadyDone || msg;
-          }
-          feedback.textContent = msg;
           if (data.xp_total != null || data.streak_days != null) {
             applyProgressStatsToDom(data.xp_total, data.streak_days);
           }
-          if (ok) {
+          if (ok && !data.repeat_submission) {
             btn.disabled = true;
             if (inputEl) inputEl.disabled = true;
             choices.forEach(function (c) { c.disabled = true; });
@@ -4551,8 +4594,19 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
           return;
         } catch (e) {
           console.warn("submit lesson exercise", e);
+          feedback.className = "small mt-2 text-danger";
+          feedback.textContent =
+            "No se pudo conectar con el servidor. Comprueba la red o recarga con Ctrl+F5.";
           btn.disabled = false;
+          return;
         }
+      }
+
+      if (valid.length === 0) {
+        feedback.className = "small mt-2 text-muted";
+        feedback.textContent = lc.exerciseNoValidConfig || "";
+        btn.disabled = false;
+        return;
       }
 
       const ok = inputEl

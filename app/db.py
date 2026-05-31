@@ -165,6 +165,7 @@ def init_db() -> None:
     ensure_user_subscription_status_column()
     ensure_user_ui_language_column()
     ensure_user_interested_in_premium_column()
+    ensure_lesson_exercise_completions_table()
     seed_default_courses()
     seed_default_levels()
 
@@ -241,6 +242,19 @@ def ensure_user_interested_in_premium_column() -> None:
             else:
                 conn.execute(text("ALTER TABLE users ADD COLUMN interested_in_premium TINYINT(1) NOT NULL DEFAULT 0"))
             conn.commit()
+    except Exception:
+        pass
+
+
+def ensure_lesson_exercise_completions_table() -> None:
+    """Crea la tabla de completions si el despliegue ya tenía BD antes del modelo nuevo."""
+    try:
+        inspector = sa_inspect(engine)
+        if "lesson_exercise_completions" in inspector.get_table_names():
+            return
+        from app import models  # noqa: F401
+
+        SQLModel.metadata.create_all(engine)
     except Exception:
         pass
 

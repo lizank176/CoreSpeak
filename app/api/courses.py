@@ -490,6 +490,16 @@ def set_extra_languages(
     return {"languages": out}
 
 
+@users_router.get("/me/progress")
+def my_progress(user: AppUser = Depends(get_current_user)) -> dict[str, Any]:
+    return {
+        "user_id": user.id,
+        "nombre": user.full_name,
+        "racha_actual": int(user.streak_days or 0),
+        "total_xp": int(user.xp_total or 0),
+    }
+
+
 @users_router.get("/{user_id}/progress")
 def user_progress(
     user_id: int,
