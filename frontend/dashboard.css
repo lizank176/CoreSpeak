@@ -392,7 +392,7 @@ a{
 .lesson-exercise-carousel {
     display: flex;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 1rem;
 }
 
 .lesson-exercise-carousel .lesson-exercise-stage {
@@ -403,29 +403,32 @@ a{
 .lesson-exercise-side-btn {
     flex-shrink: 0;
     align-self: center;
-    width: 44px;
-    height: 44px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
-    border: 2px solid #6366f1;
+    border: 3px solid #4f46e5;
     background: #fff;
-    color: #6366f1;
+    color: #4f46e5;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.18);
+    transition: background 0.15s, color 0.15s, transform 0.15s;
 }
 
 .lesson-exercise-side-btn:hover:not(:disabled) {
-    background: #6366f1;
+    background: #4f46e5;
     color: #fff;
+    transform: scale(1.04);
 }
 
 .lesson-exercise-side-btn:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: not-allowed;
     border-color: #9ca3af;
     color: #9ca3af;
+    box-shadow: none;
 }
 
 .lesson-exercise-stage {
@@ -444,13 +447,10 @@ a{
     margin: 0.85rem 0;
 }
 
-.lesson-exercise-nav--top {
+.lesson-exercise-nav--counter {
     justify-content: center;
-    margin-bottom: 0.25rem;
-}
-
-.lesson-exercise-nav--bottom {
-    margin-top: 0.25rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0;
 }
 
 .lesson-exercise-nav-btn {
@@ -472,6 +472,16 @@ a{
 }
 
 @media (max-width: 575px) {
+    .lesson-exercise-side-btn {
+        width: 56px;
+        height: 56px;
+    }
+
+    .lesson-exercise-side-btn svg {
+        width: 28px;
+        height: 28px;
+    }
+
     .lesson-exercise-nav-btn {
         min-width: auto;
         padding-left: 0.65rem;

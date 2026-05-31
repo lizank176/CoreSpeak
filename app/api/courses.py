@@ -741,6 +741,61 @@ def catalog_course_lessons(
     return rows
 
 
+def _lesson_neighbors_in_course(
+    session: Session,
+    lesson: Lesson,
+    user: AppUser,
+) -> dict[str, Any]:
+    course_id = lesson.course_id
+    if not course_id or not lesson.id:
+        return {
+            "course_id": course_id,
+            "prev_lesson": None,
+            "next_lesson": None,
+            "lesson_position": None,
+            "lessons_in_course": 0,
+        }
+    course = session.get(LanguageCourse, course_id)
+    user_level = _user_cefr_level(user, course.language_code if course else "")
+    levels_by_id = {
+        lvl.id: lvl
+        for lvl in session.exec(select(CourseLevel).where(CourseLevel.course_id == course_id)).all()
+    }
+    lessons = session.exec(
+        select(Lesson).where(Lesson.course_id == course_id, Lesson.is_published == True)  # noqa: E712
+    ).all()
+    ordered: list[tuple[int, str]] = []
+    for item in lessons:
+        if not item.id:
+            continue
+        level = levels_by_id.get(item.level_id)
+        level_code = normalize_cefr_level(level.level_code if level else "A1")
+        sort_key = _lesson_sort_key(level_code, user_level, int(item.id), str(item.title or ""))
+        ordered.append((sort_key, int(item.id), level_code))
+    ordered.sort(key=lambda row: row[0])
+    sequence = [(lesson_id, level_code) for _, lesson_id, level_code in ordered]
+    lesson_ids = [lesson_id for lesson_id, _ in sequence]
+    try:
+        idx = lesson_ids.index(int(lesson.id))
+    except ValueError:
+        idx = -1
+
+    def neighbor(offset: int) -> dict[str, Any] | None:
+        pos = idx + offset
+        if pos < 0 or pos >= len(sequence):
+            return None
+        lesson_id, level_code = sequence[pos]
+        return {"id": lesson_id, "cefr_level": level_code}
+
+    return {
+        "course_id": course_id,
+        "prev_lesson": neighbor(-1),
+        "next_lesson": neighbor(1),
+        "lesson_position": idx + 1 if idx >= 0 else None,
+        "lessons_in_course": len(sequence),
+    }
+
+
 @catalog_router.get("/lessons/{lesson_id}")
 def catalog_lesson_detail(
     lesson_id: int,
@@ -761,11 +816,17 @@ def catalog_lesson_detail(
     accessible = _lesson_accessible_for_user(lesson, user)
     blocks = _catalog_blocks_from_content(lesson.content_json)
     media = _lesson_media_display_fields(lesson)
+    neighbors = _lesson_neighbors_in_course(session, lesson, user)
     return {
         "id": lesson.id,
         "title": lesson.title,
         "description": lesson.description,
         "accessible": accessible,
+        "course_id": neighbors.get("course_id"),
+        "prev_lesson": neighbors.get("prev_lesson"),
+        "next_lesson": neighbors.get("next_lesson"),
+        "lesson_position": neighbors.get("lesson_position"),
+        "lessons_in_course": neighbors.get("lessons_in_course"),
         "cover_image_path": lesson.image_url,
         "media_gallery": [],
         "video_url": lesson.video_url,
