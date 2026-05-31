@@ -153,3 +153,66 @@ button.corespeak-logout.dashboard-nav-link {
     scroll-behavior: auto !important;
   }
 }
+
+/* Imágenes: texto alternativo coherente y fallback legible si no cargan */
+img:not([alt]) {
+  outline: 2px dashed #dc2626;
+  outline-offset: 2px;
+}
+
+.corespeak-brand-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  box-shadow: 0 4px 14px rgba(91, 33, 182, 0.25);
+}
+
+.corespeak-brand-fallback--nav {
+  min-height: 3rem;
+  padding: 0.45rem 1rem;
+  font-size: 1.15rem;
+}
+
+.corespeak-lesson-transcript {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px 16px;
+  max-height: min(360px, 55vh);
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.corespeak-lesson-transcript__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #334155;
+}
+
+.corespeak-lesson-transcript__body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #1e293b;
+}
+
+.corespeak-lesson-transcript__empty {
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.corespeak-lesson-cover img,
+.corespeak-lesson-gallery img {
+  background: #f1f5f9;
+}

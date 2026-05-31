@@ -28,6 +28,21 @@ from app.schemas import CreateLessonRequest
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
+def _lesson_video_transcript(content_json: dict | None) -> str | None:
+    if not isinstance(content_json, dict):
+        return None
+    media = content_json.get("media")
+    if isinstance(media, dict):
+        raw = media.get("transcript")
+        if raw is not None and str(raw).strip():
+            return str(raw).strip()
+    for key in ("transcript", "youtube_transcript"):
+        raw = content_json.get(key)
+        if raw is not None and str(raw).strip():
+            return str(raw).strip()
+    return None
+
+
 @router.get("/dashboard")
 def dashboard_stats(
     _: AppUser = Depends(require_admin),
@@ -184,6 +199,7 @@ def create_lesson(
                 "video_url": payload.video_url,
                 "image_url": payload.image_url,
                 "audio_url": payload.audio_url,
+                "transcript": payload.video_transcript,
             },
             "exercises": [item.model_dump() for item in payload.exercises],
         },
@@ -225,6 +241,7 @@ def admin_lesson_detail(
         "video_url": lesson.video_url,
         "image_url": lesson.image_url,
         "audio_url": lesson.audio_url,
+        "video_transcript": _lesson_video_transcript(lesson.content_json),
         "exercises": [_serialize_lesson_exercise(item) for item in exercises],
     }
 
@@ -256,6 +273,7 @@ def update_lesson(
             "video_url": payload.video_url,
             "image_url": payload.image_url,
             "audio_url": payload.audio_url,
+            "transcript": payload.video_transcript,
         },
         "exercises": [item.model_dump() for item in payload.exercises],
     }

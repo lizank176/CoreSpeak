@@ -156,6 +156,7 @@ class CreateLessonRequest(BaseModel):
     video_url: str | None = Field(default=None, max_length=400)
     image_url: str | None = Field(default=None, max_length=400)
     audio_url: str | None = Field(default=None, max_length=400)
+    video_transcript: str | None = Field(default=None, max_length=12000)
     exercises: list[LessonExerciseInput] = Field(default_factory=list)
 
 

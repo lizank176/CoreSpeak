@@ -118,6 +118,16 @@ def _lesson_media_display_fields(lesson: Lesson) -> dict[str, Any]:
     return out
 
 
+def _lesson_transcript(lesson: Lesson) -> str | None:
+    content = lesson.content_json if isinstance(lesson.content_json, dict) else {}
+    media = content.get("media") if isinstance(content.get("media"), dict) else {}
+    raw = media.get("transcript") or content.get("transcript") or content.get("youtube_transcript")
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    return text or None
+
+
 def _extract_correct_answers(correct_answer: Any, options_json: dict[str, Any]) -> list[str]:
     configured = options_json.get("correct_answers")
     if isinstance(configured, list):
@@ -448,6 +458,7 @@ def catalog_lesson_detail(
         "youtube_embed_url": media.get("youtube_embed_url"),
         "extra_videos": media.get("extra_videos") or [],
         "audio_url": lesson.audio_url,
+        "youtube_transcript": _lesson_transcript(lesson),
         "content": lesson.content_json,
         "exercises": lesson.content_json.get("exercises", []),
         "exercises_json": json.dumps({"blocks": blocks}, ensure_ascii=False),

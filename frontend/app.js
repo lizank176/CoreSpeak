@@ -492,7 +492,8 @@ function uiLessonCoursePack(uiLang) {
       catalogCourseNoLessons: "Este curso aún no tiene lecciones publicadas.",
       premiumShort: "Premium",
       transcriptTitle: "Transcripción (listening)",
-      transcriptEmpty: "No hay transcripción disponible para este vídeo.",
+      transcriptEmpty:
+        "No hay transcripción para este vídeo. Un admin puede añadirla en Admin → Lesson Builder, campo «Transcripción del vídeo».",
       exerciseCheck: "Comprobar",
       exerciseCorrect: "Correcto",
       exerciseWrong: "Incorrecto",
@@ -535,7 +536,8 @@ function uiLessonCoursePack(uiLang) {
       catalogCourseNoLessons: "This course has no lessons yet.",
       premiumShort: "Premium",
       transcriptTitle: "Transcript (listening)",
-      transcriptEmpty: "No transcript available for this video.",
+      transcriptEmpty:
+        "No transcript for this video. An admin can add it in Admin → Lesson Builder, field «Video transcript».",
       exerciseCheck: "Check",
       exerciseCorrect: "Correct",
       exerciseWrong: "Incorrect",
@@ -578,7 +580,8 @@ function uiLessonCoursePack(uiLang) {
       catalogCourseNoLessons: "Ce cours n’a pas encore de leçons.",
       premiumShort: "Premium",
       transcriptTitle: "Transcription (compréhension orale)",
-      transcriptEmpty: "Pas de transcription pour cette vidéo.",
+      transcriptEmpty:
+        "Pas de transcription pour cette vidéo. Un admin peut l’ajouter dans Admin → Lesson Builder.",
       exerciseCheck: "Vérifier",
       exerciseCorrect: "Correct",
       exerciseWrong: "Incorrect",
@@ -621,7 +624,8 @@ function uiLessonCoursePack(uiLang) {
       catalogCourseNoLessons: "Dieser Kurs hat noch keine Lektionen.",
       premiumShort: "Premium",
       transcriptTitle: "Transkript (Hörverstehen)",
-      transcriptEmpty: "Kein Transkript für dieses Video.",
+      transcriptEmpty:
+        "Kein Transkript für dieses Video. Ein Admin kann es unter Admin → Lesson Builder hinzufügen.",
       exerciseCheck: "Prüfen",
       exerciseCorrect: "Richtig",
       exerciseWrong: "Falsch",
@@ -664,7 +668,8 @@ function uiLessonCoursePack(uiLang) {
       catalogCourseNoLessons: "У цього курсу ще немає уроків.",
       premiumShort: "Premium",
       transcriptTitle: "Транскрипт (аудіювання)",
-      transcriptEmpty: "Немає транскрипту для цього відео.",
+      transcriptEmpty:
+        "Немає транскрипту для цього відео. Адміністратор може додати його в Admin → Lesson Builder.",
       exerciseCheck: "Перевірити",
       exerciseCorrect: "Вірно",
       exerciseWrong: "Невірно",
@@ -4898,7 +4903,9 @@ async function loadLessonPage() {
     im.style.maxHeight = "min(360px, 50vh)";
     im.style.width = "auto";
     im.style.objectFit = "cover";
-    im.alt = detail.title || "";
+    im.alt = detail.title
+      ? "Imagen de portada de la lección: " + detail.title
+      : "Imagen de portada de la lección";
     im.src = corespeakLessonMediaSrc(detail.cover_image_path);
     cover.appendChild(im);
     listEl.appendChild(cover);
@@ -4916,7 +4923,9 @@ async function loadLessonPage() {
       im.className = "img-fluid rounded-3 w-100 shadow-sm";
       im.style.objectFit = "cover";
       im.style.maxHeight = "220px";
-      im.alt = "";
+      im.alt = detail.title
+        ? "Imagen ilustrativa de la lección " + detail.title
+        : "Imagen ilustrativa de la lección";
       im.loading = "lazy";
       im.src = corespeakLessonMediaSrc(src);
       col.appendChild(im);
@@ -4943,7 +4952,9 @@ async function loadLessonPage() {
     wrap.className = "ratio ratio-16x9";
     const ifr = document.createElement("iframe");
     ifr.src = iframeSrc;
-    ifr.title = "YouTube";
+    ifr.title = detail.title
+      ? "Vídeo de la lección: " + detail.title
+      : "Vídeo de la lección";
     ifr.setAttribute("loading", "lazy");
     ifr.setAttribute(
       "allow",
@@ -4957,15 +4968,24 @@ async function loadLessonPage() {
 
     const colT = document.createElement("div");
     colT.className = "col-lg-5";
-    const box = document.createElement("div");
+    const box = document.createElement("section");
     box.className = "corespeak-lesson-transcript h-100";
-    const th = document.createElement("h6");
+    box.setAttribute("aria-labelledby", "lesson-transcript-heading");
+    const th = document.createElement("h2");
+    th.id = "lesson-transcript-heading";
+    th.className = "corespeak-lesson-transcript__title h6 mb-0";
     th.textContent = lc.transcriptTitle || "Transcripción";
     box.appendChild(th);
     const tx = document.createElement("div");
-    tx.className = "small text-body-secondary";
+    tx.id = "lesson-transcript-body";
     const ttext = detail.youtube_transcript != null ? String(detail.youtube_transcript).trim() : "";
-    tx.textContent = ttext || lc.transcriptEmpty || "";
+    if (ttext) {
+      tx.className = "corespeak-lesson-transcript__body";
+      tx.textContent = ttext;
+    } else {
+      tx.className = "corespeak-lesson-transcript__empty small";
+      tx.textContent = lc.transcriptEmpty || "";
+    }
     box.appendChild(tx);
     colT.appendChild(box);
     mediaRow.appendChild(colT);

@@ -107,6 +107,47 @@
     }
   }
 
+  const CORESPEAK_BRAND_LABEL = "CoreSpeak, plataforma para aprender idiomas";
+
+  function initBrandedImages() {
+    document.querySelectorAll("img[alt='CoreSpeak Logo']").forEach(function (img) {
+      if (!(img instanceof HTMLImageElement)) return;
+      const link = img.closest("a");
+      if (link) {
+        if (!link.getAttribute("aria-label")) {
+          link.setAttribute("aria-label", "Ir al inicio de CoreSpeak");
+        }
+        img.setAttribute("alt", "");
+      } else {
+        img.setAttribute("alt", CORESPEAK_BRAND_LABEL);
+      }
+    });
+
+    document.querySelectorAll(".dashboard-logo, .logo-img").forEach(function (img) {
+      if (!(img instanceof HTMLImageElement)) return;
+      const link = img.closest("a");
+      if (link && !link.getAttribute("aria-label")) {
+        link.setAttribute("aria-label", "Ir al inicio de CoreSpeak");
+      }
+      if (img.getAttribute("alt") === "CoreSpeak Logo") {
+        img.setAttribute("alt", link ? "" : CORESPEAK_BRAND_LABEL);
+      }
+      if (img.dataset.corespeakBrandBound === "1") return;
+      img.dataset.corespeakBrandBound = "1";
+      img.addEventListener("error", function onBrandImgError() {
+        img.removeEventListener("error", onBrandImgError);
+        const fallback = document.createElement("span");
+        fallback.className =
+          "corespeak-brand-fallback" +
+          (img.classList.contains("dashboard-logo") ? " corespeak-brand-fallback--nav" : "");
+        fallback.textContent = "CoreSpeak";
+        fallback.setAttribute("role", "img");
+        fallback.setAttribute("aria-label", CORESPEAK_BRAND_LABEL);
+        img.replaceWith(fallback);
+      });
+    });
+  }
+
   global.CoreSpeakA11y = {
     setFieldError,
     clearFieldErrors,
@@ -114,10 +155,14 @@
     getFocusable,
     initLogoutButtons,
     setBusy,
+    initBrandedImages,
   };
 })(typeof window !== "undefined" ? window : globalThis);
 
 document.addEventListener("DOMContentLoaded", function () {
+  if (window.CoreSpeakA11y && typeof window.CoreSpeakA11y.initBrandedImages === "function") {
+    window.CoreSpeakA11y.initBrandedImages();
+  }
   const skip = document.querySelector(".skip-link");
   if (skip) {
     skip.addEventListener("click", function (ev) {

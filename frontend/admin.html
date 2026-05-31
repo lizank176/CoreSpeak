@@ -221,6 +221,14 @@
                 </div>
 
                 <div class="col-12">
+                  <label class="form-label" for="media-video-transcript">Transcripción del vídeo (listening)</label>
+                  <textarea id="media-video-transcript" class="form-control" rows="7" placeholder="Pega aquí el texto del vídeo, frase a frase…"></textarea>
+                  <div class="small text-muted mt-1">
+                    El alumno la verá junto al vídeo para leer mientras escucha. Útil para comprensión auditiva y accesibilidad (personas sordas o con dificultad auditiva).
+                  </div>
+                </div>
+
+                <div class="col-12">
                   <label class="form-label">Imagen (subir o pegar link)</label>
                   <div class="input-group">
                     <input id="media-image-url" class="form-control" placeholder="https://.../imagen.jpg">
@@ -445,6 +453,7 @@
         el("lesson-description").value = detail.description || "";
         el("lesson-premium").checked = !!detail.is_premium;
         el("media-video-url").value = detail.video_url || "";
+        el("media-video-transcript").value = detail.video_transcript || "";
         el("media-image-url").value = detail.image_url || "";
         el("media-audio-url").value = detail.audio_url || "";
         exerciseState = Array.isArray(detail.exercises) && detail.exercises.length
@@ -805,6 +814,7 @@
           is_premium: el("lesson-premium").checked,
           is_published: true,
           video_url: el("media-video-url").value.trim() || null,
+          video_transcript: el("media-video-transcript").value.trim() || null,
           image_url: el("media-image-url").value.trim() || null,
           audio_url: el("media-audio-url").value.trim() || null,
           exercises: exercises
