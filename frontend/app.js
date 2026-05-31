@@ -2503,17 +2503,26 @@ function initPasswordVisibilityToggles() {
   }
 }
 
-const CORESPEAK_NAV_INCLUDE_URL = "/ui/includes/dashboard-nav.html?v=20260528";
+const CORESPEAK_NAV_INCLUDE_URLS = [
+  "/ui/includes/dashboard-nav.html?v=20260529",
+  "includes/dashboard-nav.html?v=20260529",
+];
 
 async function mountCoreSpeakDashboardNav() {
   const root = document.getElementById("corespeak-dashboard-nav-root");
   if (!root || root.dataset.mounted === "1") return false;
   let html = "";
-  try {
-    const res = await fetch(CORESPEAK_NAV_INCLUDE_URL);
-    if (res.ok) html = await res.text();
-  } catch (e) {
-    console.warn("mountCoreSpeakDashboardNav fetch", e);
+  for (let i = 0; i < CORESPEAK_NAV_INCLUDE_URLS.length; i++) {
+    const url = CORESPEAK_NAV_INCLUDE_URLS[i];
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        html = await res.text();
+        if (html.trim()) break;
+      }
+    } catch (e) {
+      console.warn("mountCoreSpeakDashboardNav fetch", url, e);
+    }
   }
   if (!html.trim()) return false;
   root.innerHTML = html;
@@ -5126,7 +5135,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     appendExercisePanel(card, idx);
   });
 
-  if (blocks.length > 1) {
+  if (blocks.length >= 1) {
     let currentIndex = 0;
     const counterEls = [];
     const prevBtns = [];
@@ -5153,47 +5162,80 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
       });
     }
 
-    function buildNavRow() {
-      const row = document.createElement("div");
-      row.className = "lesson-exercise-nav";
-
-      const prevBtn = document.createElement("button");
-      prevBtn.type = "button";
-      prevBtn.className = "btn btn-outline-secondary btn-sm lesson-exercise-nav-btn";
-      prevBtn.innerHTML =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left me-1" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></svg>' +
-        (lc.exercisePrev || "Anterior");
-
-      const counter = document.createElement("span");
-      counter.className = "lesson-exercise-counter";
-
-      const nextBtn = document.createElement("button");
-      nextBtn.type = "button";
-      nextBtn.className = "btn btn-outline-secondary btn-sm lesson-exercise-nav-btn";
-      nextBtn.innerHTML =
-        (lc.exerciseNext || "Siguiente") +
-        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right ms-1" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></svg>';
-
-      prevBtn.addEventListener("click", function () {
-        showExercise(currentIndex - 1);
+    function makeSideBtn(direction) {
+      const isPrev = direction === "prev";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "lesson-exercise-side-btn";
+      btn.setAttribute("aria-label", isPrev ? (lc.exercisePrev || "Anterior") : (lc.exerciseNext || "Siguiente"));
+      btn.innerHTML = isPrev
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></svg>';
+      btn.addEventListener("click", function () {
+        showExercise(currentIndex + (isPrev ? -1 : 1));
       });
-      nextBtn.addEventListener("click", function () {
-        showExercise(currentIndex + 1);
-      });
-
-      counterEls.push(counter);
-      prevBtns.push(prevBtn);
-      nextBtns.push(nextBtn);
-
-      row.appendChild(prevBtn);
-      row.appendChild(counter);
-      row.appendChild(nextBtn);
-      return row;
+      if (isPrev) prevBtns.push(btn);
+      else nextBtns.push(btn);
+      return btn;
     }
 
-    shell.insertBefore(buildNavRow(), stage);
-    shell.appendChild(buildNavRow());
+    const counterRow = document.createElement("div");
+    counterRow.className = "lesson-exercise-nav lesson-exercise-nav--top";
+    const counter = document.createElement("span");
+    counter.className = "lesson-exercise-counter";
+    counterEls.push(counter);
+    counterRow.appendChild(counter);
+
+    const carousel = document.createElement("div");
+    carousel.className = "lesson-exercise-carousel";
+    carousel.appendChild(makeSideBtn("prev"));
+    carousel.appendChild(stage);
+    carousel.appendChild(makeSideBtn("next"));
+
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "lesson-exercise-nav lesson-exercise-nav--bottom";
+    const prevText = document.createElement("button");
+    prevText.type = "button";
+    prevText.className = "btn btn-outline-secondary btn-sm lesson-exercise-nav-btn";
+    prevText.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left me-1" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></svg>' +
+      (lc.exercisePrev || "Anterior");
+    const nextText = document.createElement("button");
+    nextText.type = "button";
+    nextText.className = "btn btn-outline-secondary btn-sm lesson-exercise-nav-btn";
+    nextText.innerHTML =
+      (lc.exerciseNext || "Siguiente") +
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right ms-1" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></svg>';
+    prevText.addEventListener("click", function () {
+      showExercise(currentIndex - 1);
+    });
+    nextText.addEventListener("click", function () {
+      showExercise(currentIndex + 1);
+    });
+    prevBtns.push(prevText);
+    nextBtns.push(nextText);
+    const counterBottom = document.createElement("span");
+    counterBottom.className = "lesson-exercise-counter";
+    counterEls.push(counterBottom);
+    bottomRow.appendChild(prevText);
+    bottomRow.appendChild(counterBottom);
+    bottomRow.appendChild(nextText);
+
+    shell.appendChild(counterRow);
+    shell.appendChild(carousel);
+    shell.appendChild(bottomRow);
     showExercise(0);
+
+    shell.addEventListener("keydown", function (ev) {
+      if (ev.key === "ArrowLeft") {
+        ev.preventDefault();
+        showExercise(currentIndex - 1);
+      } else if (ev.key === "ArrowRight") {
+        ev.preventDefault();
+        showExercise(currentIndex + 1);
+      }
+    });
+    shell.setAttribute("tabindex", "0");
   }
 
   container.appendChild(shell);

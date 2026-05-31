@@ -389,6 +389,45 @@ a{
     margin-top: 0.5rem;
 }
 
+.lesson-exercise-carousel {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.lesson-exercise-carousel .lesson-exercise-stage {
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-exercise-side-btn {
+    flex-shrink: 0;
+    align-self: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #6366f1;
+    background: #fff;
+    color: #6366f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.lesson-exercise-side-btn:hover:not(:disabled) {
+    background: #6366f1;
+    color: #fff;
+}
+
+.lesson-exercise-side-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: #9ca3af;
+    color: #9ca3af;
+}
+
 .lesson-exercise-stage {
     min-height: 120px;
 }
@@ -403,6 +442,15 @@ a{
     justify-content: space-between;
     gap: 0.75rem;
     margin: 0.85rem 0;
+}
+
+.lesson-exercise-nav--top {
+    justify-content: center;
+    margin-bottom: 0.25rem;
+}
+
+.lesson-exercise-nav--bottom {
+    margin-top: 0.25rem;
 }
 
 .lesson-exercise-nav-btn {

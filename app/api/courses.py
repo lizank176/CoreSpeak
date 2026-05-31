@@ -199,7 +199,31 @@ def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[st
             }
             blocks.append(block)
             continue
-    return blocks
+
+        if prompt:
+            options = options_json.get("options")
+            if not isinstance(options, list):
+                options = []
+            valid_options = [str(op).strip() for op in options if str(op).strip()]
+            correct_answers = _extract_correct_answers(correct_answer, options_json)
+            blocks.append(
+                {
+                    "type": "quiz",
+                    "pregunta": prompt,
+                    "opciones": valid_options,
+                    "respuestas_validas": correct_answers,
+                    "respuesta_correcta": correct_answers[0] if correct_answers else None,
+                    "selection_mode": "single_choice",
+                }
+            )
+
+    if blocks:
+        return blocks
+
+    legacy = content.get("blocks")
+    if isinstance(legacy, list):
+        return [b for b in legacy if isinstance(b, dict)]
+    return []
 
 
 def _exercise_points(content: dict[str, Any] | None, exercise_index: int) -> int:
