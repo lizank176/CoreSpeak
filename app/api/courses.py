@@ -703,6 +703,7 @@ def catalog_course_lessons(
                 "is_completed": int(lesson.id or 0) in completed_lesson_ids,
                 "exercises_completed": exercises_completed,
                 "exercises_total": exercises_total,
+                "cover_image_path": lesson.image_url,
             }
         )
     rows.sort(

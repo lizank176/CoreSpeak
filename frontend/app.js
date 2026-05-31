@@ -481,6 +481,11 @@ function uiLessonCoursePack(uiLang) {
       availableCount: (n) => String(n) + " disponibles",
       progressCompleted: (done, total, level) =>
         String(done) + " de " + String(total) + " lecciones completadas · MCER " + level,
+      levelGroupTitle: (level) => "Nivel " + level,
+      yourCurrentLevel: "Tu nivel actual",
+      levelLessonsDone: "lecciones completadas",
+      lessonCompleted: "Completada",
+      review: "Repasar",
       tipTitle: "Consejo",
       tipBody: "El contenido y los ejercicios los publica el equipo desde el panel de administración.",
       catalogEmpty:
@@ -527,6 +532,11 @@ function uiLessonCoursePack(uiLang) {
       availableCount: (n) => String(n) + " available",
       progressCompleted: (done, total, level) =>
         String(done) + " of " + String(total) + " lessons completed · CEFR " + level,
+      levelGroupTitle: (level) => "Level " + level,
+      yourCurrentLevel: "Your current level",
+      levelLessonsDone: "lessons completed",
+      lessonCompleted: "Completed",
+      review: "Review",
       tipTitle: "Tip",
       tipBody: "Lessons and exercises are published by admins from the admin panel.",
       catalogEmpty:
@@ -5052,6 +5062,183 @@ function computeCourseLevelProgress(lessons, userLevel) {
   return { done: done, total: total, level: ul };
 }
 
+const CEFR_LEVEL_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+function cefrLevelIndex(code) {
+  const normalized = String(code || "A1").toUpperCase().trim();
+  const idx = CEFR_LEVEL_ORDER.indexOf(normalized);
+  return idx >= 0 ? idx : 0;
+}
+
+function groupLessonsByCefrLevel(lessons, userLevel) {
+  const ul = String(userLevel || "A1").toUpperCase().trim();
+  const groups = {};
+  (Array.isArray(lessons) ? lessons : []).forEach(function (lesson) {
+    const lv = String(lesson && lesson.cefr_level || "A1").toUpperCase().trim();
+    if (!groups[lv]) groups[lv] = [];
+    groups[lv].push(lesson);
+  });
+  return Object.keys(groups)
+    .sort(function (a, b) {
+      const tierA = a === ul ? 0 : 1;
+      const tierB = b === ul ? 0 : 1;
+      if (tierA !== tierB) return tierA - tierB;
+      return cefrLevelIndex(a) - cefrLevelIndex(b);
+    })
+    .map(function (levelCode) {
+      const rows = groups[levelCode] || [];
+      const completed = rows.filter(function (le) {
+        return !!(le && le.is_completed);
+      }).length;
+      return {
+        level: levelCode,
+        lessons: rows,
+        isCurrent: levelCode === ul,
+        completedCount: completed,
+        totalCount: rows.length,
+      };
+    });
+}
+
+function renderCourseLessonTopicCard(lesson, opts) {
+  const lc = opts.lc;
+  const lang = opts.lang;
+  const courseId = opts.courseId;
+  const lessonLevel = String(lesson.cefr_level || opts.defaultLevel || "A1").toUpperCase().trim();
+  const isLocked = !lesson.accessible;
+  const exDone = lesson.exercises_completed != null ? Number(lesson.exercises_completed) : 0;
+  const exTotal = lesson.exercises_total != null ? Number(lesson.exercises_total) : 0;
+  const title = lesson.title || "—";
+  const desc = lesson.description || "";
+  const cover = lesson.cover_image_path ? String(lesson.cover_image_path).trim() : "";
+
+  const card = document.createElement("article");
+  card.className =
+    "lesson-topic-card" +
+    (isLocked ? " lesson-topic-card--locked" : "") +
+    (lesson.is_completed ? " lesson-topic-card--completed" : "");
+
+  const href =
+    "lesson.html?lesson_id=" +
+    encodeURIComponent(String(lesson.id)) +
+    "&lang=" +
+    encodeURIComponent(lang) +
+    "&course_id=" +
+    encodeURIComponent(String(courseId)) +
+    "&level=" +
+    encodeURIComponent(lessonLevel);
+
+  let progressText = "";
+  if (lesson.is_completed) {
+    progressText = lc.lessonCompleted || "Completada";
+  } else if (exTotal > 0 && exDone > 0) {
+    progressText = exDone + "/" + exTotal + " " + (lc.exercisesHeading || "ejercicios");
+  } else if (exTotal > 0) {
+    progressText = exTotal + " " + (lc.exercisesHeading || "ejercicios");
+  }
+
+  const mediaInner = cover
+    ? '<img src="' +
+      corespeakLessonMediaSrc(cover) +
+      '" alt="" class="lesson-topic-card__img" loading="lazy">'
+    : '<div class="lesson-topic-card__placeholder" aria-hidden="true"></div>';
+
+  const lockOverlay = isLocked
+    ? '<div class="lesson-topic-card__lock"><span>' + (lc.locked || "Bloqueado") + "</span></div>"
+    : "";
+
+  const completedBadge = lesson.is_completed
+    ? '<span class="lesson-topic-card__done">' + (lc.lessonCompleted || "Completada") + "</span>"
+    : "";
+
+  card.innerHTML =
+    (isLocked ? '<div class="lesson-topic-card__link lesson-topic-card__link--disabled">' : '<a class="lesson-topic-card__link" href="' + href + '">') +
+    '<div class="lesson-topic-card__media">' +
+    mediaInner +
+    '<span class="lesson-topic-card__level">' +
+    lessonLevel +
+    "</span>" +
+    completedBadge +
+    lockOverlay +
+    '<div class="lesson-topic-card__title-bar">' +
+    title.toUpperCase() +
+    "</div>" +
+    "</div>" +
+    '<div class="lesson-topic-card__body">' +
+    '<p class="lesson-topic-card__desc">' +
+    desc +
+    "</p>" +
+    (progressText
+      ? '<p class="lesson-topic-card__meta">' + progressText + "</p>"
+      : "") +
+    (!isLocked
+      ? '<span class="lesson-topic-card__cta">' +
+        (lesson.is_completed ? (lc.review || lc.start) : lc.start) +
+        " →</span>"
+      : "") +
+    "</div>" +
+    (isLocked ? "</div>" : "</a>");
+
+  return card;
+}
+
+function renderCourseLevelGroups(container, lessons, opts) {
+  const lc = opts.lc;
+  const userLevel = String(opts.userLevel || "A1").toUpperCase().trim();
+  const groups = groupLessonsByCefrLevel(lessons, userLevel);
+  groups.forEach(function (group) {
+    const section = document.createElement("section");
+    section.className =
+      "level-group-card mb-4" + (group.isCurrent ? " level-group-card--current" : "");
+    section.setAttribute("aria-labelledby", "level-group-" + group.level);
+
+    const header = document.createElement("header");
+    header.className = "level-group-header";
+    const progressLabel =
+      group.completedCount +
+      "/" +
+      group.totalCount +
+      " " +
+      (lc.levelLessonsDone || "lecciones completadas");
+    header.innerHTML =
+      '<div class="level-group-header__main">' +
+      '<span class="level-group-badge">' +
+      group.level +
+      "</span>" +
+      '<div class="level-group-header__text">' +
+      '<h3 class="level-group-title" id="level-group-' +
+      group.level +
+      '">' +
+      (lc.levelGroupTitle ? lc.levelGroupTitle(group.level) : "Nivel " + group.level) +
+      "</h3>" +
+      (group.isCurrent
+        ? '<span class="level-group-current">' + (lc.yourCurrentLevel || "Tu nivel actual") + "</span>"
+        : "") +
+      "</div>" +
+      "</div>" +
+      '<span class="level-group-progress">' +
+      progressLabel +
+      "</span>";
+
+    const grid = document.createElement("div");
+    grid.className = "lesson-topic-grid";
+    group.lessons.forEach(function (lesson) {
+      grid.appendChild(
+        renderCourseLessonTopicCard(lesson, {
+          lc: lc,
+          lang: opts.lang,
+          courseId: opts.courseId,
+          defaultLevel: group.level,
+        })
+      );
+    });
+
+    section.appendChild(header);
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+}
+
 async function loadDynamicCoursePage() {
   const auth = requireAuth();
   if (!auth) return;
@@ -5209,24 +5396,6 @@ async function loadDynamicCoursePage() {
     const block = document.createElement("div");
     block.className = "mb-4";
 
-    const head = document.createElement("div");
-    head.className = "d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-2 mb-3";
-    const h5 = document.createElement("h5");
-    h5.className = "mb-0 section-title";
-    h5.textContent = course.title || "—";
-    const meta = document.createElement("span");
-    meta.className = "small text-muted";
-    meta.textContent = (course.cefr_level || "").toString().toUpperCase();
-    head.appendChild(h5);
-    head.appendChild(meta);
-    if (course.is_premium) {
-      const badge = document.createElement("span");
-      badge.className = "badge bg-warning text-dark";
-      badge.textContent = lc.premiumShort || "Premium";
-      head.appendChild(badge);
-    }
-    block.appendChild(head);
-
     if (!course.accessible) {
       const p = document.createElement("p");
       p.className = "text-muted mb-0";
@@ -5246,88 +5415,30 @@ async function loadDynamicCoursePage() {
       return;
     }
 
+    if (list.length > 1) {
+      const head = document.createElement("div");
+      head.className =
+        "d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom pb-2 mb-3";
+      const h5 = document.createElement("h5");
+      h5.className = "mb-0 section-title";
+      h5.textContent = course.title || "—";
+      head.appendChild(h5);
+      if (course.is_premium) {
+        const badge = document.createElement("span");
+        badge.className = "badge bg-warning text-dark";
+        badge.textContent = lc.premiumShort || "Premium";
+        head.appendChild(badge);
+      }
+      block.appendChild(head);
+    }
+
     const levelForLinks = (course.user_cefr_level || course.cefr_level || "A1").toString().toUpperCase().trim();
 
-    lessons.forEach(function (lesson) {
-      const card = document.createElement("div");
-      card.className = "card lesson-card mb-3";
-
-      const isLocked = !lesson.accessible;
-      const iconClass = isLocked ? "icon-locked" : lesson.is_completed ? "icon-completed" : "icon-active";
-      const titleMuted = isLocked ? " text-muted" : "";
-      const descMuted = isLocked ? " text-muted" : "";
-      const lessonLevel = (lesson.cefr_level || levelForLinks).toString().toUpperCase().trim();
-      const exDone = lesson.exercises_completed != null ? Number(lesson.exercises_completed) : 0;
-      const exTotal = lesson.exercises_total != null ? Number(lesson.exercises_total) : 0;
-      let progressHint = "";
-      if (lesson.is_completed) {
-        progressHint = '<span class="badge bg-success-subtle text-success ms-2">' + (lc.lessonCompleted || "Completada") + "</span>";
-      } else if (exTotal > 0 && exDone > 0) {
-        progressHint =
-          '<span class="small text-muted ms-2">' +
-          exDone +
-          "/" +
-          exTotal +
-          " " +
-          (lc.exercisesHeading || "ejercicios") +
-          "</span>";
-      }
-
-      const rightAction = isLocked
-        ? '<span class="badge-locked">' + lc.locked + "</span>"
-        : (
-            '<a href="lesson.html?lesson_id=' +
-            encodeURIComponent(String(lesson.id)) +
-            "&lang=" +
-            encodeURIComponent(lang) +
-            "&course_id=" +
-            encodeURIComponent(String(course.id)) +
-            "&level=" +
-            encodeURIComponent(lessonLevel) +
-            '">' +
-            '<button type="button" class="btn btn-primary-gradient">' +
-            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill me-1" viewBox="0 0 16 16">' +
-            '<path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>' +
-            "</svg>" +
-            (lesson.is_completed ? (lc.review || lc.start) : lc.start) +
-            "</button></a>"
-          );
-
-      card.innerHTML =
-        '<div class="card-body d-flex align-items-center justify-content-between flex-wrap">' +
-        '<div class="d-flex align-items-center">' +
-        '<div class="lesson-icon ' +
-        iconClass +
-        '">' +
-        (isLocked
-          ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-lock-fill" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2"/></svg>'
-          : lesson.is_completed
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-check-lg" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>'
-            : '<div class="inner-circle"></div>') +
-        "</div>" +
-        '<div class="ms-3">' +
-        '<div class="d-flex align-items-center flex-wrap gap-1">' +
-        '<h6 class="lesson-title mb-0' +
-        titleMuted +
-        '">' +
-        (lesson.title || "—") +
-        "</h6>" +
-        '<span class="badge bg-light text-primary border">' +
-        lessonLevel +
-        "</span>" +
-        progressHint +
-        "</div>" +
-        '<p class="lesson-desc' +
-        descMuted +
-        ' mb-0 mt-1">' +
-        (lesson.description || "") +
-        "</p>" +
-        "</div>" +
-        "</div>" +
-        rightAction +
-        "</div>";
-
-      block.appendChild(card);
+    renderCourseLevelGroups(block, lessons, {
+      lc: lc,
+      lang: lang,
+      courseId: course.id,
+      userLevel: levelForLinks,
     });
 
     listEl.appendChild(block);
