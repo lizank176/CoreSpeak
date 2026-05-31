@@ -385,6 +385,53 @@ a{
     box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
 }
 
+.lesson-exercise-shell {
+    margin-top: 0.5rem;
+}
+
+.lesson-exercise-stage {
+    min-height: 120px;
+}
+
+.lesson-exercise-panel {
+    border-radius: 14px;
+}
+
+.lesson-exercise-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0.85rem 0;
+}
+
+.lesson-exercise-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    min-width: 7.5rem;
+    justify-content: center;
+}
+
+.lesson-exercise-nav-btn:disabled {
+    opacity: 0.45;
+}
+
+.lesson-exercise-counter {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #4b5563;
+    white-space: nowrap;
+}
+
+@media (max-width: 575px) {
+    .lesson-exercise-nav-btn {
+        min-width: auto;
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+        font-size: 0.85rem;
+    }
+}
+
 /* Móvil: evitar desbordes horizontales y barra superior más usable */
 @media (max-width: 767.98px) {
     .dashboard-header {

@@ -504,6 +504,9 @@ function uiLessonCoursePack(uiLang) {
       exerciseWrong: "Incorrecto",
       exerciseNeedAnswer: "Escribe o elige una respuesta.",
       exerciseNoValidConfig: "(Sin respuestas configuradas en el catálogo)",
+      exercisePrev: "Anterior",
+      exerciseNext: "Siguiente",
+      exerciseCounter: (cur, total) => String(cur) + " de " + String(total),
       exerciseXpEarned: "+{n} XP",
       exerciseAlreadyDone: "Ya completaste este ejercicio.",
       exercisesHeading: "Ejercicios",
@@ -555,6 +558,9 @@ function uiLessonCoursePack(uiLang) {
       exerciseWrong: "Incorrect",
       exerciseNeedAnswer: "Type or select an answer.",
       exerciseNoValidConfig: "(No correct answers configured)",
+      exercisePrev: "Previous",
+      exerciseNext: "Next",
+      exerciseCounter: (cur, total) => String(cur) + " of " + String(total),
       exerciseXpEarned: "+{n} XP",
       exerciseAlreadyDone: "You already completed this exercise.",
       exercisesHeading: "Exercises",
@@ -4837,6 +4843,20 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
   heading.textContent = lc.exercisesHeading || "Ejercicios";
   container.appendChild(heading);
 
+  const shell = document.createElement("div");
+  shell.className = "lesson-exercise-shell";
+
+  const stage = document.createElement("div");
+  stage.className = "lesson-exercise-stage";
+  shell.appendChild(stage);
+
+  function appendExercisePanel(card, idx) {
+    card.className =
+      "card border shadow-sm lesson-exercise-panel" + (idx > 0 ? " d-none" : "");
+    card.setAttribute("data-exercise-index", String(idx));
+    stage.appendChild(card);
+  }
+
   blocks.forEach(function (b, idx) {
     const type = (b && b.type) ? String(b.type) : "bloque";
     const valid = corespeakCollectValidAnswers(b);
@@ -4845,7 +4865,6 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     const isSingleChoice = String(b && b.selection_mode || "").toLowerCase() === "single_choice";
 
     const card = document.createElement("div");
-    card.className = "card mb-3 border shadow-sm";
     const body = document.createElement("div");
     body.className = "card-body";
 
@@ -4886,7 +4905,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
       p2.textContent = def || "";
       body.appendChild(p2);
       card.appendChild(body);
-      container.appendChild(card);
+      appendExercisePanel(card, idx);
       return;
     }
 
@@ -5044,8 +5063,80 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     body.appendChild(btn);
     body.appendChild(feedback);
     card.appendChild(body);
-    container.appendChild(card);
+    appendExercisePanel(card, idx);
   });
+
+  if (blocks.length > 1) {
+    let currentIndex = 0;
+    const counterEls = [];
+    const prevBtns = [];
+    const nextBtns = [];
+
+    function showExercise(index) {
+      currentIndex = Math.max(0, Math.min(blocks.length - 1, index));
+      stage.querySelectorAll(".lesson-exercise-panel").forEach(function (panel, i) {
+        panel.classList.toggle("d-none", i !== currentIndex);
+      });
+      const cur = currentIndex + 1;
+      const label = lc.exerciseCounter
+        ? lc.exerciseCounter(cur, blocks.length)
+        : cur + " / " + blocks.length;
+      counterEls.forEach(function (el) {
+        el.textContent = label;
+        el.setAttribute("aria-label", label);
+      });
+      prevBtns.forEach(function (btn) {
+        btn.disabled = currentIndex === 0;
+      });
+      nextBtns.forEach(function (btn) {
+        btn.disabled = currentIndex === blocks.length - 1;
+      });
+    }
+
+    function buildNavRow() {
+      const row = document.createElement("div");
+      row.className = "lesson-exercise-nav";
+
+      const prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "btn btn-outline-secondary btn-sm lesson-exercise-nav-btn";
+      prevBtn.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left me-1" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/></svg>' +
+        (lc.exercisePrev || "Anterior");
+
+      const counter = document.createElement("span");
+      counter.className = "lesson-exercise-counter";
+
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "btn btn-outline-secondary btn-sm lesson-exercise-nav-btn";
+      nextBtn.innerHTML =
+        (lc.exerciseNext || "Siguiente") +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right ms-1" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/></svg>';
+
+      prevBtn.addEventListener("click", function () {
+        showExercise(currentIndex - 1);
+      });
+      nextBtn.addEventListener("click", function () {
+        showExercise(currentIndex + 1);
+      });
+
+      counterEls.push(counter);
+      prevBtns.push(prevBtn);
+      nextBtns.push(nextBtn);
+
+      row.appendChild(prevBtn);
+      row.appendChild(counter);
+      row.appendChild(nextBtn);
+      return row;
+    }
+
+    shell.insertBefore(buildNavRow(), stage);
+    shell.appendChild(buildNavRow());
+    showExercise(0);
+  }
+
+  container.appendChild(shell);
 }
 
 function computeCourseLevelProgress(lessons, userLevel) {
