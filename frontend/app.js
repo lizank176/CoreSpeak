@@ -2630,6 +2630,9 @@ function renderDashboardCatalogCourseCard(course) {
   img.src = "https://flagcdn.com/w160/" + flag + ".png";
   img.alt = "Bandera de " + langLabel;
   flagWrap.appendChild(img);
+  if (typeof CoreSpeakA11y !== "undefined" && typeof CoreSpeakA11y.enhanceImage === "function") {
+    CoreSpeakA11y.enhanceImage(img);
+  }
   const titleEl = document.createElement("div");
   titleEl.className = "course-title";
   titleEl.textContent = titleText;

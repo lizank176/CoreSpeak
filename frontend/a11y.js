@@ -9,6 +9,8 @@
   const CORESPEAK_BRAND_LABEL = "CoreSpeak, plataforma para aprender idiomas";
   const CORESPEAK_HOME_LABEL = "Ir al inicio de CoreSpeak";
   const GENERIC_ALTS = new Set(["corespeak logo", "corespeak", "logo", "logo corespeak"]);
+  const HIDDEN_IMG = "corespeak-img-is-hidden";
+  const HIDDEN_FALLBACK = "corespeak-brand-fallback--hidden";
 
   function getFocusable(container) {
     if (!container) return [];
@@ -143,61 +145,6 @@
     }
   }
 
-  function createBrandFallback(img) {
-    const fallback = document.createElement("span");
-    fallback.className =
-      "corespeak-brand-fallback" +
-      (img.classList.contains("dashboard-logo") ? " corespeak-brand-fallback--nav" : "");
-    fallback.textContent = "CoreSpeak";
-    fallback.setAttribute("role", "img");
-    fallback.setAttribute("aria-label", CORESPEAK_BRAND_LABEL);
-    return fallback;
-  }
-
-  function createContentFallback(altText, img) {
-    const fallback = document.createElement("span");
-    fallback.className = "corespeak-img-fallback";
-    if (img && img.closest && img.closest(".flag-img-wrapper")) {
-      fallback.classList.add("corespeak-img-fallback--circle");
-    }
-    fallback.textContent = altText;
-    fallback.setAttribute("role", "img");
-    fallback.setAttribute("aria-label", altText);
-    return fallback;
-  }
-
-  function imageLoadFailed(img) {
-    return !!(img && img.complete && img.naturalWidth === 0);
-  }
-
-  function applyImageFallback(img) {
-    if (!(img instanceof HTMLImageElement) || !img.isConnected) return;
-    if (img.dataset.corespeakFallbackApplied === "1") return;
-    img.dataset.corespeakFallbackApplied = "1";
-    if (isBrandLogo(img)) {
-      img.replaceWith(createBrandFallback(img));
-      return;
-    }
-    const altText = (img.getAttribute("alt") || "").trim();
-    if (!altText || isDecorativeImage(img)) return;
-    img.replaceWith(createContentFallback(altText, img));
-  }
-
-  function bindImageFallback(img) {
-    if (!(img instanceof HTMLImageElement)) return;
-    if (img.dataset.corespeakImgBound === "1") return;
-    img.dataset.corespeakImgBound = "1";
-
-    img.addEventListener("error", function onImgError() {
-      img.removeEventListener("error", onImgError);
-      applyImageFallback(img);
-    });
-
-    if (imageLoadFailed(img)) {
-      applyImageFallback(img);
-    }
-  }
-
   function normalizeBrandLogoSrc(img) {
     const src = (img.getAttribute("src") || "").trim();
     if (/^img\/logo\.png/i.test(src)) {
@@ -215,6 +162,176 @@
     }
   }
 
+  function createBrandFallbackEl(img) {
+    const fallback = document.createElement("span");
+    fallback.className =
+      "corespeak-brand-fallback " +
+      HIDDEN_FALLBACK +
+      (img.classList.contains("dashboard-logo") ? " corespeak-brand-fallback--nav" : "");
+    fallback.textContent = "CoreSpeak";
+    fallback.setAttribute("role", "img");
+    fallback.setAttribute("aria-label", CORESPEAK_BRAND_LABEL);
+    fallback.setAttribute("aria-hidden", "true");
+    return fallback;
+  }
+
+  function getOrCreateBrandFallback(img) {
+    let fallback = img.nextElementSibling;
+    if (fallback && fallback.classList.contains("corespeak-brand-fallback")) {
+      return fallback;
+    }
+    fallback = createBrandFallbackEl(img);
+    img.insertAdjacentElement("afterend", fallback);
+    return fallback;
+  }
+
+  function showFallback(fallback) {
+    if (!fallback) return;
+    fallback.classList.remove(HIDDEN_FALLBACK);
+    fallback.removeAttribute("aria-hidden");
+  }
+
+  function hideFallback(fallback) {
+    if (!fallback) return;
+    fallback.classList.add(HIDDEN_FALLBACK);
+    fallback.setAttribute("aria-hidden", "true");
+  }
+
+  function showImage(img) {
+    if (!img) return;
+    img.classList.remove(HIDDEN_IMG);
+  }
+
+  function hideImage(img) {
+    if (!img) return;
+    img.classList.add(HIDDEN_IMG);
+  }
+
+  function imageLoadFailed(img) {
+    if (!(img instanceof HTMLImageElement)) return false;
+    if (img.classList.contains(HIDDEN_IMG)) return false;
+    if (img.complete && img.naturalWidth === 0) return true;
+    return false;
+  }
+
+  function imageLooksBlocked(img) {
+    if (!(img instanceof HTMLImageElement)) return false;
+    if (img.complete && img.naturalWidth > 0) return false;
+    if (imageLoadFailed(img)) return true;
+    return false;
+  }
+
+  function setupBrandLogo(img) {
+    if (!(img instanceof HTMLImageElement) || img.dataset.corespeakBrandSetup === "1") return;
+    img.dataset.corespeakBrandSetup = "1";
+    prepareBrandLogo(img);
+    img.classList.add("corespeak-brand-img");
+
+    const fallback = getOrCreateBrandFallback(img);
+
+    function activateTextFallback() {
+      hideImage(img);
+      showFallback(fallback);
+    }
+
+    function activateImage() {
+      showImage(img);
+      hideFallback(fallback);
+    }
+
+    function evaluate() {
+      if (imageLooksBlocked(img)) {
+        activateTextFallback();
+        return true;
+      }
+      if (img.complete && img.naturalWidth > 0) {
+        activateImage();
+        return true;
+      }
+      return false;
+    }
+
+    img.addEventListener("error", activateTextFallback);
+    img.addEventListener("load", function () {
+      if (img.naturalWidth > 0) {
+        activateImage();
+      } else {
+        activateTextFallback();
+      }
+    });
+
+    if (!evaluate()) {
+      global.setTimeout(evaluate, 300);
+      global.setTimeout(evaluate, 1200);
+      global.setTimeout(evaluate, 3000);
+    }
+  }
+
+  function createContentFallbackEl(altText, img) {
+    const fallback = document.createElement("span");
+    fallback.className = "corespeak-img-fallback " + HIDDEN_FALLBACK;
+    if (img && img.closest && img.closest(".flag-img-wrapper")) {
+      fallback.classList.add("corespeak-img-fallback--circle");
+    }
+    const short = altText.replace(/^Bandera de\s+/i, "").trim() || altText;
+    fallback.textContent = short;
+    fallback.setAttribute("role", "img");
+    fallback.setAttribute("aria-label", altText);
+    fallback.setAttribute("aria-hidden", "true");
+    return fallback;
+  }
+
+  function setupContentImage(img) {
+    if (!(img instanceof HTMLImageElement) || isBrandLogo(img) || isDecorativeImage(img)) return;
+    if (img.dataset.corespeakContentSetup === "1") return;
+    img.dataset.corespeakContentSetup = "1";
+
+    const altText = (img.getAttribute("alt") || "").trim();
+    if (!altText) return;
+
+    let fallback = img.nextElementSibling;
+    if (!fallback || !fallback.classList.contains("corespeak-img-fallback")) {
+      fallback = createContentFallbackEl(altText, img);
+      img.insertAdjacentElement("afterend", fallback);
+    }
+
+    function activateTextFallback() {
+      hideImage(img);
+      showFallback(fallback);
+    }
+
+    function activateImage() {
+      showImage(img);
+      hideFallback(fallback);
+    }
+
+    function evaluate() {
+      if (imageLooksBlocked(img)) {
+        activateTextFallback();
+        return true;
+      }
+      if (img.complete && img.naturalWidth > 0) {
+        activateImage();
+        return true;
+      }
+      return false;
+    }
+
+    img.addEventListener("error", activateTextFallback);
+    img.addEventListener("load", function () {
+      if (img.naturalWidth > 0) {
+        activateImage();
+      } else {
+        activateTextFallback();
+      }
+    });
+
+    if (!evaluate()) {
+      global.setTimeout(evaluate, 300);
+      global.setTimeout(evaluate, 1200);
+    }
+  }
+
   function ensureImageAlt(img) {
     if (!(img instanceof HTMLImageElement)) return;
     if (img.hasAttribute("alt")) return;
@@ -229,9 +346,10 @@
     if (!(img instanceof HTMLImageElement)) return;
     ensureImageAlt(img);
     if (isBrandLogo(img)) {
-      prepareBrandLogo(img);
+      setupBrandLogo(img);
+      return;
     }
-    bindImageFallback(img);
+    setupContentImage(img);
   }
 
   function enhanceImages(root) {
@@ -278,7 +396,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     initAccessibleImages();
     observeDynamicImages();
-    window.addEventListener("load", function () {
+    global.addEventListener("load", function () {
       initAccessibleImages();
     });
     const skip = document.querySelector(".skip-link");
