@@ -6,6 +6,9 @@
   const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+  const LOGO_ALT = "Icono de CoreSpeak";
+  const LOGO_TEXT = "CoreSpeak";
+
   function getFocusable(container) {
     if (!container) return [];
     return Array.from(container.querySelectorAll(FOCUSABLE)).filter((el) => {
@@ -115,7 +118,7 @@
   }
 
   function logoFailed(img) {
-    return img.complete && img.naturalWidth === 0;
+    return !!(img && img.complete && img.naturalWidth === 0);
   }
 
   function getLogoWrap(img) {
@@ -141,50 +144,57 @@
   }
 
   function ensureLogoAltSpan(img, wrap) {
+    wrap.querySelectorAll(".corespeak-logo-alt").forEach(function (node, idx) {
+      if (idx > 0) node.remove();
+    });
     let span = wrap.querySelector(".corespeak-logo-alt");
     if (!span) {
       span = document.createElement("span");
       span.className = "corespeak-logo-alt";
-      span.textContent = "Icono de CoreSpeak";
-      span.setAttribute("aria-hidden", "true");
       img.insertAdjacentElement("afterend", span);
     }
+    span.textContent = LOGO_TEXT;
+    span.setAttribute("aria-hidden", "true");
     return span;
   }
 
-  function showLogoFallback(wrap) {
+  function showLogoFallback(wrap, img) {
     wrap.classList.add("corespeak-logo--failed");
+    img.setAttribute("alt", "");
+    img.setAttribute("aria-hidden", "true");
   }
 
-  function showLogoImage(wrap) {
+  function showLogoImage(wrap, img) {
     wrap.classList.remove("corespeak-logo--failed");
+    img.setAttribute("alt", LOGO_ALT);
+    img.removeAttribute("aria-hidden");
   }
 
   function bindLogo(img) {
     if (!(img instanceof HTMLImageElement) || img.dataset.corespeakLogoBound === "1") return;
     img.dataset.corespeakLogoBound = "1";
+    img.classList.add("corespeak-logo-img");
     normalizeLogoSrc(img);
-    img.setAttribute("alt", "Icono de CoreSpeak");
 
     const wrap = getLogoWrap(img);
     ensureLogoAltSpan(img, wrap);
 
     function check() {
       if (logoFailed(img)) {
-        showLogoFallback(wrap);
+        showLogoFallback(wrap, img);
       } else if (img.complete && img.naturalWidth > 0) {
-        showLogoImage(wrap);
+        showLogoImage(wrap, img);
       }
     }
 
     img.addEventListener("error", function () {
-      showLogoFallback(wrap);
+      showLogoFallback(wrap, img);
     });
     img.addEventListener("load", check);
 
     check();
-    global.setTimeout(check, 400);
-    global.setTimeout(check, 1500);
+    global.setTimeout(check, 250);
+    global.setTimeout(check, 1000);
   }
 
   function initLogoImages() {
@@ -201,8 +211,19 @@
     initLogoImages,
   };
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function boot() {
     initLogoImages();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+
+  global.addEventListener("load", boot);
+
+  document.addEventListener("DOMContentLoaded", function () {
     const skip = document.querySelector(".skip-link");
     if (skip) {
       skip.addEventListener("click", function (ev) {

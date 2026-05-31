@@ -160,48 +160,48 @@ img:not([alt]) {
   outline-offset: 2px;
 }
 
-/* Logo: texto azul visible si la imagen no carga (el alt del img no se puede estilizar bien) */
+/* Logo: solo "CoreSpeak" en azul si la imagen no carga */
 .corespeak-logo-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-decoration: none;
+  text-decoration: none !important;
   vertical-align: middle;
+  color: #2563eb !important;
 }
 
 .corespeak-logo-alt {
   display: none;
-  color: #1d4ed8 !important;
+  color: #2563eb !important;
+  -webkit-text-fill-color: #2563eb;
   font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-weight: 700;
-  font-size: 1.05rem;
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-  padding: 0.35rem 0.65rem;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-  border: 1px solid #93c5fd;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
-  white-space: nowrap;
-}
-
-.corespeak-logo-wrap.corespeak-logo--failed .corespeak-logo-alt {
-  display: inline-flex;
-}
-
-.corespeak-logo-wrap.corespeak-logo--failed .dashboard-logo,
-.corespeak-logo-wrap.corespeak-logo--failed .logo-img {
-  display: none !important;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .corespeak-logo-wrap--nav .corespeak-logo-alt {
-  font-size: 1.12rem;
-  min-height: 2.75rem;
-  align-items: center;
+  font-size: 1.5rem;
+}
+
+.corespeak-logo-wrap.corespeak-logo--failed .corespeak-logo-alt {
+  display: inline-block;
+}
+
+.corespeak-logo-wrap.corespeak-logo--failed .corespeak-logo-img {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
 }
 
 .dashboard-logo,
-.logo-img {
+.logo-img,
+.corespeak-logo-img {
   max-width: 100%;
   height: auto;
   object-fit: contain;
