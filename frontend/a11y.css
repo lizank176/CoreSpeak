@@ -154,99 +154,37 @@ button.corespeak-logout.dashboard-nav-link {
   }
 }
 
-/* Imágenes: texto alternativo coherente y fallback legible si no cargan */
+/* Imágenes: texto alternativo coherente */
 img:not([alt]) {
   outline: 2px dashed #dc2626;
   outline-offset: 2px;
 }
 
-.corespeak-brand-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 3rem;
-  min-width: 7.5rem;
-  text-decoration: none;
-}
-
-.corespeak-brand-img,
-.corespeak-brand-link img.dashboard-logo,
-.corespeak-brand-link img.logo-img {
-  max-width: 100%;
-  height: auto;
-}
-
-.corespeak-img-is-hidden {
-  display: none !important;
-}
-
-.corespeak-brand-fallback--hidden,
-.corespeak-img-fallback.corespeak-brand-fallback--hidden {
-  display: none !important;
-}
-
-.corespeak-brand-fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.5rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 55%, #1d4ed8 100%);
-  color: #fff;
+/* Logo: el alt hereda color y tipografía si la imagen no carga */
+.dashboard-logo,
+.logo-img {
+  color: #1d4ed8;
+  font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  font-size: 1.08rem;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  text-align: center;
+  vertical-align: middle;
+  min-width: 8.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.4rem;
+  object-fit: contain;
 }
 
-.corespeak-brand-fallback--nav {
-  min-height: 3rem;
-  padding: 0.45rem 1rem;
+.dashboard-logo {
+  max-height: 150px;
+  min-height: 2.85rem;
   font-size: 1.15rem;
 }
 
-.corespeak-img-fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.25rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  border: 1px dashed #94a3b8;
-  background: #f8fafc;
-  color: #334155;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.35;
-  text-align: center;
-  max-width: 100%;
-  word-break: break-word;
-}
-
-.corespeak-img-fallback--block {
-  display: flex;
-  width: 100%;
-  min-height: 4rem;
-  padding: 0.75rem 1rem;
-}
-
-.corespeak-img-fallback:not(.corespeak-brand-fallback--hidden) {
-  display: inline-flex;
-}
-
-.corespeak-img-fallback--circle:not(.corespeak-brand-fallback--hidden) {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-height: 4.5rem;
-  border-radius: 50%;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.5rem;
-  background: linear-gradient(145deg, #dbeafe 0%, #bfdbfe 100%);
-  border: 1px solid #60a5fa;
-  color: #1d4ed8;
+.logo-img {
+  max-width: 240px;
 }
 
 .corespeak-lesson-transcript {
