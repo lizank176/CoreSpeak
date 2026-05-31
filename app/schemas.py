@@ -183,6 +183,39 @@ class ChallengeResultResponse(BaseModel):
     repeat_submission: bool = False
 
 
+class ChallengeHistoryItem(BaseModel):
+    id: int
+    title: str
+    challenge_date: datetime
+    level_code: str
+    status: str
+    is_today: bool
+    user_answer: str | None = None
+    semantic_score: float | None = None
+    can_edit: bool = False
+
+
+class ChallengeHistoryResponse(BaseModel):
+    items: list[ChallengeHistoryItem]
+    is_premium: bool
+
+
+class ChallengeDetailResponse(BaseModel):
+    id: int
+    scenario: str
+    task_prompt: str
+    expected_solution_hint: str
+    user_answer: str | None = None
+    corrective_feedback: str | None = None
+    semantic_score: float | None = None
+    status: str
+    level_code: str
+    challenge_date: datetime
+    is_today: bool
+    read_only: bool
+    can_edit: bool
+
+
 class LessonExerciseSubmitRequest(BaseModel):
     exercise_index: int = Field(ge=0, le=500)
     answer: str | None = Field(default=None, max_length=2000)

@@ -51,12 +51,55 @@
       outline: 3px solid #a78bfa;
       outline-offset: 2px;
     }
+    #read-only-banner:not(.hidden) {
+      display: block;
+    }
+    #challenge-history-sidebar {
+      width: min(100vw, 18rem);
+    }
+    @media (max-width: 1023px) {
+      #challenge-history-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 40;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+      }
+      #challenge-history-sidebar.is-open {
+        transform: translateX(0);
+      }
+      #history-sidebar-backdrop {
+        display: none;
+      }
+      #history-sidebar-backdrop.is-open {
+        display: block;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans text-slate-100 antialiased">
   <a href="#main-content" class="skip-link">Saltar al contenido</a>
-  <div class="mx-auto flex min-h-screen min-w-0 w-full max-w-4xl flex-col px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-8 sm:pt-4">
+  <div id="history-sidebar-backdrop" class="fixed inset-0 z-30 bg-black/50 lg:hidden" aria-hidden="true"></div>
+  <div class="flex min-h-screen w-full min-w-0">
+    <aside id="challenge-history-sidebar" class="flex shrink-0 flex-col border-r border-white/10 bg-slate-950/95 backdrop-blur-md lg:relative lg:translate-x-0" aria-label="Historial de retos">
+      <div class="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-3">
+        <a href="dashboard.html" class="text-xs text-sky-300 hover:text-sky-200" aria-label="Volver al panel">← Panel</a>
+        <button type="button" id="history-sidebar-close" class="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/5 lg:hidden" aria-label="Cerrar historial">✕</button>
+      </div>
+      <div class="px-3 py-3">
+        <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Recientes</h2>
+        <button type="button" id="history-today-btn" class="mb-3 w-full rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-left text-sm font-medium text-sky-100 hover:bg-sky-500/20">
+          Reto de hoy
+        </button>
+        <ul id="challenge-history-list" class="flex max-h-[calc(100vh-10rem)] flex-col gap-1 overflow-y-auto overscroll-contain"></ul>
+      </div>
+    </aside>
+
+    <div class="mx-auto flex min-h-screen min-w-0 w-full max-w-4xl flex-1 flex-col px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-8 sm:pt-4">
   <main id="main-content" tabindex="-1" class="flex min-h-0 min-w-0 flex-1 flex-col outline-none">
+    <div class="mb-2 flex items-center justify-between gap-2 lg:hidden">
+      <button type="button" id="history-toggle" class="rounded-xl border border-white/10 bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-200">Historial</button>
+    </div>
     <!-- Gamificación -->
     <div class="mb-3 min-w-0 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
       <div class="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
@@ -115,6 +158,8 @@
       </div>
     </div>
 
+    <div id="read-only-banner" class="mb-2 hidden rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-center text-xs text-amber-100" role="status"></div>
+
     <div class="mt-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-transparent p-2 backdrop-blur-[2px] sm:flex-row sm:items-stretch">
       <label class="sr-only" for="user-reply">Tu respuesta</label>
       <input id="user-reply" type="text" enterkeyhint="send" autocomplete="off" placeholder="Escribe tu respuesta…"
@@ -125,6 +170,7 @@
       </button>
     </div>
   </main>
+  </div>
   </div>
 
   <script src="a11y.js?v=20260602"></script>
@@ -247,18 +293,14 @@
       }
 
       function syncPremiumActions(me) {
-        const wrap = document.getElementById("premium-actions");
         const isPremium = !!(me && me.is_premium === true);
         window.__premiumTutor = window.__premiumTutor || {};
         window.__premiumTutor.isPremium = isPremium;
         window.__premiumTutor.profile = me || null;
-        if (!wrap) return;
-        wrap.classList.toggle("hidden", !isPremium);
-        wrap.classList.toggle("flex", isPremium);
         if (!isPremium && window.__premiumTutor.mode === "tutor") {
           window.__premiumTutor.mode = "challenge";
         }
-        updateComposerUi();
+        syncPremiumActionsForView(window.__challengeView ? window.__challengeView.isToday !== false : true);
       }
 
       async function refreshGamificationFromServer() {
@@ -355,6 +397,13 @@
         task_prompt: "",
         expected_solution_hint: "",
       };
+      window.__challengeView = {
+        readOnly: false,
+        isResubmit: false,
+        activeId: null,
+        isToday: true,
+      };
+      window.__challengeHistoryItems = [];
       window.__premiumTutor = {
         isPremium: false,
         profile: null,
@@ -393,13 +442,26 @@
         const input = document.getElementById("user-reply");
         const sendBtn = document.getElementById("send-reply");
         if (!input || !sendBtn) return;
+        const view = window.__challengeView || {};
         if (window.__premiumTutor.mode === "tutor") {
+          input.disabled = false;
           input.placeholder = speechRecognitionCtor()
             ? "Habla o escribe tu duda sobre este reto…"
             : "Escribe tu duda sobre este reto…";
           sendBtn.textContent = "Enviar duda";
           sendBtn.disabled = false;
+        } else if (view.readOnly) {
+          input.disabled = true;
+          input.placeholder = "Solo lectura — no puedes editar este reto";
+          sendBtn.textContent = "Solo lectura";
+          sendBtn.disabled = true;
+        } else if (view.isResubmit) {
+          input.disabled = false;
+          input.placeholder = "Escribe tu nueva respuesta…";
+          sendBtn.textContent = "Actualizar respuesta";
+          sendBtn.disabled = false;
         } else {
+          input.disabled = false;
           input.placeholder = "Escribe tu respuesta…";
           sendBtn.textContent = "Enviar";
           sendBtn.disabled = !!window.__dailyChallenge.submitted;
@@ -451,6 +513,224 @@
         return parts.filter(Boolean).join("\n\n");
       }
 
+      function syncPremiumActionsForView(isToday) {
+        const wrap = document.getElementById("premium-actions");
+        if (!wrap) return;
+        const show = !!(window.__premiumTutor.isPremium && isToday);
+        wrap.classList.toggle("hidden", !show);
+        wrap.classList.toggle("flex", show);
+        if (!show && window.__premiumTutor.mode === "tutor") {
+          resetTutorState();
+        }
+      }
+
+      function escapeHistoryHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatHistoryDate(iso, isToday) {
+        if (isToday) return "Hoy";
+        try {
+          const d = new Date(iso);
+          const now = new Date();
+          const yesterday = new Date(now);
+          yesterday.setDate(now.getDate() - 1);
+          if (d.toDateString() === yesterday.toDateString()) return "Ayer";
+          return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function closeHistorySidebarMobile() {
+        document.getElementById("challenge-history-sidebar")?.classList.remove("is-open");
+        document.getElementById("history-sidebar-backdrop")?.classList.remove("is-open");
+      }
+
+      function openHistorySidebarMobile() {
+        document.getElementById("challenge-history-sidebar")?.classList.add("is-open");
+        document.getElementById("history-sidebar-backdrop")?.classList.add("is-open");
+      }
+
+      function renderChallengeHistoryList(activeId) {
+        const list = document.getElementById("challenge-history-list");
+        if (!list) return;
+        const items = window.__challengeHistoryItems || [];
+        if (!items.length) {
+          list.innerHTML = '<li class="px-2 py-2 text-xs text-slate-500">Aún no tienes retos guardados.</li>';
+          return;
+        }
+        list.innerHTML = "";
+        items.forEach(function (item) {
+          const li = document.createElement("li");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          const active = activeId != null && Number(activeId) === Number(item.id);
+          btn.className =
+            "history-item w-full rounded-xl px-3 py-2.5 text-left text-sm transition " +
+            (active
+              ? "bg-sky-500/20 text-white ring-1 ring-sky-400/40"
+              : "text-slate-300 hover:bg-white/5");
+          const dateLabel = formatHistoryDate(item.challenge_date, item.is_today);
+          const modeLabel = item.can_edit ? "Editable" : "Solo lectura";
+          const modeClass = item.can_edit ? "text-amber-300" : "text-slate-500";
+          btn.innerHTML =
+            '<div class="truncate font-medium leading-snug">' +
+            escapeHistoryHtml(item.title) +
+            "</div>" +
+            '<div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">' +
+            '<span class="text-[10px] ' +
+            (item.is_today ? "text-sky-300" : "text-slate-500") +
+            '">' +
+            escapeHistoryHtml(dateLabel) +
+            "</span>" +
+            '<span class="text-[10px] text-slate-500">' +
+            escapeHistoryHtml(item.level_code || "A1") +
+            "</span>" +
+            '<span class="text-[10px] ' +
+            modeClass +
+            '">' +
+            modeLabel +
+            "</span></div>";
+          btn.addEventListener("click", function () {
+            void openChallengeFromHistory(item.id);
+          });
+          li.appendChild(btn);
+          list.appendChild(li);
+        });
+      }
+
+      async function loadChallengeHistory() {
+        const auth = requireAuth();
+        if (!auth) return;
+        const list = document.getElementById("challenge-history-list");
+        if (list) list.innerHTML = '<li class="px-2 py-1 text-xs text-slate-500">Cargando…</li>';
+        try {
+          const res = await fetch(apiUrl("/api/challenges/history"), {
+            headers: { Authorization: "Bearer " + auth.token },
+          });
+          if (!res.ok) {
+            if (list) list.innerHTML = '<li class="px-2 py-2 text-xs text-slate-500">No se pudo cargar el historial.</li>';
+            return;
+          }
+          const data = await res.json().catch(function () {
+            return { items: [] };
+          });
+          window.__challengeHistoryItems = Array.isArray(data.items) ? data.items : [];
+          if (data.is_premium != null) {
+            window.__premiumTutor.isPremium = !!data.is_premium;
+          }
+          renderChallengeHistoryList(window.__challengeView.activeId);
+        } catch (e) {
+          if (list) list.innerHTML = '<li class="px-2 py-2 text-xs text-slate-500">Error de red.</li>';
+        }
+      }
+
+      async function displayChallengeDetail(detail) {
+        const thread = document.getElementById("chat-thread");
+        const toast = document.getElementById("toast-line");
+        const pill = document.getElementById("priority-pill");
+        const readOnlyBanner = document.getElementById("read-only-banner");
+        const status = document.getElementById("status-line");
+        if (toast) {
+          toast.classList.add("hidden");
+          toast.textContent = "";
+        }
+        if (thread) thread.innerHTML = "";
+
+        window.__challengeView.activeId = detail.id;
+        window.__challengeView.readOnly = !!detail.read_only;
+        window.__challengeView.isResubmit = !!detail.can_edit && detail.status === "completed";
+        window.__challengeView.isToday = !!detail.is_today;
+
+        window.__dailyChallenge.id = detail.id;
+        window.__dailyChallenge.loaded = true;
+        window.__dailyChallenge.submitted =
+          detail.status === "completed" && !detail.can_edit;
+        window.__dailyChallenge.scenario = detail.scenario || "";
+        window.__dailyChallenge.task_prompt = detail.task_prompt || "";
+        window.__dailyChallenge.expected_solution_hint = detail.expected_solution_hint || "";
+        resetTutorState();
+
+        const pillText = detail.is_today
+          ? "Reto diario"
+          : "Reto · " + formatHistoryDate(detail.challenge_date, false);
+        if (pill) {
+          pill.classList.remove("hidden");
+          pill.textContent = pillText;
+        }
+
+        if (readOnlyBanner) {
+          readOnlyBanner.classList.toggle("hidden", !detail.read_only);
+          readOnlyBanner.textContent = detail.read_only
+            ? "Vista de solo lectura. Hazte Premium para editar respuestas de retos anteriores."
+            : "";
+        }
+
+        if (status) {
+          if (detail.read_only) {
+            status.textContent = "Consulta tu reto anterior.";
+          } else if (detail.can_edit && detail.status === "completed") {
+            status.textContent = "Premium: puedes cambiar tu respuesta y volver a enviar.";
+          } else {
+            status.textContent = "";
+          }
+        }
+
+        syncPremiumActionsForView(!!detail.is_today);
+
+        const msgs = [];
+        if (detail.scenario) msgs.push(String(detail.scenario));
+        if (detail.task_prompt) msgs.push(String(detail.task_prompt));
+        if (detail.expected_solution_hint) msgs.push("Pista: " + String(detail.expected_solution_hint));
+        for (let i = 0; i < msgs.length; i++) {
+          await new Promise(function (r) {
+            setTimeout(r, 80 + i * 60);
+          });
+          appendTutorBubble(msgs[i]);
+        }
+        if (detail.user_answer) appendUserBubble(detail.user_answer);
+        if (detail.corrective_feedback) {
+          const ok = detail.semantic_score != null && Number(detail.semantic_score) >= 0.6;
+          appendFeedbackBubble(detail.corrective_feedback, ok);
+        }
+
+        const input = document.getElementById("user-reply");
+        if (input) {
+          input.value = detail.can_edit && detail.user_answer ? detail.user_answer : "";
+        }
+        updateComposerUi();
+      }
+
+      async function openChallengeFromHistory(challengeId) {
+        const auth = requireAuth();
+        if (!auth) return;
+        const status = document.getElementById("status-line");
+        if (status) status.textContent = "Cargando reto…";
+        try {
+          const res = await fetch(
+            apiUrl("/api/challenges/" + encodeURIComponent(challengeId) + "/detail"),
+            { headers: { Authorization: "Bearer " + auth.token } }
+          );
+          const detail = await res.json().catch(function () {
+            return {};
+          });
+          if (!res.ok) {
+            if (status) status.textContent = detail.detail || "No se pudo cargar el reto.";
+            return;
+          }
+          await displayChallengeDetail(detail);
+          renderChallengeHistoryList(detail.id);
+          closeHistorySidebarMobile();
+        } catch (e) {
+          if (status) status.textContent = "Error de red.";
+        }
+      }
+
       function setChallengeReadyState(data, pillText) {
         const status = document.getElementById("status-line");
         const pill = document.getElementById("priority-pill");
@@ -460,6 +740,10 @@
         window.__dailyChallenge.scenario = String((data && data.scenario) || "");
         window.__dailyChallenge.task_prompt = String((data && data.task_prompt) || "");
         window.__dailyChallenge.expected_solution_hint = String((data && data.expected_solution_hint) || "");
+        window.__challengeView.readOnly = false;
+        window.__challengeView.isResubmit = false;
+        window.__challengeView.isToday = true;
+        window.__challengeView.activeId = data.id || null;
         resetTutorState();
 
         const lang = "en";
@@ -473,6 +757,9 @@
           pill.classList.remove("hidden");
           pill.textContent = pillText;
         }
+        syncPremiumActionsForView(true);
+        const readOnlyBanner = document.getElementById("read-only-banner");
+        if (readOnlyBanner) readOnlyBanner.classList.add("hidden");
       }
 
       async function fetchChallenge(url, opts) {
@@ -533,6 +820,7 @@
           appendTutorBubble(msgs[i]);
         }
         updateComposerUi();
+        renderChallengeHistoryList(data.id || null);
       }
 
       async function loadChallenge() {
@@ -610,8 +898,10 @@
 
         const toast = document.getElementById("toast-line");
         let res;
+        const isResubmit = !!(window.__challengeView && window.__challengeView.isResubmit);
+        const action = isResubmit ? "resubmit" : "submit";
         try {
-          res = await fetch(apiUrl("/api/challenges/" + encodeURIComponent(challengeId) + "/submit"), {
+          res = await fetch(apiUrl("/api/challenges/" + encodeURIComponent(challengeId) + "/" + action), {
             method: "POST",
             headers: {
               Authorization: "Bearer " + auth.token,
@@ -662,10 +952,18 @@
         }
 
         if (sendBtn) sendBtn.disabled = false;
-        if (!repeat) window.__dailyChallenge.submitted = true;
+        if (!repeat && !isResubmit) {
+          window.__dailyChallenge.submitted = true;
+        }
         updateComposerUi();
 
         await refreshGamificationFromServer();
+        await loadChallengeHistory();
+        if (isResubmit && window.__challengeView.activeId) {
+          await openChallengeFromHistory(window.__challengeView.activeId);
+        } else if (window.__challengeView.activeId) {
+          renderChallengeHistoryList(window.__challengeView.activeId);
+        }
       }
 
       async function submitTutorReply(t) {
@@ -774,10 +1072,19 @@
         }
       });
 
+      document.getElementById("history-toggle")?.addEventListener("click", openHistorySidebarMobile);
+      document.getElementById("history-sidebar-close")?.addEventListener("click", closeHistorySidebarMobile);
+      document.getElementById("history-sidebar-backdrop")?.addEventListener("click", closeHistorySidebarMobile);
+      document.getElementById("history-today-btn")?.addEventListener("click", function () {
+        closeHistorySidebarMobile();
+        void loadChallenge();
+      });
+
       document.addEventListener("DOMContentLoaded", async () => {
         const auth = requireAuth();
         if (!auth) return;
         await refreshGamificationFromServer();
+        await loadChallengeHistory();
         await loadChallenge();
       });
     })();
