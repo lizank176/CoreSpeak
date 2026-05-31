@@ -2503,6 +2503,65 @@ function initPasswordVisibilityToggles() {
   }
 }
 
+const CORESPEAK_NAV_INCLUDE_URL = "/ui/includes/dashboard-nav.html?v=20260528";
+
+async function mountCoreSpeakDashboardNav() {
+  const root = document.getElementById("corespeak-dashboard-nav-root");
+  if (!root || root.dataset.mounted === "1") return false;
+  let html = "";
+  try {
+    const res = await fetch(CORESPEAK_NAV_INCLUDE_URL);
+    if (res.ok) html = await res.text();
+  } catch (e) {
+    console.warn("mountCoreSpeakDashboardNav fetch", e);
+  }
+  if (!html.trim()) return false;
+  root.innerHTML = html;
+  root.dataset.mounted = "1";
+  return true;
+}
+
+async function initCoreSpeakAppNav() {
+  const mounted = await mountCoreSpeakDashboardNav();
+  if (!mounted) return;
+
+  const token = getStoredToken();
+  if (!token) return;
+
+  let isAdmin = false;
+  let isPremium = false;
+  try {
+    const res = await fetch(apiUrl("/api/auth/me"), {
+      headers: { Authorization: "Bearer " + token },
+    });
+    if (res.ok) {
+      const me = await res.json().catch(function () {
+        return {};
+      });
+      isAdmin = String(me.role || "").toLowerCase() === "admin";
+      isPremium = me.is_premium === true;
+    }
+  } catch (e) {
+    console.warn("initCoreSpeakAppNav profile", e);
+  }
+
+  applyAdminNavVisibility(isAdmin);
+
+  const navBtn = document.getElementById("dashboard-nav-premium-btn");
+  const navPremiumLi = navBtn ? navBtn.closest("li") : null;
+  if (isPremium) {
+    if (navBtn) navBtn.classList.add("d-none");
+    if (navPremiumLi) navPremiumLi.classList.add("d-none");
+    return;
+  }
+  if (navBtn && navBtn.dataset.bound !== "1") {
+    navBtn.dataset.bound = "1";
+    navBtn.addEventListener("click", function () {
+      void startPremiumCheckoutGeneric(null, navBtn);
+    });
+  }
+}
+
 async function startPremiumCheckoutGeneric(msgEl, btn) {
   if (msgEl) {
     msgEl.classList.add("d-none");
@@ -2578,9 +2637,12 @@ async function initDashboardPremiumCta() {
   if (navPremiumLi) navPremiumLi.classList.remove("d-none");
   if (navBtn) {
     navBtn.classList.remove("d-none");
-    navBtn.addEventListener("click", function () {
-      void startPremiumCheckoutGeneric(msg, btn);
-    });
+    if (navBtn.dataset.bound !== "1") {
+      navBtn.dataset.bound = "1";
+      navBtn.addEventListener("click", function () {
+        void startPremiumCheckoutGeneric(msg, btn);
+      });
+    }
   }
   btn.addEventListener("click", function () {
     void startPremiumCheckoutGeneric(msg, btn);
@@ -4202,6 +4264,7 @@ async function submitPracticeAnswer() {
 
 // Router simple por pagina
 document.addEventListener("DOMContentLoaded", async () => {
+  await initCoreSpeakAppNav();
   await initCoreSpeakUiLanguage();
   initPasswordVisibilityToggles();
 
@@ -4238,9 +4301,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       ev.preventDefault();
       void saveProfileSetup();
     });
-  }
-  if (document.getElementById("admin-nav-wrap")) {
-    applyAdminNavVisibility(false);
   }
   // Detecta automaticamente la pagina dashboard si existen elementos de estadisticas.
   if (document.getElementById("stat-streak")) {
