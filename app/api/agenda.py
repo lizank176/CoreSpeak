@@ -1,3 +1,5 @@
+"""CRUD de agenda personal de vocabulario por usuario autenticado."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -38,6 +40,7 @@ class AgendaWordUpdate(BaseModel):
 
 
 def _to_out(row: AgendaWord) -> AgendaWordOut:
+    """Mapea entidad SQLModel a respuesta API estable."""
     return AgendaWordOut(id=row.id or 0, word=row.word or "", meaning=row.meaning or "")
 
 
@@ -46,6 +49,7 @@ def list_agenda_words(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[AgendaWordOut]:
+    """Lista palabras del usuario en orden de creación."""
     rows = session.exec(
         select(AgendaWord)
         .where(AgendaWord.user_id == user.id)
@@ -60,6 +64,7 @@ def create_agenda_word(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> AgendaWordOut:
+    """Crea una entrada de agenda (palabra/significado)."""
     w = (body.word or "").strip()
     m = (body.meaning or "").strip()
     now = datetime.utcnow()
@@ -77,6 +82,7 @@ def update_agenda_word(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> AgendaWordOut:
+    """Actualiza una entrada existente de la agenda del usuario."""
     row = session.get(AgendaWord, word_id)
     if not row or row.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Palabra no encontrada")
@@ -95,6 +101,7 @@ def delete_agenda_word(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> Response:
+    """Elimina una entrada de agenda del usuario."""
     row = session.get(AgendaWord, word_id)
     if not row or row.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Palabra no encontrada")

@@ -1,3 +1,8 @@
+"""Autenticación y perfil de usuario.
+
+Incluye registro/login, perfil actual y recuperación de contraseña.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -52,6 +57,7 @@ def _completed_challenges_count(session: Session, user_id: int) -> int:
 
 
 def _resolve_user_english_level(user: AppUser) -> str:
+    """Obtiene nivel CEFR principal (inglés) desde JSON de niveles del usuario."""
     raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
     code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
     if not code and raw_levels:
@@ -74,6 +80,7 @@ def _completed_challenges_count_for_level(session: Session, user_id: int, level_
 
 @router.post("/register", response_model=TokenResponse)
 def register(payload: RegisterRequest, session: Session = Depends(get_session)) -> TokenResponse:
+    """Crea usuario nuevo y devuelve JWT de sesión inicial."""
     email_norm = payload.email.lower().strip()
     existing = session.exec(select(AppUser).where(AppUser.email == email_norm)).first()
     if existing:
@@ -113,6 +120,7 @@ def register(payload: RegisterRequest, session: Session = Depends(get_session)) 
 
 @router.post("/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest, session: Session = Depends(get_session)) -> dict[str, str]:
+    """Genera y envía enlace de reset (respuesta neutra para no filtrar existencia)."""
     email_norm = str(payload.email).lower().strip()
     user = session.exec(select(AppUser).where(AppUser.email == email_norm)).first()
     if user:
@@ -132,6 +140,7 @@ def forgot_password(payload: ForgotPasswordRequest, session: Session = Depends(g
 
 @router.post("/reset-password")
 def reset_password(payload: ResetPasswordRequest, session: Session = Depends(get_session)) -> dict[str, str]:
+    """Aplica nueva contraseña validando token temporal de recuperación."""
     try:
         claims = decode_password_reset_token(payload.token.strip())
     except ValueError:
@@ -155,6 +164,7 @@ def reset_password(payload: ResetPasswordRequest, session: Session = Depends(get
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, session: Session = Depends(get_session)) -> TokenResponse:
+    """Autentica credenciales y devuelve JWT."""
     user = session.exec(select(AppUser).where(AppUser.email == str(payload.email).lower().strip())).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales invalidas")
@@ -173,6 +183,7 @@ def login(payload: LoginRequest, session: Session = Depends(get_session)) -> Tok
 
 @router.get("/me", response_model=UserProfileResponse)
 def me(user: AppUser = Depends(get_current_user), session: Session = Depends(get_session)) -> UserProfileResponse:
+    """Devuelve perfil actual enriquecido con progreso de retos."""
     data = UserProfileResponse.model_validate(user).model_dump()
     data["interests_json"] = coerce_interests_list(data.get("interests_json"))
     data["completed_challenges"] = _completed_challenges_count(session, int(user.id or 0))
@@ -190,6 +201,7 @@ def profile_setup(
     session: Session = Depends(get_session),
     user: AppUser = Depends(get_current_user),
 ) -> UserProfileResponse:
+    """Guarda configuración inicial de perfil y sincroniza enrollments."""
     user.ui_language = payload.ui_language
     user.native_language = payload.ui_language
     if user.is_premium:

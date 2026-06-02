@@ -22,6 +22,11 @@ from app.security import decode_access_token
 
 
 def create_app() -> FastAPI:
+    """Factory principal de FastAPI para CoreSpeak.
+
+    Configura middlewares, seguridad por JWT, routers API y servido de frontend
+    estático en `/ui`.
+    """
     app = FastAPI(title=settings.app_name, version="0.1.0")
 
     app.add_middleware(
@@ -48,6 +53,11 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def require_auth_for_api(request: Request, call_next):
+        """Aplica autenticación por defecto a rutas `/api/*`.
+
+        Excluye únicamente rutas públicas declaradas en `PUBLIC_API_PATHS` y
+        prefijos de autenticación/registro.
+        """
         path = request.url.path or ""
         if path.startswith("/api/"):
             if path in PUBLIC_API_PATHS or any(path.startswith(p) for p in PUBLIC_API_PREFIXES):

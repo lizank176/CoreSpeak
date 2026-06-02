@@ -1,3 +1,12 @@
+"""Endpoints del módulo de retos diarios.
+
+Responsabilidades principales:
+- Obtener o generar el reto del día por usuario.
+- Evaluar respuestas con validación semántica (Groq + fallback).
+- Actualizar progreso (XP, racha y promoción CEFR).
+- Gestionar historial y flujo premium (generación extra y resubmit).
+"""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -41,6 +50,7 @@ _LEGACY_BOOKSTORE_FALLBACK_PREFIX = "You're sitting in a quiet corner of your fa
 
 
 def _resolve_user_level(user: AppUser) -> str:
+    """Resuelve el nivel CEFR activo del usuario para el reto diario."""
     raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
     level_code = raw_levels.get(PRIMARY_COURSE_CODE) or raw_levels.get("en")
     if not level_code and raw_levels:
@@ -50,6 +60,11 @@ def _resolve_user_level(user: AppUser) -> str:
 
 
 def _build_and_store_challenge(session: Session, user: AppUser, *, variety_key: str) -> ChallengeResponse:
+    """Genera un reto nuevo, lo persiste y devuelve payload de frontend.
+
+    `variety_key` controla la semilla para maximizar variedad sin repetir escenarios.
+    """
+    # Se consulta historial reciente para que el generador evite repeticiones.
     prev = session.exec(
         select(DailyChallenge)
         .where(DailyChallenge.user_id == user.id)
@@ -95,6 +110,7 @@ def _build_and_store_challenge(session: Session, user: AppUser, *, variety_key: 
 
 
 def _completed_challenges_at_level(session: Session, user_id: int, level_code: str) -> int:
+    """Cuenta retos completados por nivel CEFR (para promoción)."""
     return len(
         session.exec(
             select(DailyChallenge).where(
@@ -107,6 +123,7 @@ def _completed_challenges_at_level(session: Session, user_id: int, level_code: s
 
 
 def _maybe_promote_user_level(session: Session, user: AppUser, level_code: str) -> str | None:
+    """Promueve al siguiente nivel cuando alcanza el umbral de retos completados."""
     current_level = _resolve_user_level(user)
     current_level = normalize_cefr_level(current_level)
     level_code = normalize_cefr_level(level_code)
@@ -127,6 +144,7 @@ def _maybe_promote_user_level(session: Session, user: AppUser, level_code: str) 
 
 
 def _xp_from_semantic_score(max_xp: int, score: float) -> int:
+    """Convierte score semántico [0..1] a XP con piso de participación."""
     s = max(0.0, min(1.0, float(score)))
     if s < 0.02:
         return 0
@@ -136,6 +154,7 @@ def _xp_from_semantic_score(max_xp: int, score: float) -> int:
 
 
 def _challenge_title(ch: DailyChallenge) -> str:
+    """Construye título corto para historial de retos."""
     scenario = (ch.scenario or "").strip().replace("\n", " ")
     if scenario:
         return scenario[:72] + ("…" if len(scenario) > 72 else "")
@@ -146,6 +165,7 @@ def _challenge_title(ch: DailyChallenge) -> str:
 
 
 def _get_owned_challenge(session: Session, user_id: int, challenge_id: int) -> DailyChallenge:
+    """Devuelve reto del usuario o 404 si no le pertenece/no existe."""
     challenge = session.exec(
         select(DailyChallenge).where(DailyChallenge.id == challenge_id, DailyChallenge.user_id == user_id)
     ).first()
@@ -155,10 +175,12 @@ def _get_owned_challenge(session: Session, user_id: int, challenge_id: int) -> D
 
 
 def _challenge_is_today(ch: DailyChallenge) -> bool:
+    """Determina si el reto pertenece al día actual."""
     return calendar_day_from_db(ch.challenge_date) == date.today()
 
 
 def _can_edit_challenge(user: AppUser, ch: DailyChallenge) -> bool:
+    """Regla de edición en historial (premium y estado del reto)."""
     if not user.is_premium:
         return False
     if ch.status == ChallengeStatus.COMPLETED:
@@ -167,6 +189,7 @@ def _can_edit_challenge(user: AppUser, ch: DailyChallenge) -> bool:
 
 
 def _challenge_detail_response(user: AppUser, ch: DailyChallenge) -> ChallengeDetailResponse:
+    """Mapea entidad de reto a payload de detalle para frontend."""
     is_today = _challenge_is_today(ch)
     is_completed = ch.status == ChallengeStatus.COMPLETED
     is_premium = bool(user.is_premium)
@@ -206,6 +229,11 @@ def _grade_and_store_challenge(
     *,
     award_progress: bool,
 ) -> ChallengeResultResponse:
+    """Evalúa una respuesta de reto y guarda resultado final en BD.
+
+    Si `award_progress` es False (resubmit premium), recalcula feedback/score
+    pero no otorga XP ni altera progreso acumulado.
+    """
     is_strong, score, feedback = semantic_validate_answer(
         user_answer=answer.strip(),
         expected_solution=challenge.expected_solution or "",
@@ -220,6 +248,7 @@ def _grade_and_store_challenge(
     level_up_message: str | None = None
 
     if award_progress:
+        # Primera entrega: sí otorga progreso.
         xp_earned = _xp_from_semantic_score(challenge.xp_awarded or XP_MAX_DAILY, score)
         streak_message = update_daily_streak(user)
         award_xp(user, xp_earned)
@@ -235,6 +264,7 @@ def _grade_and_store_challenge(
         if promoted_to:
             level_up_message = f"Has subido al nivel {promoted_to}. El siguiente reto será más avanzado."
 
+    # Persistimos SIEMPRE la última respuesta y su evaluación (también en resubmit premium).
     challenge.user_answer = answer.strip()
     challenge.semantic_score = score
     challenge.corrective_feedback = feedback
@@ -267,6 +297,7 @@ def get_daily_challenge(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> ChallengeResponse:
+    """Devuelve el reto de hoy o lo genera si no existe."""
     today = date.today()
     rows = session.exec(
         select(DailyChallenge)
@@ -299,6 +330,7 @@ def get_daily_challenge(
         challenge_today = None
 
     if challenge_today is not None:
+        # Si ya existe reto vigente hoy, no regeneramos: devolvemos el persistido.
         return ChallengeResponse(
             id=int(challenge_today.id or 0),
             scenario=challenge_today.scenario,
@@ -317,6 +349,7 @@ def list_challenge_history(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> ChallengeHistoryResponse:
+    """Lista historial visible en sidebar (hoy + retos completados previos)."""
     today = date.today()
     rows = session.exec(
         select(DailyChallenge)
@@ -350,6 +383,7 @@ def generate_premium_challenge(
     user: AppUser = Depends(require_premium_or_grace),
     session: Session = Depends(get_session),
 ) -> ChallengeResponse:
+    """Genera reto extra bajo demanda para usuarios premium."""
     return _build_and_store_challenge(
         session,
         user,
@@ -363,6 +397,7 @@ def get_challenge_detail(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> ChallengeDetailResponse:
+    """Devuelve detalle de un reto concreto del historial del usuario."""
     challenge = _get_owned_challenge(session, int(user.id or 0), challenge_id)
     return _challenge_detail_response(user, challenge)
 
@@ -374,9 +409,11 @@ def submit_answer(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> ChallengeResultResponse:
+    """Envía respuesta inicial del reto y otorga progreso si aplica."""
     challenge = _get_owned_challenge(session, int(user.id or 0), challenge_id)
 
     if challenge.status == ChallengeStatus.COMPLETED:
+        # Idempotencia: evita doble premio por el mismo reto ya completado.
         return ChallengeResultResponse(
             is_correct_semantically=bool(
                 challenge.semantic_score and challenge.semantic_score >= SCORE_DAILY_STRONG_SEMANTIC
@@ -405,6 +442,7 @@ def resubmit_answer(
     user: AppUser = Depends(require_premium_or_grace),
     session: Session = Depends(get_session),
 ) -> ChallengeResultResponse:
+    """Permite re-evaluar un reto completado (solo premium, sin progreso extra)."""
     challenge = _get_owned_challenge(session, int(user.id or 0), challenge_id)
     if challenge.status != ChallengeStatus.COMPLETED:
         raise HTTPException(

@@ -1,3 +1,8 @@
+"""Panel API de administración.
+
+Agrupa endpoints de gestión de usuarios, cursos y lecciones.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -30,6 +35,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 def _lesson_video_transcript(content_json: dict | None) -> str | None:
+    """Extrae transcripción desde estructura nueva o legacy de content_json."""
     if not isinstance(content_json, dict):
         return None
     media = content_json.get("media")
@@ -49,6 +55,7 @@ def dashboard_stats(
     _: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> dict:
+    """Métricas resumidas para tarjeta principal de admin."""
     users = session.exec(select(AppUser)).all()
     lessons = session.exec(select(Lesson)).all()
     courses = session.exec(
@@ -68,6 +75,7 @@ def course_tree(
     _: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> list[dict]:
+    """Estructura jerárquica curso > nivel > lecciones para UI admin."""
     courses = session.exec(
         select(LanguageCourse).where(LanguageCourse.is_active == True, LanguageCourse.language_code != "de")  # noqa: E712
     ).all()
@@ -94,6 +102,7 @@ def list_users(
     _: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> dict:
+    """Listado de usuarios con filtro por texto (email/nombre)."""
     users = session.exec(select(AppUser)).all()
     term = q.strip().lower()
     if term:
@@ -167,6 +176,7 @@ def create_lesson(
     admin: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> dict:
+    """Crea lección con su payload media + ejercicios iniciales."""
     _validate_lesson_payload(payload, session)
     lesson = Lesson(
         course_id=payload.course_id,
@@ -210,6 +220,7 @@ def admin_lesson_detail(
     _: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> dict:
+    """Detalle completo de lección para formulario de edición admin."""
     lesson = session.get(Lesson, lesson_id)
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
@@ -239,6 +250,7 @@ def update_lesson(
     _: AppUser = Depends(require_admin),
     session: Session = Depends(get_session),
 ) -> dict:
+    """Actualiza datos de lección y reemplaza ejercicios asociados."""
     lesson = session.get(Lesson, lesson_id)
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")

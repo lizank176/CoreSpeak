@@ -1,3 +1,5 @@
+"""Endpoints de tutor IA premium (chat contextual)."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -13,6 +15,7 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 def _preferred_level(user: AppUser, requested_level: str | None) -> str:
+    """Resuelve nivel CEFR: request explícito > perfil usuario > A1."""
     if requested_level:
         return normalize_cefr_level(requested_level)
     raw_levels = user.current_levels_json if isinstance(user.current_levels_json, dict) else {}
@@ -27,6 +30,7 @@ def tutor_chat(
     payload: TutorChatRequest,
     user: AppUser = Depends(require_premium_or_grace),
 ) -> TutorChatResponse:
+    """Genera respuesta del tutor premium usando contexto y breve historial."""
     reply = build_premium_tutor_reply(
         payload.user_message,
         native_language=user.native_language or "es",

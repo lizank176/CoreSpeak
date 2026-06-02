@@ -2883,6 +2883,12 @@ function flagCodeForCourseLang(lang) {
   return DASHBOARD_FLAG_BY_LANG[c] || c;
 }
 
+/**
+ * Renderiza una tarjeta de curso para el dashboard principal.
+ * Incluye CTA, metadatos de idioma/nivel y progreso (barra + texto).
+ * @param {Object} course
+ * @returns {HTMLDivElement}
+ */
 function renderDashboardCatalogCourseCard(course) {
   const u = getUiPack(getCurrentUiLangSync());
   const d = u.dashboard || {};
@@ -3005,6 +3011,10 @@ function renderDashboardCatalogCourseCard(course) {
   return col;
 }
 
+/**
+ * Carga cursos visibles en dashboard para el usuario autenticado.
+ * Divide resultados en "Mis cursos" y "Otros cursos", y pinta tarjetas dinámicas.
+ */
 async function loadDashboardCourses() {
   const auth = requireAuth();
   if (!auth) return;
@@ -4939,6 +4949,10 @@ function corespeakLessonPageHref(lessonNav, baseOpts) {
   return "lesson.html?" + params.toString();
 }
 
+/**
+ * Renderiza los ejercicios del catálogo dentro de una lección.
+ * Implementa navegación entre ejercicios y salto opcional a lección vecina.
+ */
 function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
   const options = opts || {};
   const lessonId = options.lessonId != null ? String(options.lessonId) : "";
@@ -5111,6 +5125,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
       btn.disabled = true;
 
       if (lessonId && auth && auth.token) {
+        // Flujo normal conectado a backend: guarda intento y devuelve XP/racha real.
         const activity = await recordLearningActivity(auth);
         if (activity) {
           applyProgressStatsToDom(activity.xp_total, activity.streak_days);
@@ -5152,6 +5167,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
             applyProgressStatsToDom(data.xp_total, data.streak_days);
           }
           try {
+            // Bandera para forzar refresco de course/dashboard al volver atrás.
             sessionStorage.setItem("corespeak_course_refresh", "1");
           } catch (e) {
             /* ignore */
@@ -5205,6 +5221,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     const prevLessonHref = corespeakLessonPageHref(options.prevLesson, options);
     const nextLessonHref = corespeakLessonPageHref(options.nextLesson, options);
 
+    // Si no hay más ejercicios en la lección actual, navegamos entre lecciones vecinas.
     function goPrev() {
       if (currentIndex > 0) {
         showExercise(currentIndex - 1);
@@ -5234,6 +5251,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
         el.textContent = label;
         el.setAttribute("aria-label", label);
       });
+      // Botones solo se deshabilitan si no hay ni ejercicio ni lección adyacente.
       prevBtns.forEach(function (btn) {
         btn.disabled = currentIndex === 0 && !prevLessonHref;
       });

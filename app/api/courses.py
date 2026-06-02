@@ -1,3 +1,11 @@
+"""Endpoints de cursos, catálogo de lecciones y progreso de usuario.
+
+Este módulo concentra:
+- Catálogo público autenticado (`/api/catalog/...`)
+- Endpoints legacy de cursos (`/api/courses/...`)
+- Métricas de progreso usadas por dashboard y curso/lección.
+"""
+
 from __future__ import annotations
 
 import json
@@ -632,6 +640,12 @@ def _course_level_progress(
     completed_lesson_ids: set[int],
     exercise_counts: dict[int, int] | None = None,
 ) -> dict[str, Any]:
+    """Calcula progreso de curso para dashboard priorizando avance por ejercicios.
+
+    Si existen datos de ejercicios completados, el porcentaje se calcula sobre
+    ejercicios; si no, cae al progreso por lecciones completadas.
+    """
+    # El dashboard prioriza el nivel CEFR actual del usuario dentro del curso.
     scoped = [
         lesson
         for lesson in lessons
@@ -673,6 +687,7 @@ def catalog_courses(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[dict[str, Any]]:
+    """Listado de cursos con métricas de progreso agregadas por usuario."""
     chosen_codes = {
         str(code).strip().lower()
         for code in user.target_languages_json.get("languages", [])
@@ -703,6 +718,9 @@ def catalog_courses(
     completed_lesson_ids: set[int] = set()
     exercise_counts: dict[int, int] = {}
     if all_lesson_ids:
+        # Dos vistas de avance:
+        # - attempts => lección completada
+        # - completions => ejercicios completados
         attempts = session.exec(
             select(LessonAttempt).where(
                 LessonAttempt.user_id == user.id,

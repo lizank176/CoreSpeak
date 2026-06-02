@@ -4,6 +4,15 @@ CoreSpeak es una plataforma de aprendizaje de idiomas (estilo Duolingo) con back
 
 Este README documenta el estado actual del proyecto.
 
+## Documentación adicional
+
+Para una guía más detallada por área:
+
+- `docs/arquitectura.md` — visión de arquitectura y capas.
+- `docs/api.md` — endpoints principales y contratos funcionales.
+- `docs/frontend.md` — estructura de pantallas y flujo de `app.js`.
+- `docs/retos-groq.md` — funcionamiento del reto diario y papel de Groq.
+
 ## Estado actual del proyecto
 
 ### Funcionalidades implementadas

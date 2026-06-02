@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 from datetime import datetime
@@ -13,6 +14,8 @@ from app.cefr import normalize_cefr_level
 from app.challenge_text import looks_like_ai_rubric
 from app.interest_catalog import english_for_ai_prompt, learner_topics_meaningful
 from app.constants import SCORE_DAILY_STRONG_SEMANTIC
+
+logger = logging.getLogger(__name__)
 
 
 class GroqSettings:
@@ -436,6 +439,28 @@ def _post_process_challenge(
     return {"scenario": s, "task_prompt": p, "expected_solution": e}
 
 
+def _extract_json_object_text(content: str) -> str:
+    """Extrae un objeto JSON aunque el modelo añada markdown/prefijos."""
+    text = (content or "").strip()
+    if not text:
+        return text
+    fenced = re.search(r"```(?:json)?\s*(\{[\s\S]*\})\s*```", text, re.IGNORECASE)
+    if fenced:
+        return fenced.group(1).strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return text[start : end + 1].strip()
+    return text
+
+
+def _soft_clean_english_fields(scenario: str, expected_solution: str) -> tuple[str, str]:
+    """Limpieza mínima para evitar fallback por ruido puntual de puntuación."""
+    clean_scenario = (scenario or "").replace("¿", "").replace("¡", "").strip()
+    clean_expected = (expected_solution or "").replace("¿", "").replace("¡", "").strip()
+    return clean_scenario, clean_expected
+
+
 def build_daily_challenge(
     user_name: str,
     level_code: str,
@@ -446,11 +471,17 @@ def build_daily_challenge(
     recent_scenarios: list[str] | None = None,
     variety_key: str = "",
 ) -> dict[str, str]:
+    """Genera el reto diario (Groq) con degradación segura a fallback local.
+
+    Objetivo: siempre devolver un bundle usable para UI aunque la llamada externa
+    falle, venga malformada o repita demasiado escenarios recientes.
+    """
     lvl = normalize_cefr_level(level_code)
     interest_text = _interest_line(interests)
     mw_cap = _solution_word_cap(lvl)
     simple_band = lvl in ("A1", "A2")
 
+    # Semilla estable por usuario/día para mantener variedad y reproducibilidad.
     vk = variety_key.strip() or f"{user_name}:{lvl}:{interest_text}"
     seed = _daily_entropy_seed(vk)
     theme_pick = _DAY_THEMES[_stable_index(f"{seed}:theme", len(_DAY_THEMES))]
@@ -500,6 +531,7 @@ Return JSON object with keys exactly:
 
 Respond with JSON only."""
 
+    # Se prepara antes del request para poder cortar rápido en cualquier error.
     fallback = _offline_fallback_bundle(
         vk, native_language, interests_readable=interest_text, level_code=lvl
     )
@@ -509,25 +541,36 @@ Respond with JSON only."""
 
     try:
         content = _groq_request(system_prompt, user_prompt, temperature=0.85)
-        parsed = json.loads(content)
+        parsed = json.loads(_extract_json_object_text(content))
         if not isinstance(parsed, dict):
+            logger.warning("daily_challenge fallback: groq returned non-dict payload")
             return fallback
         raw = {
             "scenario": str(parsed.get("scenario") or "").strip(),
             "task_prompt": str(parsed.get("task_prompt") or "").strip(),
             "expected_solution": str(parsed.get("expected_solution") or "").strip(),
         }
+        # Sanitiza JSON de IA y rellena campos vacíos/raros con fallback.
         outcome = _post_process_challenge(raw, fallback, max_solution_words=mw_cap)
         if _too_similar_to_recent(outcome["scenario"], recent_scenarios):
+            # Si se parece demasiado a retos previos, forzamos variante local distinta.
+            logger.info("daily_challenge fallback: scenario too similar to recent")
             return _offline_fallback_bundle(
                 f"{vk}:dup-recovery",
                 native_language,
                 interests_readable=interest_text,
                 level_code=lvl,
             )
-        if _looks_like_non_english_leak(outcome["scenario"]) or _looks_like_non_english_leak(
-            outcome.get("expected_solution") or ""
-        ):
+        scenario_clean, expected_clean = _soft_clean_english_fields(
+            outcome["scenario"],
+            outcome.get("expected_solution") or "",
+        )
+        if scenario_clean != outcome["scenario"] or expected_clean != (outcome.get("expected_solution") or ""):
+            outcome["scenario"] = scenario_clean
+            outcome["expected_solution"] = expected_clean
+        if _looks_like_non_english_leak(outcome["scenario"]) or _looks_like_non_english_leak(outcome["expected_solution"]):
+            # Evita contaminación de idioma en campos que deben ser 100% inglés.
+            logger.info("daily_challenge fallback: non-english leak detected after cleanup")
             return _offline_fallback_bundle(
                 f"{vk}:lang-leak",
                 native_language,
@@ -535,7 +578,8 @@ Respond with JSON only."""
                 level_code=lvl,
             )
         return outcome
-    except Exception:
+    except Exception as e:
+        logger.exception("daily_challenge fallback: generation failed, using offline bundle (%s)", e)
         return fallback
 
 
@@ -641,6 +685,7 @@ def semantic_validate_answer(
     native_language: str = "es",
     **ctx: Any,
 ) -> tuple[bool, float, str]:
+    """Evalúa semánticamente una respuesta de reto y devuelve (fuerte, score, feedback)."""
     nl = (native_language or "es").strip() or "es"
     nl_short = _eval_feedback_language_short(nl)
     task_prompt = str(ctx.get("task_prompt") or "").strip()
@@ -693,11 +738,13 @@ Brief flow: compare meaning → note concrete English mistakes → end with moti
         data = json.loads(content)
         score_raw = float(data.get("score", 0))
         score = max(0.0, min(1.0, score_raw))
+        # Piso de score para A1/A2: evita castigos extremos por errores menores.
         score = _apply_beginner_score_floor(user_answer.strip(), score, lvl_band)
         feedback_raw = str(data.get("feedback") or "").strip()
         if not feedback_raw:
             feedback_raw = _localized_eval_fallback_message(nl, error=False)
         weak = score < SCORE_DAILY_STRONG_SEMANTIC
+        # Post-procesa feedback para añadir correcciones concretas de alto valor.
         feedback = _inject_correction_hints(
             feedback_raw,
             user_answer.strip(),

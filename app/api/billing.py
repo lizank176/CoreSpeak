@@ -1,3 +1,8 @@
+"""Flujo de suscripciones y pagos con Stripe.
+
+Incluye checkout, estado de suscripción, portal de cliente y webhook.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -46,6 +51,7 @@ def _resolve_stripe_customer_id(session: Session, user: AppUser) -> str | None:
 
 
 def _sync_billing_from_stripe(session: Session, user: AppUser) -> None:
+    """Sincroniza IDs de customer/subscription en caso de datos incompletos."""
     _resolve_stripe_customer_id(session, user)
     _resolve_stripe_subscription_id(session, user)
 
@@ -86,6 +92,7 @@ def _resolve_stripe_subscription_id(session: Session, user: AppUser) -> str | No
 
 
 def _stripe_subscription_snapshot(user: AppUser) -> dict:
+    """Consulta snapshot de suscripción en Stripe para exponer estado actualizado."""
     sub_id = str(user.subscription_id or "").strip()
     if not sub_id or not settings.stripe_secret_key:
         return {}
@@ -106,6 +113,7 @@ def subscription_status(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> SubscriptionStatusResponse:
+    """Devuelve estado consolidado de suscripción para UI de configuración."""
     _sync_billing_from_stripe(session, user)
     status_value = user.subscription_status or "inactive"
     if user.is_premium and status_value == "inactive":
@@ -138,6 +146,7 @@ def cancel_subscription(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CancelSubscriptionResponse:
+    """Marca cancelación al final del período pagado (no cancela inmediatamente)."""
     _sync_billing_from_stripe(session, user)
     subscription_id = user.subscription_id or _resolve_stripe_subscription_id(session, user)
     if not subscription_id:
@@ -189,6 +198,7 @@ def create_checkout(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CheckoutResponse:
+    """Crea sesión de checkout de Stripe para plan mensual."""
     _ = payload
     if not settings.stripe_secret_key or not settings.stripe_price_id_monthly:
         raise HTTPException(
@@ -236,6 +246,7 @@ def create_portal_session(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> PortalResponse:
+    """Abre sesión del billing portal de Stripe para autogestión del usuario."""
     if not settings.stripe_secret_key:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Configura STRIPE_SECRET_KEY")
     customer_id = _resolve_stripe_customer_id(session, user)
