@@ -19,6 +19,7 @@ from app.config import settings
 from app.pricing_plans import billing_pricing_payload
 from app.db import init_db
 from app.security import decode_access_token
+from app.services.media_storage import ensure_upload_dir
 
 
 def create_app() -> FastAPI:
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def on_startup() -> None:
         init_db()
+        ensure_upload_dir()
 
     # Seguridad: por defecto, toda la API requiere JWT.
     # Excepciones: auth (login/registro), health y webhook Stripe (Stripe no envía JWT).
@@ -138,6 +140,14 @@ def create_app() -> FastAPI:
         ctx["request"] = request
         ctx["base_url"] = settings.app_base_url.rstrip("/")
         return jinja_templates.TemplateResponse("pricing.html", ctx)
+
+    uploads_dir = project_root / "data" / "uploads"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    app.mount(
+        "/media/uploads",
+        StaticFiles(directory=str(uploads_dir)),
+        name="lesson_media",
+    )
 
     if frontend_dir.exists():
         app.mount(

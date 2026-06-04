@@ -4046,7 +4046,7 @@ async function loadPracticeExercise(skillOverride) {
       audioEl.src = "";
     } else if (ex.audio_url) {
       audioWrap.style.display = "block";
-      audioEl.src = ex.audio_url;
+      audioEl.src = corespeakLessonMediaSrc(ex.audio_url);
       audioEl.load();
     } else {
       audioWrap.style.display = "none";
@@ -4822,6 +4822,7 @@ function corespeakLessonMediaSrc(pathOrUrl) {
   if (pathOrUrl == null || pathOrUrl === "") return "";
   const s = String(pathOrUrl).trim();
   if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  if (s.startsWith("/media/")) return staticUrl(s);
   return staticUrl("/static/" + s.replace(/^\/+/, ""));
 }
 
@@ -6012,11 +6013,16 @@ async function loadLessonPage() {
     listEl.appendChild(block);
   });
 
-  if (detail.audio_static_path && detail.accessible) {
+  const lessonAudioSrc = detail.audio_url
+    ? corespeakLessonMediaSrc(detail.audio_url)
+    : detail.audio_static_path
+      ? staticUrl("/static/" + String(detail.audio_static_path).replace(/^\/+/, ""))
+      : "";
+  if (lessonAudioSrc && detail.accessible) {
     const au = document.createElement("audio");
     au.className = "w-100 mb-3";
     au.controls = true;
-    au.src = staticUrl("/static/" + String(detail.audio_static_path).replace(/^\/+/, ""));
+    au.src = lessonAudioSrc;
     listEl.appendChild(au);
   }
 

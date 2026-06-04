@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlmodel import Session, select
 
 from app.config import settings
@@ -30,6 +30,7 @@ from app.models import (
 from app.security import create_password_reset_token
 from app.services.user_account_service import delete_user_account
 from app.schemas import CreateLessonRequest
+from app.services.media_storage import save_lesson_media
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -385,4 +386,15 @@ def _serialize_lesson_exercise(item: LessonExercise) -> dict:
         "model_answer": item.model_answer,
         "points": item.points,
     }
+
+
+@router.post("/media/upload")
+async def upload_lesson_media(
+    kind: str = Form(...),
+    file: UploadFile = File(...),
+    _: AppUser = Depends(require_admin),
+) -> dict[str, str]:
+    """Sube imagen o audio de lección; devuelve URL pública servida por `/media/uploads/`."""
+    url = await save_lesson_media(file, kind)
+    return {"url": url}
 

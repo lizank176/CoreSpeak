@@ -180,9 +180,9 @@
               <h3 class="h6 mb-3">Módulo multimedia</h3>
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="form-label">Vídeo (enlace de YouTube o vídeo)</label>
-                  <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=... o enlace de vídeo">
-                  <div class="small text-muted mt-1">Se guarda como URL en base de datos.</div>
+                  <label class="form-label">Vídeo (enlace YouTube o Vimeo)</label>
+                  <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                  <div class="small text-muted mt-1">Solo enlaces de YouTube o Vimeo (no se sube archivo de vídeo).</div>
                   <div id="video-preview-wrap" class="mt-2 d-none">
                     <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Vista previa del vídeo"></iframe>
                   </div>
@@ -197,22 +197,23 @@
                 </div>
 
                 <div class="col-12">
-                  <label class="form-label">Imagen (subir o pegar link)</label>
+                  <label class="form-label">Imagen (subir archivo o pegar enlace directo)</label>
                   <div class="input-group">
-                    <input id="media-image-url" class="form-control" placeholder="https://.../imagen.jpg">
-                    <input id="media-image-file" type="file" class="form-control" accept="image/*">
+                    <input id="media-image-url" class="form-control" placeholder="https://.../imagen.jpg o se rellena al subir">
+                    <input id="media-image-file" type="file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
                   </div>
-                  <div class="small text-muted mt-1">Para persistir en MySQL usa URL. El archivo local se usa como previsualización temporal.</div>
+                  <div class="small text-muted mt-1">Al guardar la lección, el archivo se sube al servidor. El enlace debe apuntar a la imagen (.jpg, .png…), no a una página web.</div>
+                  <div id="image-preview-hint" class="small text-warning mt-1 d-none">No se pudo cargar la imagen: usa un enlace directo o sube un archivo.</div>
                   <img id="image-preview" class="preview-media mt-2 d-none w-100" alt="Previsualización imagen">
                 </div>
 
                 <div class="col-12">
-                  <label class="form-label">Audio (subir o pegar link)</label>
+                  <label class="form-label">Audio (subir archivo o pegar enlace directo)</label>
                   <div class="input-group">
-                    <input id="media-audio-url" class="form-control" placeholder="https://.../audio.mp3">
-                    <input id="media-audio-file" type="file" class="form-control" accept="audio/*">
+                    <input id="media-audio-url" class="form-control" placeholder="https://.../audio.mp3 o se rellena al subir">
+                    <input id="media-audio-file" type="file" class="form-control" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac">
                   </div>
-                  <div class="small text-muted mt-1">Para persistir usa URL. El archivo local solo se previsualiza.</div>
+                  <div class="small text-muted mt-1">Al guardar la lección, el archivo se sube al servidor (mp3, wav, ogg, m4a; máx. 15 MB).</div>
                   <audio id="audio-preview" class="mt-2 d-none w-100" controls></audio>
                 </div>
               </div>
@@ -322,6 +323,8 @@
       let editingLessonId = null;
       let exerciseState = [];
       let courseTreeData = [];
+      let pendingImageFile = null;
+      let pendingAudioFile = null;
 
       function updateSelectionLabels() {
         const summary = selectedCourseName && selectedLevelName
@@ -424,6 +427,10 @@
         el("media-video-transcript").value = detail.video_transcript || "";
         el("media-image-url").value = detail.image_url || "";
         el("media-audio-url").value = detail.audio_url || "";
+        pendingImageFile = null;
+        pendingAudioFile = null;
+        if (el("media-image-file")) el("media-image-file").value = "";
+        if (el("media-audio-file")) el("media-audio-file").value = "";
         exerciseState = Array.isArray(detail.exercises) && detail.exercises.length
           ? detail.exercises.map(lessonInputToState)
           : [exerciseDefault("multiple_choice")];
@@ -485,13 +492,28 @@
         function drawImagePreviewFromUrl() {
           const v = el("media-image-url").value.trim();
           const img = el("image-preview");
-          if (!v) { img.classList.add("d-none"); img.removeAttribute("src"); return; }
+          const hint = el("image-preview-hint");
+          if (!v) {
+            img.classList.add("d-none");
+            img.removeAttribute("src");
+            if (hint) hint.classList.add("d-none");
+            return;
+          }
+          img.onerror = function () {
+            img.classList.add("d-none");
+            if (hint) hint.classList.remove("d-none");
+          };
+          img.onload = function () {
+            if (hint) hint.classList.add("d-none");
+          };
           img.src = v;
           img.classList.remove("d-none");
         }
         function drawImagePreviewFromFile(file) {
           const img = el("image-preview");
+          const hint = el("image-preview-hint");
           if (!file) return;
+          if (hint) hint.classList.add("d-none");
           img.src = URL.createObjectURL(file);
           img.classList.remove("d-none");
         }
@@ -513,11 +535,50 @@
         el("media-image-url").addEventListener("input", drawImagePreviewFromUrl);
         el("media-audio-url").addEventListener("input", drawAudioPreviewFromUrl);
         el("media-image-file").addEventListener("change", function (ev) {
-          drawImagePreviewFromFile(ev.target.files && ev.target.files[0]);
+          const file = ev.target.files && ev.target.files[0];
+          pendingImageFile = file || null;
+          drawImagePreviewFromFile(file);
         });
         el("media-audio-file").addEventListener("change", function (ev) {
-          drawAudioPreviewFromFile(ev.target.files && ev.target.files[0]);
+          const file = ev.target.files && ev.target.files[0];
+          pendingAudioFile = file || null;
+          drawAudioPreviewFromFile(file);
         });
+      }
+
+      async function uploadLessonMediaFile(file, kind) {
+        const token = typeof getStoredToken === "function" ? getStoredToken() : "";
+        if (!token) throw new Error("Sesión caducada. Vuelve a iniciar sesión.");
+        const fd = new FormData();
+        fd.append("kind", kind);
+        fd.append("file", file, file.name || (kind + ".bin"));
+        const res = await fetch(apiUrl("/api/admin/media/upload"), {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token },
+          body: fd
+        });
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          const detail = data.detail;
+          const msg = typeof detail === "string" ? detail : (Array.isArray(detail) ? detail.map(function (d) { return d.msg || d; }).join(" ") : "Error al subir el archivo.");
+          throw new Error(msg);
+        }
+        return data.url || "";
+      }
+
+      async function resolveMediaUrlsBeforeSave() {
+        if (pendingImageFile) {
+          const url = await uploadLessonMediaFile(pendingImageFile, "image");
+          el("media-image-url").value = url;
+          pendingImageFile = null;
+          el("media-image-file").value = "";
+        }
+        if (pendingAudioFile) {
+          const url = await uploadLessonMediaFile(pendingAudioFile, "audio");
+          el("media-audio-url").value = url;
+          pendingAudioFile = null;
+          el("media-audio-file").value = "";
+        }
       }
 
       function exerciseDefault(type) {
@@ -803,8 +864,20 @@
           setMsg(errors, "err", "No se puede guardar la lección");
           return;
         }
-        const payload = buildLessonPayload();
         const isEditing = editingLessonId != null;
+        setMsg(
+          pendingImageFile || pendingAudioFile
+            ? "Subiendo archivos multimedia…"
+            : (isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…"),
+          "info"
+        );
+        try {
+          await resolveMediaUrlsBeforeSave();
+        } catch (uploadErr) {
+          setMsg(uploadErr.message || "No se pudo subir el archivo multimedia.", "err");
+          return;
+        }
+        const payload = buildLessonPayload();
         setMsg(
           isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…",
           "info"
