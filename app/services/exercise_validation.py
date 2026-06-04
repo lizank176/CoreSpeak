@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import unicodedata
 from typing import Any
@@ -40,16 +41,56 @@ def answer_list_matches_valid(user_inputs: list[str], valid_list: list[str]) -> 
     return bool(cleaned_user) and len(cleaned_user) == len(cleaned_valid) and cleaned_user == cleaned_valid
 
 
+def _validate_quiz_multi_block(
+    block: dict[str, Any],
+    *,
+    answer: str | None,
+    selected: list[str] | None,
+) -> bool:
+    preguntas = block.get("preguntas")
+    if not isinstance(preguntas, list) or len(preguntas) < 2:
+        return False
+    responses: dict[str, Any] = {}
+    if answer:
+        try:
+            parsed = json.loads(answer)
+            if isinstance(parsed, dict):
+                responses = parsed
+        except json.JSONDecodeError:
+            return False
+    if not responses and selected:
+        return False
+    for idx, sub in enumerate(preguntas):
+        if not isinstance(sub, dict):
+            return False
+        key = str(idx)
+        raw = responses.get(key)
+        sub_selected: list[str] | None = None
+        sub_answer: str | None = None
+        if isinstance(raw, list):
+            sub_selected = [str(x).strip() for x in raw if str(x).strip()]
+        elif raw is not None:
+            sub_answer = str(raw).strip()
+        if not sub_answer and not sub_selected:
+            return False
+        if not validate_catalog_block_answer(sub, answer=sub_answer, selected=sub_selected):
+            return False
+    return True
+
+
 def validate_catalog_block_answer(
     block: dict[str, Any],
     *,
     answer: str | None,
     selected: list[str] | None,
 ) -> bool:
+    block_type = str(block.get("type") or "").strip().lower()
+    if block_type == "quiz_multi":
+        return _validate_quiz_multi_block(block, answer=answer, selected=selected)
+
     valid = collect_valid_answers(block)
     if not valid:
         return False
-    block_type = str(block.get("type") or "").strip().lower()
     selection_mode = str(block.get("selection_mode") or "").strip().lower()
     is_single = selection_mode == "single_choice" or block_type in {"quiz", "test"} and selection_mode != "multiple_choice"
 

@@ -5013,6 +5013,7 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     const card = document.createElement("div");
     const body = document.createElement("div");
     body.className = "card-body";
+    const uid = "ex-" + idx + "-" + Math.random().toString(36).slice(2, 9);
 
     const exImgPath = corespeakExerciseBlockImagePath(b);
     if (exImgPath) {
@@ -5055,6 +5056,162 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
       return;
     }
 
+    if (type === "quiz_multi" && Array.isArray(b.preguntas) && b.preguntas.length) {
+      titleRow.textContent = (lc.exercisesHeading || "Ejercicios") + " · " + b.preguntas.length + " preguntas";
+      const multiChoices = [];
+      b.preguntas.forEach(function (sub, subIdx) {
+        const subType = String(sub && sub.type || "quiz");
+        const subQ = corespeakExerciseQuestionText(sub);
+        const subOpts = Array.isArray(sub.opciones) ? sub.opciones : [];
+        const subSingle = String(sub.selection_mode || "").toLowerCase() === "single_choice";
+        const section = document.createElement("div");
+        section.className = "mb-4 pb-3 border-bottom";
+        const h = document.createElement("p");
+        h.className = "fw-semibold mb-2";
+        h.textContent = (subIdx + 1) + ". " + (subQ || "—");
+        section.appendChild(h);
+        const subUid = uid + "-sq" + subIdx;
+        const subChoiceInputs = [];
+        if (subOpts.length) {
+          const wrap = document.createElement("div");
+          wrap.className = "d-flex flex-column gap-2";
+          subOpts.forEach(function (opt, j) {
+            const labelText = typeof opt === "object" && opt != null ? opt.texto || opt.text || opt.label : String(opt);
+            const id = subUid + "-o" + j;
+            const row = document.createElement("div");
+            row.className = "form-check";
+            const choice = document.createElement("input");
+            choice.type = subSingle ? "radio" : "checkbox";
+            choice.className = "form-check-input";
+            if (subSingle) choice.name = subUid + "-mc";
+            choice.id = id;
+            choice.value = String(labelText);
+            subChoiceInputs.push(choice);
+            const lab = document.createElement("label");
+            lab.className = "form-check-label";
+            lab.setAttribute("for", id);
+            lab.textContent = String(labelText);
+            row.appendChild(choice);
+            row.appendChild(lab);
+            wrap.appendChild(row);
+          });
+          section.appendChild(wrap);
+        } else {
+          const inp = document.createElement("input");
+          inp.type = "text";
+          inp.className = "form-control";
+          inp.setAttribute("autocomplete", "off");
+          subChoiceInputs.push(inp);
+          section.appendChild(inp);
+        }
+        multiChoices.push({ sub: sub, inputs: subChoiceInputs, single: subSingle });
+        body.appendChild(section);
+      });
+
+      const btnMulti = document.createElement("button");
+      btnMulti.type = "button";
+      btnMulti.className = "btn btn-primary btn-sm";
+      btnMulti.textContent = lc.exerciseCheck || "Comprobar";
+      const feedbackMulti = document.createElement("div");
+      feedbackMulti.className = "small mt-2 fw-semibold";
+      feedbackMulti.style.minHeight = "1.25rem";
+
+      btnMulti.addEventListener("click", async function () {
+        const responses = {};
+        let missing = false;
+        multiChoices.forEach(function (entry, subIdx) {
+          const key = String(subIdx);
+          const picked = entry.inputs.filter(function (x) {
+            return x.type === "text" ? (x.value || "").trim() : x.checked;
+          });
+          if (!picked.length) {
+            missing = true;
+            return;
+          }
+          if (entry.inputs[0] && entry.inputs[0].type === "text") {
+            responses[key] = (entry.inputs[0].value || "").trim();
+          } else if (entry.single) {
+            responses[key] = picked[0].value;
+          } else {
+            responses[key] = picked.map(function (x) { return x.value; });
+          }
+        });
+        if (missing) {
+          feedbackMulti.className = "small mt-2 text-warning";
+          feedbackMulti.textContent = lc.exerciseNeedAnswer || "";
+          return;
+        }
+        btnMulti.disabled = true;
+        const answerJson = JSON.stringify(responses);
+        if (lessonId && auth && auth.token) {
+          const activity = await recordLearningActivity(auth);
+          if (activity) applyProgressStatsToDom(activity.xp_total, activity.streak_days);
+          try {
+            const res = await fetch(
+              apiUrl("/api/catalog/lessons/" + encodeURIComponent(lessonId) + "/exercises/submit"),
+              {
+                method: "POST",
+                headers: {
+                  Authorization: "Bearer " + auth.token,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ exercise_index: idx, answer: answerJson }),
+              }
+            );
+            const data = await res.json().catch(function () { return {}; });
+            if (!res.ok) {
+              feedbackMulti.className = "small mt-2 text-danger";
+              feedbackMulti.textContent =
+                formatApiErrorDetail(data) || data.detail || "No se pudo guardar el progreso.";
+              btnMulti.disabled = false;
+              return;
+            }
+            const ok = !!data.is_correct;
+            feedbackMulti.className = "small mt-2 fw-semibold " + (ok ? "text-success" : "text-danger");
+            feedbackMulti.textContent =
+              data.feedback || (ok ? lc.exerciseCorrect : lc.exerciseWrong);
+            if (data.xp_total != null || data.streak_days != null) {
+              applyProgressStatsToDom(data.xp_total, data.streak_days);
+            }
+            try { sessionStorage.setItem("corespeak_course_refresh", "1"); } catch (e) { /* ignore */ }
+            if (ok && !data.repeat_submission) {
+              multiChoices.forEach(function (entry) {
+                entry.inputs.forEach(function (inp) { inp.disabled = true; });
+              });
+            } else {
+              btnMulti.disabled = false;
+            }
+            return;
+          } catch (e) {
+            console.warn("submit quiz_multi", e);
+            feedbackMulti.className = "small mt-2 text-danger";
+            feedbackMulti.textContent = "No se pudo conectar con el servidor.";
+            btnMulti.disabled = false;
+            return;
+          }
+        }
+        let allOk = true;
+        multiChoices.forEach(function (entry, subIdx) {
+          const subValid = corespeakCollectValidAnswers(entry.sub);
+          const key = String(subIdx);
+          const raw = responses[key];
+          const ok = Array.isArray(raw)
+            ? corespeakAnswerListMatchesValid(raw, subValid)
+            : corespeakAnswerMatchesValid(String(raw || ""), subValid);
+          if (!ok) allOk = false;
+        });
+        feedbackMulti.className = "small mt-2 fw-semibold " + (allOk ? "text-success" : "text-danger");
+        feedbackMulti.textContent = allOk ? lc.exerciseCorrect : lc.exerciseWrong;
+        btnMulti.disabled = false;
+      });
+
+      body.appendChild(btnMulti);
+      body.appendChild(feedbackMulti);
+      card.appendChild(body);
+      appendExercisePanel(card, idx);
+      return;
+    }
+
     if (qText) {
       const pq = document.createElement("p");
       pq.className = "card-text mb-3";
@@ -5062,7 +5219,6 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
       body.appendChild(pq);
     }
 
-    const uid = "ex-" + idx + "-" + Math.random().toString(36).slice(2, 9);
     let inputEl = null;
     const choices = [];
 

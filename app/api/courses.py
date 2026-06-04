@@ -175,6 +175,41 @@ def _catalog_blocks_from_content(content: dict[str, Any] | None) -> list[dict[st
         options_json = item.get("options_json") if isinstance(item.get("options_json"), dict) else {}
         correct_answer = item.get("correct_answer")
 
+        sub_questions = options_json.get("questions")
+        if isinstance(sub_questions, list) and len(sub_questions) > 1:
+            preguntas: list[dict[str, Any]] = []
+            for sq in sub_questions:
+                if not isinstance(sq, dict):
+                    continue
+                sq_prompt = str(sq.get("prompt") or "").strip()
+                sq_options = sq.get("options")
+                if not isinstance(sq_options, list):
+                    sq_options = []
+                valid_options = [str(op).strip() for op in sq_options if str(op).strip()]
+                sq_correct = sq.get("correct_answers")
+                correct_answers = (
+                    [str(x).strip() for x in sq_correct if str(x).strip()]
+                    if isinstance(sq_correct, list)
+                    else _extract_correct_answers(correct_answer, sq)
+                )
+                if not sq_prompt or len(valid_options) < 2:
+                    continue
+                preguntas.append(
+                    {
+                        "type": "quiz",
+                        "pregunta": sq_prompt,
+                        "opciones": valid_options,
+                        "respuestas_validas": correct_answers,
+                        "respuesta_correcta": correct_answers[0] if correct_answers else None,
+                        "selection_mode": "single_choice"
+                        if str(options_json.get("mode") or sq.get("mode") or "").strip().lower() == "single_choice"
+                        else "multiple_choice",
+                    }
+                )
+            if len(preguntas) > 1:
+                blocks.append({"type": "quiz_multi", "preguntas": preguntas})
+                continue
+
         if ex_type in {"multiple_choice", "single_choice"}:
             options = options_json.get("options")
             if not isinstance(options, list):
@@ -927,6 +962,11 @@ def catalog_lesson_detail(
         raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
     accessible = _lesson_accessible_for_user(lesson, user)
     blocks = _catalog_blocks_from_content(lesson.content_json)
+    lesson_image = (lesson.image_url or "").strip()
+    if lesson_image and blocks:
+        first = blocks[0]
+        if isinstance(first, dict) and not str(first.get("image") or "").strip():
+            blocks[0] = {**first, "image": lesson_image}
     media = _lesson_media_display_fields(lesson)
     neighbors = _lesson_neighbors_in_course(session, lesson, user)
     return {

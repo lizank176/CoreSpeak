@@ -218,7 +218,7 @@ class ChallengeDetailResponse(BaseModel):
 
 class LessonExerciseSubmitRequest(BaseModel):
     exercise_index: int = Field(ge=0, le=500)
-    answer: str | None = Field(default=None, max_length=2000)
+    answer: str | None = Field(default=None, max_length=8000)
     selected: list[str] = Field(default_factory=list, max_length=20)
 
 

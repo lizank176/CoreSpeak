@@ -221,7 +221,7 @@
               <hr>
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="h6 mb-0">Constructor de ejercicios</h3>
-                <button id="btn-add-exercise" class="btn btn-sm btn-primary" type="button">+ Añadir ejercicio</button>
+                <button id="btn-add-exercise" class="btn btn-sm btn-primary" type="button">+ Añadir pregunta</button>
               </div>
               <div id="exercise-list" class="d-flex flex-column gap-3"></div>
               <div class="mt-3">
@@ -377,31 +377,116 @@
         return raw.split("||").map(function (x) { return x.trim(); }).filter(Boolean);
       }
 
+      function questionDefault(type) {
+        if (type === "fill_in_the_blank") {
+          return { prompt: "", sentence: "", hidden_word: "", correct_answer: "" };
+        }
+        return {
+          prompt: "",
+          options: [
+            { text: "", is_correct: false },
+            { text: "", is_correct: false },
+            { text: "", is_correct: false },
+            { text: "", is_correct: false }
+          ]
+        };
+      }
+
+      function exerciseDefault(type) {
+        const t = type === "single_choice"
+          ? "single_choice"
+          : (type === "fill_in_the_blank" ? "fill_in_the_blank" : "multiple_choice");
+        return { exercise_type: t, questions: [questionDefault(t)], points: 10 };
+      }
+
+      function normalizeExerciseGroup(ex) {
+        if (!ex) return exerciseDefault("multiple_choice");
+        if (Array.isArray(ex.questions) && ex.questions.length) return ex;
+        if (ex.exercise_type === "fill_in_the_blank") {
+          return {
+            exercise_type: "fill_in_the_blank",
+            questions: [{
+              prompt: ex.prompt || ex.sentence || "",
+              sentence: ex.sentence || ex.prompt || "",
+              hidden_word: ex.hidden_word || "",
+              correct_answer: ex.correct_answer || ""
+            }],
+            points: Number(ex.points || 10) || 10
+          };
+        }
+        return {
+          exercise_type: ex.exercise_type || "multiple_choice",
+          questions: [{
+            prompt: ex.prompt || "",
+            options: ex.options || questionDefault("multiple_choice").options
+          }],
+          points: Number(ex.points || 10) || 10
+        };
+      }
+
+      function exercisesFromApi(items) {
+        if (!items || !items.length) return [exerciseDefault("multiple_choice")];
+        const groups = items.map(lessonInputToState).map(normalizeExerciseGroup);
+        if (groups.length <= 1) return groups;
+        const merged = groups[0];
+        for (let i = 1; i < groups.length; i += 1) {
+          const g = groups[i];
+          if (
+            g.exercise_type === merged.exercise_type &&
+            merged.exercise_type !== "fill_in_the_blank"
+          ) {
+            merged.questions = (merged.questions || []).concat(g.questions || []);
+          }
+        }
+        return [merged];
+      }
+
       function lessonInputToState(item) {
         const type = String(item && item.exercise_type || "").toLowerCase();
         const optionsJson = item && typeof item.options_json === "object" ? item.options_json : {};
+        const subqs = Array.isArray(optionsJson.questions) ? optionsJson.questions : null;
         if (type === "fill_in_the_blank") {
-          return {
-            exercise_type: "fill_in_the_blank",
+          const q = {
             prompt: item.prompt || optionsJson.sentence || "",
             sentence: optionsJson.sentence || item.prompt || "",
             hidden_word: optionsJson.hidden_word || "",
-            correct_answer: item.correct_answer || "",
+            correct_answer: item.correct_answer || ""
+          };
+          return { exercise_type: "fill_in_the_blank", questions: [q], points: Number(item.points || 10) || 10 };
+        }
+        const selectionMode = String(optionsJson.mode || "").toLowerCase() === "single_choice"
+          ? "single_choice"
+          : "multiple_choice";
+        if (subqs && subqs.length) {
+          return {
+            exercise_type: selectionMode,
+            questions: subqs.map(function (sq) {
+              const options = Array.isArray(sq.options) ? sq.options : [];
+              const correctAnswers = Array.isArray(sq.correct_answers)
+                ? sq.correct_answers.map(function (x) { return String(x || "").trim(); }).filter(Boolean)
+                : [];
+              return {
+                prompt: String(sq.prompt || "").trim(),
+                options: [0, 1, 2, 3].map(function (idx) {
+                  const text = String(options[idx] || "");
+                  return { text: text, is_correct: !!text && correctAnswers.indexOf(text.trim()) >= 0 };
+                })
+              };
+            }),
             points: Number(item.points || 10) || 10
           };
         }
         const options = Array.isArray(optionsJson.options) ? optionsJson.options : [];
         const correctAnswers = getStoredCorrectAnswers(item, optionsJson);
-        const selectionMode = String(optionsJson.mode || "").toLowerCase() === "single_choice"
-          ? "single_choice"
-          : "multiple_choice";
         return {
           exercise_type: selectionMode,
-          prompt: item.prompt || "",
-          options: [0, 1, 2, 3].map(function (idx) {
-            const text = String(options[idx] || "");
-            return { text: text, is_correct: !!text && correctAnswers.indexOf(text.trim()) >= 0 };
-          }),
+          questions: [{
+            prompt: item.prompt || "",
+            options: [0, 1, 2, 3].map(function (idx) {
+              const text = String(options[idx] || "");
+              return { text: text, is_correct: !!text && correctAnswers.indexOf(text.trim()) >= 0 };
+            })
+          }],
           points: Number(item.points || 10) || 10
         };
       }
@@ -432,7 +517,7 @@
         if (el("media-image-file")) el("media-image-file").value = "";
         if (el("media-audio-file")) el("media-audio-file").value = "";
         exerciseState = Array.isArray(detail.exercises) && detail.exercises.length
-          ? detail.exercises.map(lessonInputToState)
+          ? exercisesFromApi(detail.exercises)
           : [exerciseDefault("multiple_choice")];
         renderExercises();
         el("media-video-url").dispatchEvent(new Event("input"));
@@ -581,47 +666,34 @@
         }
       }
 
-      function exerciseDefault(type) {
-        if (type === "fill_in_the_blank") {
-          return { exercise_type: type, prompt: "", sentence: "", hidden_word: "", correct_answer: "", points: 10 };
-        }
-        return {
-          exercise_type: type === "single_choice" ? "single_choice" : "multiple_choice",
-          prompt: "",
-          options: [
-            { text: "", is_correct: false },
-            { text: "", is_correct: false },
-            { text: "", is_correct: false },
-            { text: "", is_correct: false }
-          ],
-          points: 10
-        };
-      }
-
-      function renderExerciseBody(state, idx) {
+      function renderQuestionBody(state, exIdx, qIdx) {
+        const q = (state.questions || [])[qIdx] || questionDefault(state.exercise_type);
         if (state.exercise_type === "fill_in_the_blank") {
-          const sentence = escapeHtml(state.sentence || "");
-          const hidden = escapeHtml(state.hidden_word || "");
+          const sentence = escapeHtml(q.sentence || "");
+          const hidden = escapeHtml(q.hidden_word || "");
           const preview = sentence && hidden
             ? sentence.replace(new RegExp(hidden, "i"), "_____")
             : "";
           return (
-            "<div class='mb-2'>" +
-              "<label class='form-label'>Frase completa</label>" +
-              "<input class='form-control ex-sentence' value='" + sentence + "' placeholder='I ___ to school every day'>" +
-            "</div>" +
-            "<div class='mb-2'>" +
-              "<label class='form-label'>Palabra a ocultar</label>" +
-              "<input class='form-control ex-hidden-word' value='" + hidden + "' placeholder='go'>" +
-            "</div>" +
-            "<div class='mb-2'>" +
-              "<label class='form-label'>Respuesta exacta</label>" +
-              "<input class='form-control ex-correct-answer' value='" + escapeHtml(state.correct_answer || "") + "' placeholder='go'>" +
-            "</div>" +
-            "<div class='small text-muted'>" + (preview ? ("Vista previa: " + escapeHtml(preview)) : "Vista previa pendiente") + "</div>"
+            "<div class='question-block border rounded p-2 mb-2 bg-light' data-q-index='" + qIdx + "'>" +
+              "<div class='fw-semibold small mb-2'>Pregunta " + (qIdx + 1) + "</div>" +
+              "<div class='mb-2'>" +
+                "<label class='form-label'>Frase completa</label>" +
+                "<input class='form-control ex-sentence' value='" + sentence + "' placeholder='I ___ to school every day'>" +
+              "</div>" +
+              "<div class='mb-2'>" +
+                "<label class='form-label'>Palabra a ocultar</label>" +
+                "<input class='form-control ex-hidden-word' value='" + hidden + "' placeholder='go'>" +
+              "</div>" +
+              "<div class='mb-2'>" +
+                "<label class='form-label'>Respuesta exacta</label>" +
+                "<input class='form-control ex-correct-answer' value='" + escapeHtml(q.correct_answer || "") + "' placeholder='go'>" +
+              "</div>" +
+              "<div class='small text-muted'>" + (preview ? ("Vista previa: " + escapeHtml(preview)) : "Vista previa pendiente") + "</div>" +
+            "</div>"
           );
         }
-        const options = state.options || [];
+        const options = q.options || [];
         let optionsHtml = "";
         const usesCheckboxes = state.exercise_type === "multiple_choice";
         for (let i = 0; i < 4; i += 1) {
@@ -629,73 +701,106 @@
           optionsHtml += (
             "<div class='input-group mb-1'>" +
               "<span class='input-group-text'>" +
-                "<input class='form-check-input mt-0 ex-option-correct' type='" + (usesCheckboxes ? "checkbox" : "radio") + "' " + (usesCheckboxes ? "" : ("name='correct-" + idx + "'")) + " data-option-index='" + i + "' " + (op.is_correct ? "checked" : "") + ">" +
+                "<input class='form-check-input mt-0 ex-option-correct' type='" + (usesCheckboxes ? "checkbox" : "radio") + "' " + (usesCheckboxes ? "" : ("name='correct-" + exIdx + "-" + qIdx + "'")) + " data-option-index='" + i + "' " + (op.is_correct ? "checked" : "") + ">" +
               "</span>" +
               "<input class='form-control ex-option-text' data-option-index='" + i + "' value='" + escapeHtml(op.text || "") + "' placeholder='Opción " + (i + 1) + "'>" +
             "</div>"
           );
         }
+        const removeBtn = (state.questions || []).length > 1
+          ? "<button type='button' class='btn btn-sm btn-outline-secondary btn-remove-question mt-1' data-q-index='" + qIdx + "'>Quitar pregunta</button>"
+          : "";
         return (
-          "<div class='mb-2'>" +
-            "<label class='form-label'>Pregunta</label>" +
-            "<textarea class='form-control ex-prompt' rows='2' placeholder='¿Cuál es la forma correcta?'>" + escapeHtml(state.prompt || "") + "</textarea>" +
-          "</div>" +
-          "<div class='mb-2'>" +
-            "<label class='form-label'>Opciones (" + (usesCheckboxes ? "marca una o varias correctas" : "marca una correcta") + ")</label>" +
-            optionsHtml +
+          "<div class='question-block border rounded p-2 mb-2 bg-light' data-q-index='" + qIdx + "'>" +
+            "<div class='d-flex justify-content-between align-items-center mb-2'>" +
+              "<div class='fw-semibold small'>Pregunta " + (qIdx + 1) + "</div>" +
+              removeBtn +
+            "</div>" +
+            "<div class='mb-2'>" +
+              "<label class='form-label'>Enunciado</label>" +
+              "<textarea class='form-control ex-prompt' rows='2' placeholder='¿Cuál es la forma correcta?'>" + escapeHtml(q.prompt || "") + "</textarea>" +
+            "</div>" +
+            "<div class='mb-2'>" +
+              "<label class='form-label'>Opciones (" + (usesCheckboxes ? "marca una o varias correctas" : "marca una correcta") + ")</label>" +
+              optionsHtml +
+            "</div>" +
           "</div>"
         );
+      }
+
+      function renderExerciseBody(state, exIdx) {
+        const questions = state.questions || [questionDefault(state.exercise_type)];
+        return questions.map(function (_q, qIdx) {
+          return renderQuestionBody(state, exIdx, qIdx);
+        }).join("");
       }
 
       function bindExerciseEvents(card, idx) {
         const typeSelect = card.querySelector(".exercise-type");
         const removeBtn = card.querySelector(".btn-remove");
         const body = card.querySelector(".exercise-body");
-        removeBtn.classList.toggle("d-none", exerciseState.length <= 1);
+        removeBtn.classList.add("d-none");
         typeSelect.addEventListener("change", function () {
           exerciseState[idx] = exerciseDefault(typeSelect.value);
           renderExercises();
         });
-        removeBtn.addEventListener("click", function () {
-          exerciseState.splice(idx, 1);
-          renderExercises();
-        });
 
         function updateFromCard() {
-          const state = exerciseState[idx];
+          const state = normalizeExerciseGroup(exerciseState[idx]);
+          exerciseState[idx] = state;
           if (!state) return;
           state.exercise_type = typeSelect.value;
-          const points = 10;
-          state.points = points;
-
-          if (state.exercise_type === "fill_in_the_blank") {
-            const sentence = card.querySelector(".ex-sentence");
-            const hidden = card.querySelector(".ex-hidden-word");
-            const correct = card.querySelector(".ex-correct-answer");
-            state.sentence = sentence ? sentence.value.trim() : "";
-            state.hidden_word = hidden ? hidden.value.trim() : "";
-            state.correct_answer = correct ? correct.value.trim() : "";
-            state.prompt = state.sentence || "Completa el hueco";
-            return;
-          }
-          const prompt = card.querySelector(".ex-prompt");
-          state.prompt = prompt ? prompt.value.trim() : "";
-          const textInputs = card.querySelectorAll(".ex-option-text");
-          const checks = card.querySelectorAll(".ex-option-correct");
-          const options = [];
-          textInputs.forEach(function (input) {
-            options.push({ text: input.value.trim(), is_correct: false });
-          });
-          checks.forEach(function (control) {
-            if (control.checked) {
-              const i = Number(control.getAttribute("data-option-index"));
-              if (options[i]) options[i].is_correct = true;
+          state.points = 10;
+          const blocks = body.querySelectorAll(".question-block");
+          const questions = [];
+          blocks.forEach(function (block) {
+            const qIdx = Number(block.getAttribute("data-q-index"));
+            if (state.exercise_type === "fill_in_the_blank") {
+              const sentence = block.querySelector(".ex-sentence");
+              const hidden = block.querySelector(".ex-hidden-word");
+              const correct = block.querySelector(".ex-correct-answer");
+              const sentenceVal = sentence ? sentence.value.trim() : "";
+              questions[qIdx] = {
+                prompt: sentenceVal || "Completa el hueco",
+                sentence: sentenceVal,
+                hidden_word: hidden ? hidden.value.trim() : "",
+                correct_answer: correct ? correct.value.trim() : ""
+              };
+              return;
             }
+            const prompt = block.querySelector(".ex-prompt");
+            const textInputs = block.querySelectorAll(".ex-option-text");
+            const checks = block.querySelectorAll(".ex-option-correct");
+            const options = [];
+            textInputs.forEach(function (input) {
+              options.push({ text: input.value.trim(), is_correct: false });
+            });
+            checks.forEach(function (control) {
+              if (control.checked) {
+                const i = Number(control.getAttribute("data-option-index"));
+                if (options[i]) options[i].is_correct = true;
+              }
+            });
+            questions[qIdx] = {
+              prompt: prompt ? prompt.value.trim() : "",
+              options: options
+            };
           });
-          state.options = options;
+          state.questions = questions.length ? questions : [questionDefault(state.exercise_type)];
         }
+
         body.addEventListener("input", updateFromCard);
         body.addEventListener("change", updateFromCard);
+        body.querySelectorAll(".btn-remove-question").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            const state = normalizeExerciseGroup(exerciseState[idx]);
+            const qIdx = Number(btn.getAttribute("data-q-index"));
+            if (state.questions.length <= 1) return;
+            state.questions.splice(qIdx, 1);
+            exerciseState[idx] = state;
+            renderExercises();
+          });
+        });
       }
 
       function renderExercises() {
@@ -709,7 +814,7 @@
         const tpl = el("exercise-template");
         exerciseState.forEach(function (state, idx) {
           const node = tpl.content.firstElementChild.cloneNode(true);
-          node.querySelector(".exercise-title").textContent = "Ejercicio " + (idx + 1);
+          node.querySelector(".exercise-title").textContent = "Ejercicio · " + ((state.questions || []).length) + " pregunta(s)";
           const typeSelect = node.querySelector(".exercise-type");
           typeSelect.value = state.exercise_type;
           node.querySelector(".exercise-body").innerHTML = renderExerciseBody(state, idx);
@@ -727,34 +832,39 @@
           root.innerHTML = "<p class='small text-muted mb-0'>Aquí verás las preguntas que vayas creando.</p>";
           return;
         }
-        exerciseState.forEach(function (ex, idx) {
-          const card = document.createElement("div");
-          card.className = "border rounded p-2 bg-white";
-          const title = document.createElement("div");
-          title.className = "fw-semibold small mb-1";
-          title.textContent = "Pregunta " + (idx + 1);
-          const prompt = document.createElement("div");
-          prompt.className = "small mb-1";
-          prompt.textContent = ex.prompt || "(sin enunciado)";
-          card.appendChild(title);
-          card.appendChild(prompt);
+        let previewNum = 0;
+        exerciseState.forEach(function (ex) {
+          const group = normalizeExerciseGroup(ex);
+          (group.questions || []).forEach(function (q) {
+            previewNum += 1;
+            const card = document.createElement("div");
+            card.className = "border rounded p-2 bg-white";
+            const title = document.createElement("div");
+            title.className = "fw-semibold small mb-1";
+            title.textContent = "Pregunta " + previewNum;
+            const prompt = document.createElement("div");
+            prompt.className = "small mb-1";
+            prompt.textContent = q.prompt || q.sentence || "(sin enunciado)";
+            card.appendChild(title);
+            card.appendChild(prompt);
 
-          if (ex.exercise_type === "fill_in_the_blank") {
-            const ans = document.createElement("div");
-            ans.className = "small text-muted";
-            ans.textContent = "Respuesta: " + (ex.correct_answer || "(sin respuesta)");
-            card.appendChild(ans);
-          } else {
-            const ul = document.createElement("ul");
-            ul.className = "small mb-0 ps-3";
-            (ex.options || []).filter(function (o) { return o.text && o.text.trim(); }).forEach(function (op) {
-              const li = document.createElement("li");
-              li.textContent = op.text + (op.is_correct ? "  (correcta)" : "");
-              ul.appendChild(li);
-            });
-            card.appendChild(ul);
-          }
-          root.appendChild(card);
+            if (group.exercise_type === "fill_in_the_blank") {
+              const ans = document.createElement("div");
+              ans.className = "small text-muted";
+              ans.textContent = "Respuesta: " + (q.correct_answer || "(sin respuesta)");
+              card.appendChild(ans);
+            } else {
+              const ul = document.createElement("ul");
+              ul.className = "small mb-0 ps-3";
+              (q.options || []).filter(function (o) { return o.text && o.text.trim(); }).forEach(function (op) {
+                const li = document.createElement("li");
+                li.textContent = op.text + (op.is_correct ? "  (correcta)" : "");
+                ul.appendChild(li);
+              });
+              card.appendChild(ul);
+            }
+            root.appendChild(card);
+          });
         });
       }
 
@@ -765,74 +875,113 @@
           errors.push("Añade al menos un ejercicio.");
           return { errors: errors, warnings: warnings };
         }
-        exerciseState.forEach(function (ex, idx) {
-          const label = "Ejercicio " + (idx + 1);
-          if (!ex.prompt || ex.prompt.length < 3) {
-            errors.push(label + ": la pregunta/enunciado es obligatorio.");
+        let qNum = 0;
+        exerciseState.forEach(function (ex) {
+          const group = normalizeExerciseGroup(ex);
+          const activeQuestions = (group.questions || []).filter(function (q) {
+            const text = (q.prompt || q.sentence || "").trim();
+            const hasOptions = (q.options || []).some(function (o) { return o.text && o.text.trim(); });
+            return text.length >= 3 || hasOptions || (q.hidden_word || "").trim();
+          });
+          if (!activeQuestions.length) {
+            errors.push("Añade al menos una pregunta con enunciado.");
+            return;
           }
-          if (ex.exercise_type === "multiple_choice" || ex.exercise_type === "single_choice") {
-            const validOptions = (ex.options || []).filter(function (o) { return o.text && o.text.trim(); });
-            if (validOptions.length < 2) errors.push(label + ": escribe mínimo 2 opciones.");
-            const correctCount = (ex.options || []).filter(function (o) { return !!o.is_correct; }).length;
-            if (ex.exercise_type === "single_choice" && correctCount === 0) {
-              warnings.push(label + ": no has seleccionado la respuesta correcta.");
-            } else if (ex.exercise_type === "single_choice" && correctCount > 1) {
-              warnings.push(label + ": has marcado más de una opción correcta; en opción única solo debe haber una.");
+          activeQuestions.forEach(function (q) {
+            qNum += 1;
+            const label = "Pregunta " + qNum;
+            const promptText = (q.prompt || q.sentence || "").trim();
+            if (promptText.length < 3) {
+              errors.push(label + ": el enunciado es obligatorio (mínimo 3 caracteres).");
             }
-            if (ex.exercise_type === "multiple_choice" && correctCount < 1) {
-              warnings.push(label + ": no has seleccionado ninguna respuesta correcta.");
+            if (group.exercise_type === "multiple_choice" || group.exercise_type === "single_choice") {
+              const validOptions = (q.options || []).filter(function (o) { return o.text && o.text.trim(); });
+              if (validOptions.length < 2) errors.push(label + ": escribe mínimo 2 opciones.");
+              const correctCount = (q.options || []).filter(function (o) { return !!o.is_correct; }).length;
+              if (group.exercise_type === "single_choice" && correctCount === 0) {
+                warnings.push(label + ": no has seleccionado la respuesta correcta.");
+              } else if (group.exercise_type === "single_choice" && correctCount > 1) {
+                warnings.push(label + ": en opción única solo debe haber una respuesta correcta.");
+              }
+              if (group.exercise_type === "multiple_choice" && correctCount < 1) {
+                warnings.push(label + ": no has seleccionado ninguna respuesta correcta.");
+              }
             }
-          }
-          if (ex.exercise_type === "fill_in_the_blank") {
-            if (!ex.hidden_word) errors.push(label + ": define la palabra oculta.");
-            if (!ex.correct_answer) warnings.push(label + ": no has definido la respuesta exacta.");
-          }
+            if (group.exercise_type === "fill_in_the_blank") {
+              if (!q.hidden_word) errors.push(label + ": define la palabra oculta.");
+              if (!q.correct_answer) warnings.push(label + ": no has definido la respuesta exacta.");
+            }
+          });
         });
         return { errors: errors, warnings: warnings };
       }
 
       function buildLessonPayload() {
-        const exercises = exerciseState.map(function (ex) {
-          if (ex.exercise_type === "multiple_choice" || ex.exercise_type === "single_choice") {
-            const options = (ex.options || []).filter(function (o) { return o.text && o.text.trim(); });
-            const correctAnswers = options.filter(function (o) { return !!o.is_correct; }).map(function (o) { return o.text.trim(); });
-            return {
-              exercise_type: "multiple_choice",
-              prompt: ex.prompt,
+        const exercises = [];
+        exerciseState.forEach(function (ex) {
+          const group = normalizeExerciseGroup(ex);
+          const activeQuestions = (group.questions || []).filter(function (q) {
+            return (q.prompt || q.sentence || "").trim().length >= 3;
+          });
+          if (!activeQuestions.length) return;
+
+          if (group.exercise_type === "fill_in_the_blank") {
+            const q = activeQuestions[0];
+            exercises.push({
+              exercise_type: "fill_in_the_blank",
+              prompt: q.prompt || q.sentence,
               options_json: {
-                mode: ex.exercise_type === "single_choice" ? "single_choice" : "multiple_choice",
+                sentence: q.sentence || q.prompt,
+                hidden_word: q.hidden_word || ""
+              },
+              correct_answer: q.correct_answer || null,
+              model_answer: null,
+              points: 10
+            });
+            return;
+          }
+
+          if (activeQuestions.length === 1) {
+            const q = activeQuestions[0];
+            const options = (q.options || []).filter(function (o) { return o.text && o.text.trim(); });
+            const correctAnswers = options.filter(function (o) { return !!o.is_correct; }).map(function (o) { return o.text.trim(); });
+            exercises.push({
+              exercise_type: "multiple_choice",
+              prompt: q.prompt,
+              options_json: {
+                mode: group.exercise_type === "single_choice" ? "single_choice" : "multiple_choice",
                 options: options.map(function (o) { return o.text.trim(); }),
                 correct_answers: correctAnswers
               },
               correct_answer: correctAnswers.length ? correctAnswers.join("||") : null,
               model_answer: null,
               points: 10
-            };
+            });
+            return;
           }
-          if (ex.exercise_type === "fill_in_the_blank") {
+
+          const bundled = activeQuestions.map(function (q) {
+            const options = (q.options || []).filter(function (o) { return o.text && o.text.trim(); });
+            const correctAnswers = options.filter(function (o) { return !!o.is_correct; }).map(function (o) { return o.text.trim(); });
             return {
-              exercise_type: "fill_in_the_blank",
-              prompt: ex.prompt,
-              options_json: {
-                sentence: ex.sentence || ex.prompt,
-                hidden_word: ex.hidden_word || ""
-              },
-              correct_answer: ex.correct_answer || null,
-              model_answer: null,
-              points: 10
+              prompt: q.prompt,
+              options: options.map(function (o) { return o.text.trim(); }),
+              correct_answers: correctAnswers,
+              mode: group.exercise_type === "single_choice" ? "single_choice" : "multiple_choice"
             };
-          }
-          return {
-            exercise_type: "fill_in_the_blank",
-            prompt: ex.prompt,
+          });
+          const firstCorrect = bundled[0] && bundled[0].correct_answers ? bundled[0].correct_answers : [];
+          exercises.push({
+            exercise_type: "multiple_choice",
+            prompt: bundled[0].prompt,
             options_json: {
-              sentence: ex.sentence || ex.prompt || "",
-              hidden_word: ex.hidden_word || ""
+              mode: group.exercise_type === "single_choice" ? "single_choice" : "multiple_choice",
+              questions: bundled
             },
-            correct_answer: ex.correct_answer || null,
+            correct_answer: firstCorrect.length ? firstCorrect.join("||") : null,
             model_answer: null,
             points: 10
-          };
+          });
         });
 
         return {
@@ -850,7 +999,25 @@
         };
       }
 
+      function syncExerciseStateFromDom() {
+        const bodies = el("exercise-list") ? el("exercise-list").querySelectorAll(".exercise-body") : [];
+        bodies.forEach(function (body) {
+          body.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+      }
+
       async function saveLesson() {
+        syncExerciseStateFromDom();
+        const isEditing = editingLessonId != null;
+        if (pendingImageFile || pendingAudioFile) {
+          setMsg("Subiendo archivos multimedia…", "info");
+          try {
+            await resolveMediaUrlsBeforeSave();
+          } catch (uploadErr) {
+            setMsg(uploadErr.message || "No se pudo subir el archivo multimedia.", "err");
+            return;
+          }
+        }
         const validation = validateExercises();
         const errors = validation.errors.slice();
         const warnings = validation.warnings.slice();
@@ -864,19 +1031,10 @@
           setMsg(errors, "err", "No se puede guardar la lección");
           return;
         }
-        const isEditing = editingLessonId != null;
         setMsg(
-          pendingImageFile || pendingAudioFile
-            ? "Subiendo archivos multimedia…"
-            : (isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…"),
+          isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…",
           "info"
         );
-        try {
-          await resolveMediaUrlsBeforeSave();
-        } catch (uploadErr) {
-          setMsg(uploadErr.message || "No se pudo subir el archivo multimedia.", "err");
-          return;
-        }
         const payload = buildLessonPayload();
         setMsg(
           isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…",
@@ -1044,7 +1202,12 @@
         });
 
         el("btn-add-exercise").addEventListener("click", function () {
-          exerciseState.push(exerciseDefault("multiple_choice"));
+          if (exerciseState.length === 0) {
+            exerciseState.push(exerciseDefault("multiple_choice"));
+          }
+          const ex = normalizeExerciseGroup(exerciseState[0]);
+          ex.questions.push(questionDefault(ex.exercise_type));
+          exerciseState[0] = ex;
           renderExercises();
         });
         el("btn-validate").addEventListener("click", function () {
