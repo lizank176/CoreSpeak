@@ -5015,23 +5015,6 @@ function corespeakRenderCatalogExercises(container, exercisesJson, lc, opts) {
     body.className = "card-body";
     const uid = "ex-" + idx + "-" + Math.random().toString(36).slice(2, 9);
 
-    const exImgPath = corespeakExerciseBlockImagePath(b);
-    if (exImgPath) {
-      const imgWrap = document.createElement("div");
-      imgWrap.className = "text-center mb-3";
-      const img = document.createElement("img");
-      img.src = corespeakLessonMediaSrc(exImgPath);
-      img.alt = qText
-        ? "Ilustración del ejercicio: " + qText
-        : "Ilustración del ejercicio";
-      img.className = "lesson-exercise-photo";
-      img.width = 120;
-      img.height = 120;
-      img.loading = "lazy";
-      imgWrap.appendChild(img);
-      body.appendChild(imgWrap);
-    }
-
     const titleRow = document.createElement("h6");
     titleRow.className = "card-title text-primary";
     const meta = [];

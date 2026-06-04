@@ -962,11 +962,6 @@ def catalog_lesson_detail(
         raise HTTPException(status_code=402, detail="Curso disponible para usuarios Premium")
     accessible = _lesson_accessible_for_user(lesson, user)
     blocks = _catalog_blocks_from_content(lesson.content_json)
-    lesson_image = (lesson.image_url or "").strip()
-    if lesson_image and blocks:
-        first = blocks[0]
-        if isinstance(first, dict) and not str(first.get("image") or "").strip():
-            blocks[0] = {**first, "image": lesson_image}
     media = _lesson_media_display_fields(lesson)
     neighbors = _lesson_neighbors_in_course(session, lesson, user)
     return {
