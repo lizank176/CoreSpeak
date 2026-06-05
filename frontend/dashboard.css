@@ -382,6 +382,36 @@ button.dashboard-nav-link.corespeak-logout:hover {
     transform: translateY(-1px);
 }
 
+/* Botón Volver reutilizable (mismo estilo que auth-back-btn) */
+.nav-back-btn {
+    display: inline-flex;
+    align-items: center;
+    max-width: fit-content;
+    color: #2f3744;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 0.45rem 0.85rem 0.45rem 0.65rem;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 2px 8px rgba(57,82,125,0.08);
+    border: 1px solid rgba(57,82,125,0.10);
+    transition: transform 0.12s ease, box-shadow 0.15s ease, color 0.12s ease;
+}
+
+.nav-back-btn:hover {
+    color: #242c39;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(57,82,125,0.14);
+}
+
+.nav-back-btn span {
+    padding-left: 0.5rem;
+    position: relative;
+    top: -1px;
+}
+
 /* Saludo */
 .saludo-section {
     margin-top: 20px;
