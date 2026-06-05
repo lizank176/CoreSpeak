@@ -107,10 +107,10 @@ def create_app() -> FastAPI:
                 headers={"Cache-Control": "no-cache, must-revalidate"},
             )
 
-    # La raíz abre la app web; monitores y Render deben usar /api/health.
+    # La raíz abre la landing page; monitores y Render deben usar /api/health.
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:
-        return RedirectResponse(url="/ui/index.html", status_code=307)
+        return RedirectResponse(url="/ui/landing.html", status_code=307)
 
     @app.get("/favicon.ico", include_in_schema=False)
     def favicon_ico():
