@@ -8,7 +8,7 @@
   <link rel="shortcut icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="apple-touch-icon" href="/ui/img/favicon-corespeak.png?v=3">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="dashboard.css?v=20260602u">
+    <link rel="stylesheet" href="dashboard.css?v=20260605d">
     <link rel="stylesheet" href="a11y.css?v=20260602g">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icon-css@3.5.0/css/flag-icon.min.css"/>
 </head>
@@ -23,14 +23,26 @@
                 <h1><span data-i18n="dashboard.greetingHi">Â¡Hola,</span> <span id="user-name">Usuario</span>!</h1>
                 <p data-i18n="dashboard.journey">ContinÃºa tu viaje de aprendizaje</p>
             </div>
-            <div id="dashboard-premium-cta" class="alert alert-warning d-none mb-4" role="region" aria-live="polite">
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                    <div>
-                        <h5 class="mb-1">Hazte Premium</h5>
-                        <p class="mb-0">Desbloquea idiomas ilimitados, feedback avanzado y contenido exclusivo.</p>
+            <div id="dashboard-premium-cta" class="premium-cta-banner d-none mb-4" role="region" aria-live="polite">
+                <div class="premium-cta-inner">
+                    <div class="premium-cta-left">
+                        <span class="premium-cta-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <h5 class="premium-cta-title mb-1">Hazte Premium</h5>
+                            <p class="premium-cta-desc mb-0">Desbloquea idiomas ilimitados, feedback avanzado y contenido exclusivo.</p>
+                        </div>
                     </div>
                     <div class="d-flex flex-column align-items-stretch align-items-md-end gap-2">
-                        <button id="dashboard-premium-btn" type="button" class="btn btn-primary">Obtener Premium</button>
+                        <button id="dashboard-premium-btn" type="button" class="premium-cta-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                            </svg>
+                            Obtener Premium
+                        </button>
                         <small id="dashboard-premium-msg" class="text-danger d-none"></small>
                     </div>
                 </div>
@@ -135,6 +147,10 @@
     
 </body>
 </html>
+
+
+
+
 
 
 

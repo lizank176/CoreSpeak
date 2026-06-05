@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -8,7 +8,7 @@
   <link rel="shortcut icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="apple-touch-icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=20260602u">
+  <link rel="stylesheet" href="dashboard.css?v=20260605d">
   <link rel="stylesheet" href="a11y.css?v=20260602g">
   <style>
     .admin-page-wrap {
@@ -84,7 +84,7 @@
   <main id="main-content" class="dashboard-content row p-4" tabindex="-1">
     <div class="admin-page-wrap">
     <div id="admin-gate" class="d-none">
-      <div class="alert alert-danger mb-3">No tienes permisos de administrador para acceder a este módulo.</div>
+      <div class="alert alert-danger mb-3">No tienes permisos de administrador para acceder a este mÃ³dulo.</div>
       <a class="btn btn-primary" href="dashboard.html">Volver al Dashboard</a>
     </div>
 
@@ -118,7 +118,7 @@
             </div>
             <div class="col-12 col-md-4">
               <div class="p-3 rounded bg-light">
-                <div class="small text-muted">Idiomas con más alumnos</div>
+                <div class="small text-muted">Idiomas con mÃ¡s alumnos</div>
                 <div class="small fw-semibold" id="stat-top-languages">-</div>
               </div>
             </div>
@@ -146,8 +146,8 @@
               </div>
               <hr>
               <div class="small">
-                <div class="fw-semibold mb-1">Selección actual</div>
-                <div id="selection-summary" class="text-muted">Sin selección</div>
+                <div class="fw-semibold mb-1">SelecciÃ³n actual</div>
+                <div id="selection-summary" class="text-muted">Sin selecciÃ³n</div>
               </div>
             </div>
           </section>
@@ -160,39 +160,39 @@
               <p id="lesson-editor-mode" class="small text-muted mb-3 d-none"></p>
               <div class="row g-3">
                 <div class="col-12 col-md-8">
-                  <label class="form-label">Título de la lección</label>
+                  <label class="form-label">TÃ­tulo de la lecciÃ³n</label>
                   <input id="lesson-title" class="form-control" placeholder="Ej: Vocabulario de trabajo y oficina">
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label">Lección premium</label>
+                  <label class="form-label">LecciÃ³n premium</label>
                   <div class="form-check mt-2">
                     <input id="lesson-premium" class="form-check-input" type="checkbox">
-                    <label class="form-check-label" for="lesson-premium">Sí, solo premium</label>
+                    <label class="form-check-label" for="lesson-premium">SÃ­, solo premium</label>
                   </div>
                 </div>
                 <div class="col-12">
-                  <label class="form-label">Descripción</label>
-                  <textarea id="lesson-description" class="form-control" rows="3" placeholder="Descripción para el alumno"></textarea>
+                  <label class="form-label">DescripciÃ³n</label>
+                  <textarea id="lesson-description" class="form-control" rows="3" placeholder="DescripciÃ³n para el alumno"></textarea>
                 </div>
               </div>
 
               <hr>
-              <h3 class="h6 mb-3">Módulo multimedia</h3>
+              <h3 class="h6 mb-3">MÃ³dulo multimedia</h3>
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="form-label">Vídeo (enlace YouTube o Vimeo)</label>
+                  <label class="form-label">VÃ­deo (enlace YouTube o Vimeo)</label>
                   <input id="media-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
-                  <div class="small text-muted mt-1">Solo enlaces de YouTube o Vimeo (no se sube archivo de vídeo).</div>
+                  <div class="small text-muted mt-1">Solo enlaces de YouTube o Vimeo (no se sube archivo de vÃ­deo).</div>
                   <div id="video-preview-wrap" class="mt-2 d-none">
-                    <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Vista previa del vídeo"></iframe>
+                    <iframe id="video-preview" class="preview-media w-100" allowfullscreen title="Vista previa del vÃ­deo"></iframe>
                   </div>
                 </div>
 
                 <div class="col-12">
-                  <label class="form-label" for="media-video-transcript">Transcripción del vídeo (listening)</label>
-                  <textarea id="media-video-transcript" class="form-control" rows="7" placeholder="Pega aquí el texto del vídeo, frase a frase…"></textarea>
+                  <label class="form-label" for="media-video-transcript">TranscripciÃ³n del vÃ­deo (listening)</label>
+                  <textarea id="media-video-transcript" class="form-control" rows="7" placeholder="Pega aquÃ­ el texto del vÃ­deo, frase a fraseâ€¦"></textarea>
                   <div class="small text-muted mt-1">
-                    El alumno la verá junto al vídeo para leer mientras escucha. Útil para comprensión auditiva y accesibilidad (personas sordas o con dificultad auditiva).
+                    El alumno la verÃ¡ junto al vÃ­deo para leer mientras escucha. Ãštil para comprensiÃ³n auditiva y accesibilidad (personas sordas o con dificultad auditiva).
                   </div>
                 </div>
 
@@ -202,9 +202,9 @@
                     <input id="media-image-url" class="form-control" placeholder="https://.../imagen.jpg o se rellena al subir">
                     <input id="media-image-file" type="file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
                   </div>
-                  <div class="small text-muted mt-1">Al guardar la lección, el archivo se sube al servidor. El enlace debe apuntar a la imagen (.jpg, .png…), no a una página web.</div>
+                  <div class="small text-muted mt-1">Al guardar la lecciÃ³n, el archivo se sube al servidor. El enlace debe apuntar a la imagen (.jpg, .pngâ€¦), no a una pÃ¡gina web.</div>
                   <div id="image-preview-hint" class="small text-warning mt-1 d-none">No se pudo cargar la imagen: usa un enlace directo o sube un archivo.</div>
-                  <img id="image-preview" class="preview-media mt-2 d-none w-100" alt="Previsualización imagen">
+                  <img id="image-preview" class="preview-media mt-2 d-none w-100" alt="PrevisualizaciÃ³n imagen">
                 </div>
 
                 <div class="col-12">
@@ -213,7 +213,7 @@
                     <input id="media-audio-url" class="form-control" placeholder="https://.../audio.mp3 o se rellena al subir">
                     <input id="media-audio-file" type="file" class="form-control" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac">
                   </div>
-                  <div class="small text-muted mt-1">Al guardar la lección, el archivo se sube al servidor (mp3, wav, ogg, m4a; máx. 15 MB).</div>
+                  <div class="small text-muted mt-1">Al guardar la lecciÃ³n, el archivo se sube al servidor (mp3, wav, ogg, m4a; mÃ¡x. 15 MB).</div>
                   <audio id="audio-preview" class="mt-2 d-none w-100" controls></audio>
                 </div>
               </div>
@@ -221,7 +221,7 @@
               <hr>
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="h6 mb-0">Constructor de ejercicios</h3>
-                <button id="btn-add-exercise" class="btn btn-sm btn-primary" type="button">+ Añadir pregunta</button>
+                <button id="btn-add-exercise" class="btn btn-sm btn-primary" type="button">+ AÃ±adir pregunta</button>
               </div>
               <div id="exercise-list" class="d-flex flex-column gap-3"></div>
               <div class="mt-3">
@@ -231,7 +231,7 @@
 
               <div class="mt-4 d-flex flex-wrap gap-2">
                 <button id="btn-validate" type="button" class="btn btn-outline-secondary">Validar</button>
-                <button id="btn-save-lesson" type="button" class="btn btn-success">Guardar lección</button>
+                <button id="btn-save-lesson" type="button" class="btn btn-success">Guardar lecciÃ³n</button>
               </div>
               <div id="lesson-msg" class="lesson-admin-msg mt-3 mb-0 d-none" aria-live="polite"></div>
             </div>
@@ -250,8 +250,8 @@
       <div class="mb-2">
         <label class="form-label">Tipo</label>
         <select class="form-select exercise-type">
-          <option value="multiple_choice">Opción múltiple</option>
-          <option value="single_choice">Opción única</option>
+          <option value="multiple_choice">OpciÃ³n mÃºltiple</option>
+          <option value="single_choice">OpciÃ³n Ãºnica</option>
           <option value="fill_in_the_blank">Rellenar huecos</option>
         </select>
       </div>
@@ -329,19 +329,19 @@
       function updateSelectionLabels() {
         const summary = selectedCourseName && selectedLevelName
           ? (selectedCourseName + " / " + selectedLevelName)
-          : "Sin selección";
+          : "Sin selecciÃ³n";
         el("selection-summary").textContent = summary;
       }
 
       function normalizeLanguageName(code, fallbackName) {
         const key = String(code || "").toLowerCase();
         const map = {
-          en: "Inglés",
-          es: "Español",
-          fr: "Francés",
+          en: "InglÃ©s",
+          es: "EspaÃ±ol",
+          fr: "FrancÃ©s",
           uk: "Ucraniano",
           it: "Italiano",
-          pt: "Portugués"
+          pt: "PortuguÃ©s"
         };
         return map[key] || (fallbackName || "Idioma");
       }
@@ -356,7 +356,7 @@
         const saveBtn = el("btn-save-lesson");
         if (hint) {
           if (mode === "edit" && lessonId) {
-            hint.textContent = "Estás editando la lección ID " + lessonId + ".";
+            hint.textContent = "EstÃ¡s editando la lecciÃ³n ID " + lessonId + ".";
             hint.classList.remove("d-none");
           } else {
             hint.textContent = "";
@@ -364,7 +364,7 @@
           }
         }
         if (saveBtn) {
-          saveBtn.textContent = mode === "edit" ? "Guardar cambios" : "Guardar lección";
+          saveBtn.textContent = mode === "edit" ? "Guardar cambios" : "Guardar lecciÃ³n";
         }
       }
 
@@ -531,22 +531,22 @@
           setEditorMode("create");
           return;
         }
-        setMsg("Cargando la lección para editar…", "info");
+        setMsg("Cargando la lecciÃ³n para editarâ€¦", "info");
         try {
           const res = await fetch(apiUrl("/api/admin/lessons/" + encodeURIComponent(String(requestedId))), {
             headers: apiHeaders()
           });
           const data = await res.json().catch(function () { return {}; });
           if (!res.ok) {
-            setMsg(data.detail || "No se pudo cargar la lección para editar.", "err");
+            setMsg(data.detail || "No se pudo cargar la lecciÃ³n para editar.", "err");
             setEditorMode("create");
             return;
           }
           fillLessonForm(data);
-          setMsg("Lección cargada. Ya puedes editarla.", "ok");
+          setMsg("LecciÃ³n cargada. Ya puedes editarla.", "ok");
         } catch (err) {
           console.warn("maybeLoadLessonForEdit", err);
-          setMsg("No se pudo cargar la lección por un problema de red.", "err");
+          setMsg("No se pudo cargar la lecciÃ³n por un problema de red.", "err");
           setEditorMode("create");
         }
       }
@@ -633,7 +633,7 @@
 
       async function uploadLessonMediaFile(file, kind) {
         const token = typeof getStoredToken === "function" ? getStoredToken() : "";
-        if (!token) throw new Error("Sesión caducada. Vuelve a iniciar sesión.");
+        if (!token) throw new Error("SesiÃ³n caducada. Vuelve a iniciar sesiÃ³n.");
         const fd = new FormData();
         fd.append("kind", kind);
         fd.append("file", file, file.name || (kind + ".bin"));
@@ -703,7 +703,7 @@
               "<span class='input-group-text'>" +
                 "<input class='form-check-input mt-0 ex-option-correct' type='" + (usesCheckboxes ? "checkbox" : "radio") + "' " + (usesCheckboxes ? "" : ("name='correct-" + exIdx + "-" + qIdx + "'")) + " data-option-index='" + i + "' " + (op.is_correct ? "checked" : "") + ">" +
               "</span>" +
-              "<input class='form-control ex-option-text' data-option-index='" + i + "' value='" + escapeHtml(op.text || "") + "' placeholder='Opción " + (i + 1) + "'>" +
+              "<input class='form-control ex-option-text' data-option-index='" + i + "' value='" + escapeHtml(op.text || "") + "' placeholder='OpciÃ³n " + (i + 1) + "'>" +
             "</div>"
           );
         }
@@ -718,7 +718,7 @@
             "</div>" +
             "<div class='mb-2'>" +
               "<label class='form-label'>Enunciado</label>" +
-              "<textarea class='form-control ex-prompt' rows='2' placeholder='¿Cuál es la forma correcta?'>" + escapeHtml(q.prompt || "") + "</textarea>" +
+              "<textarea class='form-control ex-prompt' rows='2' placeholder='Â¿CuÃ¡l es la forma correcta?'>" + escapeHtml(q.prompt || "") + "</textarea>" +
             "</div>" +
             "<div class='mb-2'>" +
               "<label class='form-label'>Opciones (" + (usesCheckboxes ? "marca una o varias correctas" : "marca una correcta") + ")</label>" +
@@ -807,14 +807,14 @@
         const list = el("exercise-list");
         list.innerHTML = "";
         if (exerciseState.length === 0) {
-          list.innerHTML = "<p class='text-muted small mb-0'>No hay ejercicios todavía. Añade el primero con el botón superior.</p>";
+          list.innerHTML = "<p class='text-muted small mb-0'>No hay ejercicios todavÃ­a. AÃ±ade el primero con el botÃ³n superior.</p>";
           renderExercisePreview();
           return;
         }
         const tpl = el("exercise-template");
         exerciseState.forEach(function (state, idx) {
           const node = tpl.content.firstElementChild.cloneNode(true);
-          node.querySelector(".exercise-title").textContent = "Ejercicio · " + ((state.questions || []).length) + " pregunta(s)";
+          node.querySelector(".exercise-title").textContent = "Ejercicio Â· " + ((state.questions || []).length) + " pregunta(s)";
           const typeSelect = node.querySelector(".exercise-type");
           typeSelect.value = state.exercise_type;
           node.querySelector(".exercise-body").innerHTML = renderExerciseBody(state, idx);
@@ -829,7 +829,7 @@
         if (!root) return;
         root.innerHTML = "";
         if (exerciseState.length === 0) {
-          root.innerHTML = "<p class='small text-muted mb-0'>Aquí verás las preguntas que vayas creando.</p>";
+          root.innerHTML = "<p class='small text-muted mb-0'>AquÃ­ verÃ¡s las preguntas que vayas creando.</p>";
           return;
         }
         let previewNum = 0;
@@ -872,7 +872,7 @@
         const errors = [];
         const warnings = [];
         if (exerciseState.length === 0) {
-          errors.push("Añade al menos un ejercicio.");
+          errors.push("AÃ±ade al menos un ejercicio.");
           return { errors: errors, warnings: warnings };
         }
         let qNum = 0;
@@ -884,7 +884,7 @@
             return text.length >= 3 || hasOptions || (q.hidden_word || "").trim();
           });
           if (!activeQuestions.length) {
-            errors.push("Añade al menos una pregunta con enunciado.");
+            errors.push("AÃ±ade al menos una pregunta con enunciado.");
             return;
           }
           activeQuestions.forEach(function (q) {
@@ -892,16 +892,16 @@
             const label = "Pregunta " + qNum;
             const promptText = (q.prompt || q.sentence || "").trim();
             if (promptText.length < 3) {
-              errors.push(label + ": el enunciado es obligatorio (mínimo 3 caracteres).");
+              errors.push(label + ": el enunciado es obligatorio (mÃ­nimo 3 caracteres).");
             }
             if (group.exercise_type === "multiple_choice" || group.exercise_type === "single_choice") {
               const validOptions = (q.options || []).filter(function (o) { return o.text && o.text.trim(); });
-              if (validOptions.length < 2) errors.push(label + ": escribe mínimo 2 opciones.");
+              if (validOptions.length < 2) errors.push(label + ": escribe mÃ­nimo 2 opciones.");
               const correctCount = (q.options || []).filter(function (o) { return !!o.is_correct; }).length;
               if (group.exercise_type === "single_choice" && correctCount === 0) {
                 warnings.push(label + ": no has seleccionado la respuesta correcta.");
               } else if (group.exercise_type === "single_choice" && correctCount > 1) {
-                warnings.push(label + ": en opción única solo debe haber una respuesta correcta.");
+                warnings.push(label + ": en opciÃ³n Ãºnica solo debe haber una respuesta correcta.");
               }
               if (group.exercise_type === "multiple_choice" && correctCount < 1) {
                 warnings.push(label + ": no has seleccionado ninguna respuesta correcta.");
@@ -1010,7 +1010,7 @@
         syncExerciseStateFromDom();
         const isEditing = editingLessonId != null;
         if (pendingImageFile || pendingAudioFile) {
-          setMsg("Subiendo archivos multimedia…", "info");
+          setMsg("Subiendo archivos multimediaâ€¦", "info");
           try {
             await resolveMediaUrlsBeforeSave();
           } catch (uploadErr) {
@@ -1025,19 +1025,19 @@
           errors.unshift("Selecciona idioma y nivel en los selectores.");
         }
         if (!el("lesson-title").value.trim()) {
-          errors.unshift("El título de la lección es obligatorio.");
+          errors.unshift("El tÃ­tulo de la lecciÃ³n es obligatorio.");
         }
         if (errors.length > 0) {
-          setMsg(errors, "err", "No se puede guardar la lección");
+          setMsg(errors, "err", "No se puede guardar la lecciÃ³n");
           return;
         }
         setMsg(
-          isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…",
+          isEditing ? "Guardando cambios de la lecciÃ³nâ€¦" : "Guardando la lecciÃ³n y sus ejerciciosâ€¦",
           "info"
         );
         const payload = buildLessonPayload();
         setMsg(
-          isEditing ? "Guardando cambios de la lección…" : "Guardando la lección y sus ejercicios…",
+          isEditing ? "Guardando cambios de la lecciÃ³nâ€¦" : "Guardando la lecciÃ³n y sus ejerciciosâ€¦",
           "info"
         );
         try {
@@ -1050,7 +1050,7 @@
           });
           const data = await res.json().catch(function () { return {}; });
           if (!res.ok) {
-            setMsg(data.detail || "Error al guardar la lección.", "err");
+            setMsg(data.detail || "Error al guardar la lecciÃ³n.", "err");
             return;
           }
           const lessonId = data.lesson_id || editingLessonId;
@@ -1059,13 +1059,13 @@
             setMsg(
               warnings,
               "warn",
-              (isEditing ? "Lección actualizada." : "Lección guardada.") +
+              (isEditing ? "LecciÃ³n actualizada." : "LecciÃ³n guardada.") +
                 " Revisa estos ejercicios sin respuesta correcta"
             );
           } else {
             setMsg(
-              (isEditing ? "Lección actualizada correctamente." : "Lección guardada correctamente.") +
-                " Redirigiendo…",
+              (isEditing ? "LecciÃ³n actualizada correctamente." : "LecciÃ³n guardada correctamente.") +
+                " Redirigiendoâ€¦",
               "ok"
             );
           }
@@ -1077,7 +1077,7 @@
           }, redirectDelay);
         } catch (err) {
           console.warn("saveLesson", err);
-          setMsg("No se pudo guardar la lección por un problema de red.", "err");
+          setMsg("No se pudo guardar la lecciÃ³n por un problema de red.", "err");
         }
       }
 
@@ -1175,7 +1175,7 @@
           (course.levels || []).forEach(function (lvl) {
             const op = document.createElement("option");
             op.value = String(lvl.id);
-            op.textContent = (lvl.code || "") + " · " + (lvl.title || "Nivel");
+            op.textContent = (lvl.code || "") + " Â· " + (lvl.title || "Nivel");
             levelSelect.appendChild(op);
           });
           updateSelectionLabels();
@@ -1196,7 +1196,7 @@
           if (!lvl) return;
           selectedLevelId = lvl.id;
           selectedLevelCode = String(lvl.code || "").toUpperCase();
-          selectedLevelName = selectedLevelCode + " · " + (lvl.title || "Nivel");
+          selectedLevelName = selectedLevelCode + " Â· " + (lvl.title || "Nivel");
           updateSelectionLabels();
           setMsg("Nivel seleccionado: " + selectedLevelName, "ok");
         });
@@ -1224,7 +1224,7 @@
             );
             return;
           }
-          setMsg("Validación OK. Todo listo para guardar.", "ok");
+          setMsg("ValidaciÃ³n OK. Todo listo para guardar.", "ok");
         });
         el("btn-save-lesson").addEventListener("click", saveLesson);
         await maybeLoadLessonForEdit();
@@ -1233,3 +1233,7 @@
   </script>
 </body>
 </html>
+
+
+
+
