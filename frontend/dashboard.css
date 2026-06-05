@@ -428,27 +428,36 @@ button.dashboard-nav-link.corespeak-logout:hover {
 .icon-circle {
     width: 50px;
     height: 50px;
-    border-radius: 50%; /* Hace que sea un círculo perfecto */
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-circle svg {
+    display: block;
+    margin: auto;
 }
 
 /* Colores específicos para cada icono */
 .bg-blue {
-    background: linear-gradient(135deg, #AD46FF, #00D3F2); /* Azul/Violeta */
+    background: linear-gradient(135deg, #9333ea 0%, #AD46FF 45%, #00D3F2 100%);
+    box-shadow: 0 6px 18px rgba(173, 70, 255, 0.4);
 }
 
 .bg-orange {
-    background: linear-gradient(135deg, #FF6900, #FB64B6); /* Naranja/Rojo */
+    background: linear-gradient(135deg, #f97316 0%, #FF6900 40%, #ec4899 100%);
+    box-shadow: 0 6px 18px rgba(255, 105, 0, 0.4);
 }
 
 .bg-green {
-    background: linear-gradient(135deg, #00C950, #00D492); /* Verde/Turquesa */
+    background: linear-gradient(135deg, #16a34a 0%, #00C950 45%, #00D3F2 100%);
+    box-shadow: 0 6px 18px rgba(0, 201, 80, 0.4);
 }
 
 .bg-agenda {
-    background: linear-gradient(135deg, #7c3aed, #f472b6 55%, #22d3ee);
+    background: linear-gradient(135deg, #7c3aed 0%, #f472b6 55%, #22d3ee 100%);
     box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
