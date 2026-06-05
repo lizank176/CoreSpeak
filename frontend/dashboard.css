@@ -1,21 +1,20 @@
 /* Estilos personalizados para ajustar detalles */
 html {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100%;
 }
 
 body {
-        background: linear-gradient(
+    background: linear-gradient(
         135deg,
         #F3E8FF,
         #ECFEFF,
         #F3E8FF
-    ); 
-        /* Agrega estas líneas: */
-    min-height: 100vh;       /* Obliga al cuerpo a medir el 100% de la altura de la ventana */
-    background-repeat: no-repeat; /* Evita que el fondo se repita si el contenido crece */
-    background-attachment: fixed; /* Opcional: Hace que el fondo se quede fijo al hacer scroll */
-    overflow-x: hidden;
+    );
+    min-height: 100vh;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    overflow-x: clip;
     max-width: 100%;
 }
 
@@ -383,13 +382,36 @@ button.dashboard-nav-link.corespeak-logout:hover {
     transform: translateY(-1px);
 }
 
+/* Saludo */
 .saludo-section {
     margin-top: 20px;
 }
 
+.saludo-section h1 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 500;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+}
+
+.saludo-section p {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+/* Títulos de sección */
+.section-heading {
+    font-weight: 500;
+    color: #374151;
+    letter-spacing: -0.01em;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    display: block;
+}
+
 .config-card {
-    margin-bottom: 40px; /* Espacio debajo de las tarjetas */
-    margin-top:20px;
+    margin-bottom: 40px;
+    margin-top: 20px;
 }
 /* Estilos para las tarjetas de estadísticas */
 .stat-card {
