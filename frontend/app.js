@@ -166,31 +166,31 @@ function langSelectOptionsHtml() {
 function injectLanguageSelectors(currentLang) {
   const applySelectVisual = (sel) => {
     if (!sel) return;
-    sel.style.minWidth = "8.15rem";
+    sel.style.minWidth = "7.5rem";
     sel.style.height = "2.1rem";
-    sel.style.borderRadius = "8px";
-    sel.style.border = "1px solid #d6d8dd";
-    sel.style.backgroundColor = "#ffffff";
-    sel.style.color = "#1f2937";
-    sel.style.fontWeight = "400";
-    sel.style.padding = "0.2rem 1.9rem 0.2rem 0.65rem";
+    sel.style.borderRadius = "10px";
+    sel.style.border = "1.5px solid rgba(255,255,255,0.55)";
+    sel.style.background = "linear-gradient(90deg, rgba(173,70,255,0.82) 0%, rgba(0,211,242,0.82) 100%)";
+    sel.style.color = "#ffffff";
+    sel.style.fontWeight = "600";
+    sel.style.fontSize = "0.82rem";
+    sel.style.padding = "0.2rem 1.8rem 0.2rem 0.65rem";
     sel.style.appearance = "none";
     sel.style.webkitAppearance = "none";
     sel.style.mozAppearance = "none";
     sel.style.backgroundImage =
-      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5.25 7 9l4-3.75' fill='none' stroke='%234b5563' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
-    sel.style.backgroundRepeat = "no-repeat";
-    sel.style.backgroundPosition = "right 0.62rem center";
-    sel.style.backgroundSize = "14px 14px";
-    sel.style.boxShadow = "none";
+      "linear-gradient(90deg, rgba(173,70,255,0.82) 0%, rgba(0,211,242,0.82) 100%), url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 14 14'%3E%3Cpath d='M3 5.25 7 9l4-3.75' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
+    sel.style.backgroundRepeat = "no-repeat, no-repeat";
+    sel.style.backgroundPosition = "0 0, right 0.6rem center";
+    sel.style.backgroundSize = "cover, 12px 12px";
+    sel.style.boxShadow = "0 4px 14px rgba(124,58,237,0.22)";
+    sel.style.cursor = "pointer";
     if (!sel.dataset.corespeakFocusBound) {
       sel.addEventListener("focus", () => {
-        sel.style.borderColor = "#b08ce8";
-        sel.style.boxShadow = "0 0 0 0.14rem rgba(168,85,247,0.14)";
+        sel.style.boxShadow = "0 0 0 2px rgba(173,70,255,0.45), 0 4px 14px rgba(124,58,237,0.22)";
       });
       sel.addEventListener("blur", () => {
-        sel.style.borderColor = "#d6d8dd";
-        sel.style.boxShadow = "none";
+        sel.style.boxShadow = "0 4px 14px rgba(124,58,237,0.22)";
       });
       sel.dataset.corespeakFocusBound = "1";
     }
@@ -198,10 +198,10 @@ function injectLanguageSelectors(currentLang) {
 
   const styleLabelShell = (label) => {
     if (!label) return;
-    label.style.background = "#f5f6f8";
-    label.style.border = "1px solid #d7dae0";
-    label.style.borderRadius = "8px";
-    label.style.padding = "0.34rem 0.46rem";
+    label.style.background = "transparent";
+    label.style.border = "none";
+    label.style.borderRadius = "0";
+    label.style.padding = "0";
     label.style.boxShadow = "0 1px 3px rgba(15, 23, 42, 0.08)";
     label.style.backdropFilter = "none";
   };
@@ -222,98 +222,58 @@ function injectLanguageSelectors(currentLang) {
     return sel;
   };
 
-  document.querySelectorAll("ul.dashboard-nav-list").forEach((ul) => {
-    if (ul.querySelector(".corespeak-ui-lang-select")) return;
-    const li = document.createElement("li");
-    li.className =
-      "dashboard-nav-item align-self-center me-2 me-md-3 d-none d-lg-flex align-items-center";
-    const label = document.createElement("label");
-    label.className = "dashboard-nav-link mb-0 d-flex align-items-center gap-2";
-    const sp = document.createElement("span");
-    sp.className = "d-none d-lg-inline text-muted small";
-    sp.setAttribute("data-i18n", "nav.uiLang");
-    styleLabelText(sp);
-    label.appendChild(sp);
-    label.appendChild(mkSelect());
-    li.appendChild(label);
-    ul.insertBefore(li, ul.firstChild);
-  });
-
-  const nav = document.querySelector("nav.dashboard-nav");
-  if (nav && !document.querySelector(".corespeak-ui-lang-select")) {
-    const wrap = document.createElement("div");
-    wrap.className = "ms-auto d-none d-lg-flex align-items-center pe-2 pe-md-3";
-    const label = document.createElement("label");
-    label.className = "d-flex align-items-center gap-2 mb-0 small";
-    const sp = document.createElement("span");
-    sp.className = "text-muted d-none d-sm-inline";
-    sp.setAttribute("data-i18n", "nav.uiLang");
-    styleLabelText(sp);
-    label.appendChild(sp);
-    label.appendChild(mkSelect());
-    wrap.appendChild(label);
-    nav.appendChild(wrap);
-  }
-
-  if (!document.querySelector(".corespeak-ui-lang-select") && document.body) {
-    const bar = document.createElement("div");
-    bar.className = "position-fixed top-0 end-0 p-2 p-md-3 d-none d-lg-block";
-    bar.style.zIndex = "1080";
-
+  /** Construye el pill-dropdown de idioma y lo adjunta a `container`.
+   *  Si `inline` es true, el panel se posiciona absolute (para nav);
+   *  si es false, el panel es static (para el flotante de auth). */
+  const buildLangDropdown = (container, inline) => {
     const dd = document.createElement("div");
     dd.className = "corespeak-ui-lang-dropdown";
-    dd.style.width = "170px";
-    dd.style.color = "#f9fafb";
-    dd.style.fontSize = "0.96rem";
+    dd.style.position = "relative";
+    dd.style.fontSize = "0.9rem";
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "corespeak-ui-lang-dd-btn";
     btn.setAttribute("aria-haspopup", "listbox");
     btn.setAttribute("aria-expanded", "false");
-    btn.style.width = "100%";
     btn.style.display = "flex";
     btn.style.alignItems = "center";
     btn.style.justifyContent = "space-between";
-    btn.style.gap = "0.55rem";
-    btn.style.padding = "0.62rem 0.74rem";
-    btn.style.borderRadius = "10px";
-    btn.style.border = "1.5px solid rgba(245, 247, 250, 0.95)";
-    btn.style.background =
-      "linear-gradient(90deg, rgba(184, 172, 214, 0.93) 0%, rgba(169, 190, 215, 0.93) 100%)";
-    btn.style.color = "#f9fafb";
+    btn.style.gap = "0.5rem";
+    btn.style.padding = "0.42rem 0.78rem";
+    btn.style.borderRadius = "999px";
+    btn.style.border = "1.5px solid rgba(255,255,255,0.45)";
+    btn.style.background = "linear-gradient(90deg, #AD46FF 0%, #00D3F2 100%)";
+    btn.style.color = "#ffffff";
     btn.style.fontWeight = "600";
+    btn.style.fontSize = "0.82rem";
     btn.style.lineHeight = "1.2";
-    btn.style.boxShadow = "0 5px 14px rgba(15, 23, 42, 0.16)";
-    btn.style.backdropFilter = "blur(0.5px)";
+    btn.style.boxShadow = "0 4px 14px rgba(124,58,237,0.28)";
+    btn.style.cursor = "pointer";
+    btn.style.whiteSpace = "nowrap";
 
     const left = document.createElement("span");
     left.style.display = "inline-flex";
     left.style.alignItems = "center";
-    left.style.gap = "0.55rem";
-    left.style.lineHeight = "1.2";
+    left.style.gap = "0.4rem";
 
-    const icon = document.createElement("span");
-    icon.textContent = "◉";
-    icon.style.fontSize = "0.74rem";
-    icon.style.opacity = "0.95";
+    const globe = document.createElement("span");
+    globe.innerHTML = "<svg width='14' height='14' fill='currentColor' viewBox='0 0 16 16' aria-hidden='true'><path d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7 7 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm6.853 3.472A7 7 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855q.26-.488.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7 7 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z'/></svg>";
+    globe.style.display = "inline-flex";
+    globe.style.opacity = "0.9";
 
     const current = document.createElement("span");
     current.className = "corespeak-ui-lang-current";
     current.textContent = uiLangLabel(currentLang);
 
-    left.appendChild(icon);
+    left.appendChild(globe);
     left.appendChild(current);
 
     const caret = document.createElement("span");
-    caret.innerHTML =
-      "<svg width='13' height='13' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'><path d='M3 5.25L7 9L11 5.25' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+    caret.innerHTML = "<svg width='11' height='11' viewBox='0 0 14 14' fill='none' aria-hidden='true'><path d='M3 5.25L7 9L11 5.25' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>";
     caret.style.display = "inline-flex";
     caret.style.alignItems = "center";
-    caret.style.justifyContent = "center";
-    caret.style.width = "14px";
-    caret.style.height = "14px";
-    caret.style.opacity = "0.96";
+    caret.style.opacity = "0.85";
 
     btn.appendChild(left);
     btn.appendChild(caret);
@@ -321,14 +281,18 @@ function injectLanguageSelectors(currentLang) {
     const panel = document.createElement("div");
     panel.className = "corespeak-ui-lang-dd-panel";
     panel.hidden = true;
-    panel.style.marginTop = "0.55rem";
-    panel.style.padding = "0.58rem 0.72rem";
-    panel.style.borderRadius = "10px";
-    panel.style.border = "1.5px solid rgba(245, 247, 250, 0.95)";
-    panel.style.background =
-      "linear-gradient(180deg, rgba(176, 182, 201, 0.96) 0%, rgba(159, 172, 194, 0.96) 100%)";
-    panel.style.boxShadow = "0 7px 20px rgba(15, 23, 42, 0.22)";
-    panel.style.maxHeight = "270px";
+    panel.style.position = "absolute";
+    panel.style.top = "calc(100% + 8px)";
+    panel.style.left = "0";
+    panel.style.right = "0";
+    panel.style.width = "100%";
+    panel.style.zIndex = "500";
+    panel.style.padding = "0.5rem 0.4rem";
+    panel.style.borderRadius = "14px";
+    panel.style.border = "1px solid rgba(173,70,255,0.2)";
+    panel.style.background = "#ffffff";
+    panel.style.boxShadow = "0 8px 24px rgba(124,58,237,0.18)";
+    panel.style.maxHeight = "260px";
     panel.style.overflowY = "auto";
 
     const radioName = "corespeak-ui-lang-radio-" + Date.now();
@@ -336,18 +300,24 @@ function injectLanguageSelectors(currentLang) {
       const row = document.createElement("label");
       row.style.display = "flex";
       row.style.alignItems = "center";
-      row.style.gap = "0.62rem";
-      row.style.padding = "0.3rem 0";
+      row.style.justifyContent = "flex-start";
+      row.style.gap = "0.55rem";
+      row.style.padding = "0.32rem 0.5rem 0.32rem 0.1rem";
       row.style.cursor = "pointer";
-      row.style.fontWeight = "600";
-      row.style.color = "#f8fafc";
+      row.style.fontWeight = "500";
+      row.style.fontSize = "0.88rem";
+      row.style.color = "#1e293b";
+      row.style.borderRadius = "8px";
+      row.style.transition = "background 0.12s";
+      row.addEventListener("mouseenter", () => { row.style.background = "#f3e8ff"; });
+      row.addEventListener("mouseleave", () => { row.style.background = "transparent"; });
 
       const rd = document.createElement("input");
       rd.type = "radio";
       rd.name = radioName;
       rd.value = opt.v;
       rd.setAttribute("data-lang-value", opt.v);
-      rd.style.accentColor = "#8b5cf6";
+      rd.style.accentColor = "#AD46FF";
       rd.checked = normalizeUiLang(currentLang) === opt.v;
       rd.addEventListener("change", () => {
         if (!rd.checked) return;
@@ -358,13 +328,13 @@ function injectLanguageSelectors(currentLang) {
 
       const tx = document.createElement("span");
       tx.textContent = opt.t;
-
       row.appendChild(rd);
       row.appendChild(tx);
       panel.appendChild(row);
     });
 
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       const open = panel.hidden;
       panel.hidden = !open;
       btn.setAttribute("aria-expanded", open ? "true" : "false");
@@ -387,7 +357,24 @@ function injectLanguageSelectors(currentLang) {
 
     dd.appendChild(btn);
     dd.appendChild(panel);
-    bar.appendChild(dd);
+    container.appendChild(dd);
+  };
+
+  // En el dashboard: inyectar el pill dentro del nav (inline, no flotante)
+  const navList = document.querySelector("ul.dashboard-nav-list");
+  if (navList && !navList.querySelector(".corespeak-ui-lang-dropdown")) {
+    const li = document.createElement("li");
+    li.className = "dashboard-nav-item align-self-center d-none d-lg-flex me-1";
+    buildLangDropdown(li, true);
+    navList.insertBefore(li, navList.firstChild);
+  }
+
+  // En páginas sin nav (login, registro, etc.): dropdown flotante en esquina
+  if (!document.querySelector(".corespeak-ui-lang-dropdown, .corespeak-ui-lang-select") && document.body) {
+    const bar = document.createElement("div");
+    bar.className = "position-fixed top-0 end-0 p-2 p-md-3 d-none d-lg-block";
+    bar.style.zIndex = "1080";
+    buildLangDropdown(bar, false);
     document.body.appendChild(bar);
   }
 
@@ -2571,6 +2558,48 @@ async function initCoreSpeakAppNav() {
 
   applyAdminNavVisibility(isAdmin);
 
+  // Expand-on-hover para Configuración: mide el ancho real para animar width en px
+  const configLink = document.querySelector('a.dashboard-nav-link[href="configuracion.html"]');
+  if (configLink && !configLink.dataset.expandBound) {
+    configLink.dataset.expandBound = "1";
+    const COLLAPSED_W = "2.2rem";
+
+    const expand = () => {
+      // Mide el ancho real sin mostrar el cambio
+      configLink.style.transition = "none";
+      configLink.classList.add("is-expanded");
+      configLink.style.width = "auto";
+      const fullW = configLink.getBoundingClientRect().width;
+      configLink.style.width = COLLAPSED_W;
+      configLink.classList.remove("is-expanded");
+      void configLink.offsetWidth; // fuerza reflow
+      // 1. Activa la transición de ancho explícitamente
+      configLink.style.transition = "width 0.42s cubic-bezier(0.4,0,0.2,1), background 0.18s, border-color 0.18s";
+      configLink.classList.add("is-expanded");
+      configLink.style.width = fullW + "px";
+      // 2. Texto aparece con fade-in después de que el ancho empiece a crecer
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        configLink.classList.add("text-visible");
+      }));
+    };
+
+    const collapse = () => {
+      // 1. Desvanece el texto
+      configLink.classList.remove("text-visible");
+      // 2. Colapsa el ancho tras el fade-out
+      setTimeout(() => {
+        configLink.style.transition = "width 0.32s cubic-bezier(0.4,0,0.2,1), background 0.18s, border-color 0.18s";
+        configLink.classList.remove("is-expanded");
+        configLink.style.width = COLLAPSED_W;
+      }, 160);
+    };
+
+    configLink.addEventListener("mouseenter", expand);
+    configLink.addEventListener("mouseleave", collapse);
+    configLink.addEventListener("focusin",    expand);
+    configLink.addEventListener("focusout",   collapse);
+  }
+
   const navBtn = document.getElementById("dashboard-nav-premium-btn");
   const navPremiumLi = navBtn ? navBtn.closest("li") : null;
   if (isPremium) {
@@ -2829,11 +2858,16 @@ async function loadMyProgress() {
     const tpl = (u.dashboard && u.dashboard.streakDays) || "{n} días consecutivos";
     streakEl.textContent = tpl.replace("{n}", String(streakNum));
   }
+  const streakNumEl = document.getElementById("stat-streak-num");
+  if (streakNumEl) streakNumEl.textContent = String(streakNum);
+
   const xpEl = document.getElementById("stat-xp");
   if (xpEl) {
     const tpl = (u.dashboard && u.dashboard.xpTotal) || "{n} XP acumulados";
     xpEl.textContent = tpl.replace("{n}", String(xpNum));
   }
+  const xpNumEl = document.getElementById("stat-xp-num");
+  if (xpNumEl) xpNumEl.textContent = String(xpNum);
 }
 
 /** Nombre del idioma de estudio según el idioma de interfaz (mismas cadenas que onboarding.lang*). */
@@ -4930,11 +4964,16 @@ function applyProgressStatsToDom(xpTotal, streakDays) {
     const tpl = (u.dashboard && u.dashboard.streakDays) || "{n} días consecutivos";
     streakEl.textContent = tpl.replace("{n}", String(streakDays));
   }
+  const streakNumEl2 = document.getElementById("stat-streak-num");
+  if (streakNumEl2 && streakDays != null) streakNumEl2.textContent = String(streakDays);
+
   const xpEl = document.getElementById("stat-xp");
   if (xpEl && xpTotal != null) {
     const tpl = (u.dashboard && u.dashboard.xpTotal) || "{n} XP acumulados";
     xpEl.textContent = tpl.replace("{n}", String(xpTotal));
   }
+  const xpNumEl2 = document.getElementById("stat-xp-num");
+  if (xpNumEl2 && xpTotal != null) xpNumEl2.textContent = String(xpTotal);
 }
 
 function corespeakLessonPageHref(lessonNav, baseOpts) {

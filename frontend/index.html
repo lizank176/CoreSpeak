@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>CoreSpeak — Reto diario</title>
+  <title>CoreSpeak â€” Reto diario</title>
   <link rel="icon" type="image/png" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="shortcut icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="apple-touch-icon" href="/ui/img/favicon-corespeak.png?v=3">
@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="a11y.css?v=20260602">
+  <link rel="stylesheet" href="a11y.css?v=20260602g">
   <style>
     html {
       overflow-x: hidden;
@@ -87,7 +87,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></svg>
           <span>Volver</span>
         </a>
-        <button type="button" id="history-sidebar-close" class="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/5 lg:hidden" aria-label="Cerrar historial">✕</button>
+        <button type="button" id="history-sidebar-close" class="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/5 lg:hidden" aria-label="Cerrar historial">âœ•</button>
       </div>
       <div class="px-3 py-3">
         <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Recientes</h2>
@@ -103,18 +103,18 @@
     <div class="mb-2 flex items-center justify-between gap-2 lg:hidden">
       <button type="button" id="history-toggle" class="rounded-xl border border-white/10 bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-200">Historial</button>
     </div>
-    <!-- Gamificación -->
+    <!-- GamificaciÃ³n -->
     <div class="mb-3 min-w-0 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-lg backdrop-blur-md">
       <div class="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
         <div class="flex items-center gap-2 min-w-0">
           <span id="streak-badge" class="flex shrink-0 items-center gap-1 rounded-xl bg-orange-500/20 px-2.5 py-1.5 text-sm font-bold text-orange-200 ring-1 ring-orange-500/30 transition-shadow" aria-labelledby="streak-count">
-            <span aria-hidden="true" class="text-lg leading-none">🔥</span>
+            <span aria-hidden="true" class="text-lg leading-none">ðŸ”¥</span>
             <span id="streak-count">0</span>
-            <span class="sr-only">días consecutivos de racha</span>
+            <span class="sr-only">dÃ­as consecutivos de racha</span>
           </span>
           <div class="min-w-0">
             <div class="text-[10px] uppercase tracking-wider text-slate-400">Nivel <span id="level-num" class="text-sky-300">A1</span></div>
-            <div class="truncate text-xs text-slate-300"><span id="lang-label">—</span> · <span id="xp-label">0</span> XP</div>
+            <div class="truncate text-xs text-slate-300"><span id="lang-label">â€”</span> Â· <span id="xp-label">0</span> XP</div>
           </div>
         </div>
         <a href="dashboard.html" class="ml-auto inline-flex shrink-0 items-center gap-1.5 text-xs text-sky-300 hover:text-sky-200 sm:ml-0" aria-label="Volver al panel">
@@ -134,17 +134,17 @@
     </header>
 
     <div class="mb-2 flex min-w-0 items-center gap-3">
-      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg shadow-lg shadow-sky-900/40" aria-hidden="true">✦</div>
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg shadow-lg shadow-sky-900/40" aria-hidden="true">âœ¦</div>
       <div class="min-w-0">
         <h1 class="text-base font-semibold tracking-tight text-white sm:text-lg">Tutor CoreSpeak</h1>
-        <p class="text-xs text-slate-400">Micro-reto del día (~5 min)</p>
+        <p class="text-xs text-slate-400">Micro-reto del dÃ­a (~5 min)</p>
       </div>
     </div>
 
     <div id="status-line" class="mb-2 min-h-[1.25rem] text-center text-sm text-amber-200" role="status" aria-live="polite"></div>
     <div id="toast-line" class="mb-2 hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-200" role="status" aria-live="polite"></div>
 
-    <section id="chat-thread" class="chat-thread-shell flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl bg-transparent px-1 py-3 sm:px-2" aria-live="polite" aria-label="Conversación del reto diario"></section>
+    <section id="chat-thread" class="chat-thread-shell flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl bg-transparent px-1 py-3 sm:px-2" aria-live="polite" aria-label="ConversaciÃ³n del reto diario"></section>
 
     <div id="premium-actions" class="mb-3 hidden flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3" role="region" aria-labelledby="premium-actions-title">
       <h2 id="premium-actions-title" class="sr-only">Acciones Premium del reto diario</h2>
@@ -168,7 +168,7 @@
 
     <div class="mt-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-transparent p-2 backdrop-blur-[2px] sm:flex-row sm:items-stretch">
       <label class="sr-only" for="user-reply">Tu respuesta</label>
-      <input id="user-reply" type="text" enterkeyhint="send" autocomplete="off" placeholder="Escribe tu respuesta…"
+      <input id="user-reply" type="text" enterkeyhint="send" autocomplete="off" placeholder="Escribe tu respuestaâ€¦"
         class="min-w-0 w-full flex-1 rounded-xl border-0 bg-slate-800/80 px-3 py-3 text-[16px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 sm:px-4 sm:text-sm" />
       <button type="button" id="send-reply"
         class="w-full shrink-0 rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50 sm:w-auto min-h-[44px]">
@@ -250,7 +250,7 @@
         }
         if (sub) {
           if (!g.next_level_code) {
-            sub.textContent = "Nivel máximo alcanzado";
+            sub.textContent = "Nivel mÃ¡ximo alcanzado";
           } else {
             const needChallenges = Number(g.challenges_to_next_level ?? CHALLENGES_PER_LEVEL);
             sub.textContent = needChallenges === 1
@@ -334,7 +334,7 @@
       function setInputPlaceholder(lang) {
         const input = document.getElementById("user-reply");
         if (!input) return;
-        const ph = { en: "Type your answer…", es: "Escribe tu respuesta…", fr: "Écris ta réponse…", de: "Schreib deine Antwort…" };
+        const ph = { en: "Type your answerâ€¦", es: "Escribe tu respuestaâ€¦", fr: "Ã‰cris ta rÃ©ponseâ€¦", de: "Schreib deine Antwortâ€¦" };
         input.placeholder = ph[lang] || ph.en;
       }
 
@@ -364,7 +364,7 @@
         wrap.className = "flex w-full min-w-0 justify-end animate-bubble-in";
         wrap.innerHTML =
           '<div class="max-w-[min(100%,36rem)] min-w-0 rounded-2xl rounded-tr-md border border-white/10 bg-sky-600/25 px-4 py-3.5 text-sm text-slate-100 sm:px-5">' +
-          '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-200/70">Tú</div>' +
+          '<div class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-sky-200/70">TÃº</div>' +
           '<div class="whitespace-pre-wrap break-words"></div></div>';
         wrap.querySelector("div div:last-child").textContent = text;
         thread.appendChild(wrap);
@@ -452,23 +452,23 @@
         if (window.__premiumTutor.mode === "tutor") {
           input.disabled = false;
           input.placeholder = speechRecognitionCtor()
-            ? "Habla o escribe tu duda sobre este reto…"
-            : "Escribe tu duda sobre este reto…";
+            ? "Habla o escribe tu duda sobre este retoâ€¦"
+            : "Escribe tu duda sobre este retoâ€¦";
           sendBtn.textContent = "Enviar duda";
           sendBtn.disabled = false;
         } else if (view.readOnly) {
           input.disabled = true;
-          input.placeholder = "Solo lectura — no puedes editar este reto";
+          input.placeholder = "Solo lectura â€” no puedes editar este reto";
           sendBtn.textContent = "Solo lectura";
           sendBtn.disabled = true;
         } else if (view.isResubmit) {
           input.disabled = false;
-          input.placeholder = "Escribe tu nueva respuesta…";
+          input.placeholder = "Escribe tu nueva respuestaâ€¦";
           sendBtn.textContent = "Actualizar respuesta";
           sendBtn.disabled = false;
         } else {
           input.disabled = false;
-          input.placeholder = "Escribe tu respuesta…";
+          input.placeholder = "Escribe tu respuestaâ€¦";
           sendBtn.textContent = "Enviar";
           sendBtn.disabled = !!window.__dailyChallenge.submitted;
         }
@@ -510,7 +510,7 @@
         if (resp && resp.chat_response) parts.push(String(resp.chat_response));
         if (resp && resp.translation_hint) parts.push("Pista: " + String(resp.translation_hint));
         if (resp && Array.isArray(resp.corrections) && resp.corrections.length) {
-          parts.push("Correcciones útiles:\n- " + resp.corrections.join("\n- "));
+          parts.push("Correcciones Ãºtiles:\n- " + resp.corrections.join("\n- "));
         }
         if (resp && Array.isArray(resp.new_vocabulary) && resp.new_vocabulary.length) {
           parts.push("Vocabulario:\n- " + resp.new_vocabulary.join("\n- "));
@@ -567,7 +567,7 @@
         if (!list) return;
         const items = window.__challengeHistoryItems || [];
         if (!items.length) {
-          list.innerHTML = '<li class="px-2 py-2 text-xs text-slate-500">Aún no tienes retos guardados.</li>';
+          list.innerHTML = '<li class="px-2 py-2 text-xs text-slate-500">AÃºn no tienes retos guardados.</li>';
           return;
         }
         list.innerHTML = "";
@@ -614,7 +614,7 @@
         const auth = requireAuth();
         if (!auth) return;
         const list = document.getElementById("challenge-history-list");
-        if (list) list.innerHTML = '<li class="px-2 py-1 text-xs text-slate-500">Cargando…</li>';
+        if (list) list.innerHTML = '<li class="px-2 py-1 text-xs text-slate-500">Cargandoâ€¦</li>';
         try {
           const res = await fetch(apiUrl("/api/challenges/history"), {
             headers: { Authorization: "Bearer " + auth.token },
@@ -664,7 +664,7 @@
 
         const pillText = detail.is_today
           ? "Reto diario"
-          : "Reto · " + formatHistoryDate(detail.challenge_date, false);
+          : "Reto Â· " + formatHistoryDate(detail.challenge_date, false);
         if (pill) {
           pill.classList.remove("hidden");
           pill.textContent = pillText;
@@ -716,7 +716,7 @@
         const auth = requireAuth();
         if (!auth) return;
         const status = document.getElementById("status-line");
-        if (status) status.textContent = "Cargando reto…";
+        if (status) status.textContent = "Cargando retoâ€¦";
         try {
           const res = await fetch(
             apiUrl("/api/challenges/" + encodeURIComponent(challengeId) + "/detail"),
@@ -772,7 +772,7 @@
         const auth = requireAuth();
         if (!auth) return;
         const method = opts && opts.method ? opts.method : "GET";
-        const loadingText = opts && opts.loadingText ? opts.loadingText : "Generando tu reto personalizado…";
+        const loadingText = opts && opts.loadingText ? opts.loadingText : "Generando tu reto personalizadoâ€¦";
         const pillText = opts && opts.pillText ? opts.pillText : "Reto diario";
 
         const status = document.getElementById("status-line");
@@ -812,7 +812,7 @@
                 : d && typeof d === "object"
                   ? JSON.stringify(d)
                   : "";
-          if (status) status.textContent = line || `Error al cargar el reto (HTTP ${res.status}). Comprueba la consola «Red».`;
+          if (status) status.textContent = line || `Error al cargar el reto (HTTP ${res.status}). Comprueba la consola Â«RedÂ».`;
           return;
         }
 
@@ -831,7 +831,7 @@
 
       async function loadChallenge() {
         await fetchChallenge(apiUrl("/api/challenges/daily"), {
-          loadingText: "Generando tu reto personalizado…",
+          loadingText: "Generando tu reto personalizadoâ€¦",
           pillText: "Reto diario",
         });
       }
@@ -842,7 +842,7 @@
         try {
           await fetchChallenge(apiUrl("/api/challenges/premium/generate"), {
             method: "POST",
-            loadingText: "Preparando un nuevo reto Premium…",
+            loadingText: "Preparando un nuevo reto Premiumâ€¦",
             pillText: "Reto Premium",
           });
         } finally {
@@ -892,7 +892,7 @@
         }
         const challengeId = window.__dailyChallenge.id;
         if (!challengeId) {
-          alert("No se pudo identificar el reto actual. Recarga la página.");
+          alert("No se pudo identificar el reto actual. Recarga la pÃ¡gina.");
           return;
         }
 
@@ -934,20 +934,20 @@
         const xp = Number(data.xp_awarded) || 0;
         appendFeedbackBubble(
           (repeat
-            ? "Ya habíamos calificado tu respuesta. No se suma XP otra vez.\n\n"
-            : "") + (data.corrective_feedback || (ok ? "¡Bien!" : "Sigue practicando.")),
+            ? "Ya habÃ­amos calificado tu respuesta. No se suma XP otra vez.\n\n"
+            : "") + (data.corrective_feedback || (ok ? "Â¡Bien!" : "Sigue practicando.")),
           !repeat && ok
         );
         if (toast) {
           if (repeat) {
-            toast.textContent = "Este reto ya estaba hecho. No se añade XP otra vez.";
+            toast.textContent = "Este reto ya estaba hecho. No se aÃ±ade XP otra vez.";
             toast.classList.remove("hidden");
           } else {
             const parts = [];
             if (data.streak_message) parts.push(String(data.streak_message));
             if (xp > 0) parts.push("+" + String(xp) + " XP");
             if (parts.length) {
-              toast.textContent = parts.join(" · ");
+              toast.textContent = parts.join(" Â· ");
               toast.classList.remove("hidden");
             } else if (!ok) {
               toast.textContent = "Mira el feedback y sigue practicando.";
@@ -1012,8 +1012,8 @@
         if (firstTutorOpen) {
           appendTutorBubble(
             SpeechRecognitionCtor
-              ? "Cuéntame tu duda sobre este reto. Te escucho y te responderé aquí mismo."
-              : "Cuéntame tu duda sobre este reto. Tu navegador no permite dictado aquí, así que escríbela abajo."
+              ? "CuÃ©ntame tu duda sobre este reto. Te escucho y te responderÃ© aquÃ­ mismo."
+              : "CuÃ©ntame tu duda sobre este reto. Tu navegador no permite dictado aquÃ­, asÃ­ que escrÃ­bela abajo."
           );
         }
 
@@ -1057,7 +1057,7 @@
           updateTutorButton();
           const spoken = finalTranscript.trim();
           if (!spoken) {
-            if (status) status.textContent = "No detecté ninguna frase. Puedes volver a pulsar o escribir la duda.";
+            if (status) status.textContent = "No detectÃ© ninguna frase. Puedes volver a pulsar o escribir la duda.";
             return;
           }
           if (status) status.textContent = "Procesando tu duda...";
@@ -1097,3 +1097,4 @@
   </script>
 </body>
 </html>
+

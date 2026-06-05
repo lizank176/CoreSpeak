@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoreSpeak | Gestión de usuarios</title>
+  <title>CoreSpeak | GestiÃ³n de usuarios</title>
   <link rel="icon" type="image/png" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="shortcut icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="apple-touch-icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css">
-  <link rel="stylesheet" href="a11y.css?v=20260602">
+  <link rel="stylesheet" href="dashboard.css?v=20260602u">
+  <link rel="stylesheet" href="a11y.css?v=20260602g">
   <style>
     .admin-page-wrap {
       max-width: 1240px;
@@ -48,14 +48,14 @@
   <main id="main-content" class="dashboard-content p-4" tabindex="-1">
     <div class="admin-page-wrap">
       <div id="admin-users-gate" class="d-none">
-        <div class="alert alert-danger mb-3">No tienes permisos de administrador para acceder a esta gestión.</div>
+        <div class="alert alert-danger mb-3">No tienes permisos de administrador para acceder a esta gestiÃ³n.</div>
         <a class="btn btn-primary" href="dashboard.html">Volver al dashboard</a>
       </div>
 
       <div id="admin-users-panel" class="d-none">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <div>
-            <h1 class="h3 mb-1">Gestión de usuarios</h1>
+            <h1 class="h3 mb-1">GestiÃ³n de usuarios</h1>
             <p class="text-muted mb-0">Busca cuentas, genera enlaces de restablecimiento y controla el acceso.</p>
           </div>
           <div class="d-flex flex-wrap gap-2">
@@ -93,7 +93,7 @@
         <section id="reset-link-card" class="card stat-card p-3 mb-4 d-none">
           <div class="card-body pt-0">
             <h2 class="h5 mb-2">Enlace de restablecimiento generado</h2>
-            <p class="text-muted small mb-3">Puedes copiarlo y enviárselo manualmente al usuario.</p>
+            <p class="text-muted small mb-3">Puedes copiarlo y enviÃ¡rselo manualmente al usuario.</p>
             <div class="input-group">
               <input id="reset-link-output" type="text" class="form-control" readonly>
               <button id="copy-reset-link-btn" type="button" class="btn btn-outline-primary">Copiar</button>
@@ -111,7 +111,7 @@
                     <th scope="col">Rol</th>
                     <th scope="col">Estado</th>
                     <th scope="col">Plan</th>
-                    <th scope="col">Última actividad</th>
+                    <th scope="col">Ãšltima actividad</th>
                     <th scope="col">Acciones</th>
                   </tr>
                 </thead>
@@ -130,7 +130,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="a11y.js?v=20260602"></script>
-  <script src="app.js?v=20260528"></script>
+  <script src="app.js?v=20260602v"></script>
   <script>
     (function () {
       var state = {
@@ -207,7 +207,7 @@
             +   "<td class='small text-muted'>" + escapeHtml(formatDate(user.last_active_at)) + "</td>"
             +   "<td class='table-actions'>"
             +     "<div class='d-flex flex-wrap gap-2'>"
-            +       "<button type='button' class='btn btn-outline-primary btn-sm' data-action='reset'>Reset contraseña</button>"
+            +       "<button type='button' class='btn btn-outline-primary btn-sm' data-action='reset'>Reset contraseÃ±a</button>"
             +       "<button type='button' class='btn btn-outline-secondary btn-sm' data-action='toggle'>" + (user.is_active ? "Desactivar" : "Activar") + "</button>"
             +       "<button type='button' class='btn btn-outline-danger btn-sm' data-action='delete'>Eliminar</button>"
             +     "</div>"
@@ -279,7 +279,7 @@
       async function handleToggle(user) {
         var nextActive = !user.is_active;
         var verb = nextActive ? "activar" : "desactivar";
-        if (!window.confirm("¿Seguro que quieres " + verb + " la cuenta de " + (user.email || "este usuario") + "?")) {
+        if (!window.confirm("Â¿Seguro que quieres " + verb + " la cuenta de " + (user.email || "este usuario") + "?")) {
           return;
         }
         showMsg((nextActive ? "Activando" : "Desactivando") + " cuenta...", "info");
@@ -297,7 +297,7 @@
 
       async function handleDelete(user) {
         var label = user.email || user.full_name || "este usuario";
-        if (!window.confirm("Se eliminará la cuenta de " + label + " y sus datos asociados. Esta acción no se puede deshacer. ¿Continuar?")) {
+        if (!window.confirm("Se eliminarÃ¡ la cuenta de " + label + " y sus datos asociados. Esta acciÃ³n no se puede deshacer. Â¿Continuar?")) {
           return;
         }
         showMsg("Eliminando usuario...", "warn");
@@ -348,7 +348,7 @@
             await navigator.clipboard.writeText(value);
             showMsg("Enlace copiado al portapapeles.", "ok");
           } catch (err) {
-            showMsg("No se pudo copiar automáticamente. Puedes copiarlo manualmente.", "warn");
+            showMsg("No se pudo copiar automÃ¡ticamente. Puedes copiarlo manualmente.", "warn");
           }
         });
         el("users-table-body").addEventListener("click", function (event) {
@@ -363,7 +363,7 @@
           if (action === "delete") task = handleDelete(user);
           if (task && typeof task.catch === "function") {
             task.catch(function (err) {
-              showMsg(err.message || "La acción no pudo completarse.", "err");
+              showMsg(err.message || "La acciÃ³n no pudo completarse.", "err");
             });
           }
         });
@@ -380,10 +380,30 @@
           bindEvents();
           await loadUsers("");
         } catch (err) {
-          showMsg(err.message || "No se pudo iniciar la gestión de usuarios.", "err");
+          showMsg(err.message || "No se pudo iniciar la gestiÃ³n de usuarios.", "err");
         }
       });
     })();
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -208,7 +208,9 @@ img:not([alt]) {
 }
 
 .dashboard-logo {
-  max-height: 150px;
+  height: 75px !important;
+  max-height: 75px !important;
+  width: auto !important;
 }
 
 .logo-img {
