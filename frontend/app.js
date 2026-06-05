@@ -366,7 +366,13 @@ function injectLanguageSelectors(currentLang) {
     const li = document.createElement("li");
     li.className = "dashboard-nav-item align-self-center d-none d-lg-flex me-1";
     buildLangDropdown(li, true);
-    navList.insertBefore(li, navList.firstChild);
+    // Insertar después del botón Admin (primer li) si existe, si no al principio
+    const adminLi = navList.querySelector("#admin-nav-wrap");
+    if (adminLi && adminLi.nextSibling) {
+      navList.insertBefore(li, adminLi.nextSibling);
+    } else {
+      navList.insertBefore(li, navList.firstChild);
+    }
   }
 
   // En páginas sin nav (login, registro, etc.): dropdown flotante en esquina
@@ -2506,8 +2512,8 @@ function initPasswordVisibilityToggles() {
 }
 
 const CORESPEAK_NAV_INCLUDE_URLS = [
-  "/ui/includes/dashboard-nav.html?v=20260529",
-  "includes/dashboard-nav.html?v=20260529",
+  "/ui/includes/dashboard-nav.html?v=20260605x",
+  "includes/dashboard-nav.html?v=20260605x",
 ];
 
 async function mountCoreSpeakDashboardNav() {

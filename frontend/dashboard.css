@@ -728,6 +728,31 @@ button.dashboard-nav-link.corespeak-logout:hover {
     }
 }
 
+/* Badge Admin */
+.admin-nav-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #f97316 0%, #eab308 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+    transition: opacity 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+}
+
+.admin-nav-badge:hover {
+    color: #ffffff;
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+}
+
 /* Selector de idioma — mismo estilo que el login */
 .corespeak-ui-lang-select {
     background: linear-gradient(90deg, rgba(173, 70, 255, 0.85) 0%, rgba(0, 211, 242, 0.85) 100%);

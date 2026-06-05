@@ -1,26 +1,26 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoreSpeak - ConfiguraciÃ³n</title>
+    <title>CoreSpeak - Configuración</title>
   <link rel="icon" type="image/png" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="shortcut icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="apple-touch-icon" href="/ui/img/favicon-corespeak.png?v=3">
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- 1. Estilos Globales (MenÃº, Fondo, Logo) -->
-    <link rel="stylesheet" href="dashboard.css?v=20260605v">
+    <!-- 1. Estilos Globales (Menú, Fondo, Logo) -->
+    <link rel="stylesheet" href="dashboard.css?v=20260605z">
     <link rel="stylesheet" href="cursos.css">
     
-    <!-- 2. Estilos EspecÃ­ficos de esta pÃ¡gina -->
+    <!-- 2. Estilos Específicos de esta página -->
     <link rel="stylesheet" href="config.css">
-    <link rel="stylesheet" href="a11y.css?v=20260602g">
+    <link rel="stylesheet" href="a11y.css?v=20260605z">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Saltar al contenido</a>
-    <!-- Header / MenÃº Superior (Reutilizado) -->
+    <!-- Header / Menú Superior (Reutilizado) -->
     <div class="container-fluid p-0">
         <div class="dashboard-header">
             <div class="container-fluid" id="corespeak-dashboard-nav-root"></div>
@@ -29,7 +29,7 @@
 
     <main id="main-content" class="container main-content" tabindex="-1">
         
-        <!-- BotÃ³n Volver -->
+        <!-- Botón Volver -->
         <div class="row mb-4">
             <div class="col-12">
                 <a href="dashboard.html" class="back-link">
@@ -41,9 +41,9 @@
             </div>
         </div>
 
-        <!-- TÃ­tulo -->
+        <!-- Título -->
         <div class="mb-4">
-            <h2 class="settings-title mb-1" data-i18n="config.title">ConfiguraciÃ³n</h2>
+            <h2 class="settings-title mb-1" data-i18n="config.title">Configuración</h2>
             <p class="text-muted" data-i18n="config.lead">Administra tu perfil y preferencias</p>
         </div>
 
@@ -57,7 +57,7 @@
                         </svg>
                     </div>
                     <div class="ms-3">
-                        <h5 class="mb-0 fw-semibold" data-i18n="config.personalTitle">InformaciÃ³n personal</h5>
+                        <h5 class="mb-0 fw-semibold" data-i18n="config.personalTitle">Información personal</h5>
                         <p class="text-muted small mb-0" data-i18n="config.personalSub">Actualiza tus datos personales</p>
                     </div>
                 </div>
@@ -94,16 +94,16 @@
                 <div class="setting-row d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                     <div class="flex-grow-1" style="min-width: 180px">
                         <h6 class="mb-0 text-dark">Nivel de dificultad</h6>
-                        <p class="text-muted small mb-0">MCER (inglÃ©s): el reto que ya tienes para hoy no cambia; desde el siguiente reto (maÃ±ana o cuando no haya reto de ese dÃ­a) se usarÃ¡ este nivel.</p>
+                        <p class="text-muted small mb-0">MCER (inglés): el reto que ya tienes para hoy no cambia; desde el siguiente reto (mañana o cuando no haya reto de ese día) se usará este nivel.</p>
                     </div>
                     <label class="visually-hidden" for="config-english-level">Nivel MCER</label>
                     <select id="config-english-level" class="form-select form-select-sm border" style="max-width: 220px">
-                        <option value="A1">A1 â€” principiante</option>
-                        <option value="A2">A2 â€” bÃ¡sico</option>
-                        <option value="B1">B1 â€” intermedio bajo</option>
-                        <option value="B2">B2 â€” intermedio alto</option>
-                        <option value="C1">C1 â€” avanzado</option>
-                        <option value="C2">C2 â€” competente / nativo cercano</option>
+                        <option value="A1">A1 — principiante</option>
+                        <option value="A2">A2 — básico</option>
+                        <option value="B1">B1 — intermedio bajo</option>
+                        <option value="B2">B2 — intermedio alto</option>
+                        <option value="C1">C1 — avanzado</option>
+                        <option value="C2">C2 — competente / nativo cercano</option>
                     </select>
                 </div>
                 <p id="config-difficulty-msg" class="alert py-2 px-3 small d-none mb-4" role="status"></p>
@@ -111,26 +111,26 @@
                 <div class="setting-row d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-0 text-dark">Idioma de la interfaz</h6>
-                        <p class="text-muted small mb-0">Cambia el idioma de la aplicaciÃ³n</p>
+                        <p class="text-muted small mb-0">Cambia el idioma de la aplicación</p>
                     </div>
-                    <button class="btn btn-light border btn-sm px-3">EspaÃ±ol</button>
+                    <button class="btn btn-light border btn-sm px-3">Español</button>
                 </div>
             </div>
         </div>
 
-        <!-- Idiomas extra (solo Premium; el inglÃ©s es el curso base para todos) -->
+        <!-- Idiomas extra (solo Premium; el inglés es el curso base para todos) -->
         <div class="card settings-card mb-4 d-none" id="config-premium-languages-card">
             <div class="card-body p-4">
-                <h5 class="mb-1 fw-semibold">MÃ¡s idiomas de aprendizaje</h5>
-                <p class="text-muted small mb-3">InglÃ©s es el curso principal para todos. Con Premium puedes aÃ±adir otros idiomas del catÃ¡logo.</p>
+                <h5 class="mb-1 fw-semibold">Más idiomas de aprendizaje</h5>
+                <p class="text-muted small mb-3">Inglés es el curso principal para todos. Con Premium puedes añadir otros idiomas del catálogo.</p>
                 <div class="d-flex flex-wrap gap-3 mb-2" id="config-extra-lang-checks" role="group" aria-label="Idiomas adicionales">
                     <div class="form-check">
                         <input class="form-check-input config-extra-lang-cb" type="checkbox" value="es" id="cfg-lang-es">
-                        <label class="form-check-label" for="cfg-lang-es">EspaÃ±ol</label>
+                        <label class="form-check-label" for="cfg-lang-es">Español</label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input config-extra-lang-cb" type="checkbox" value="fr" id="cfg-lang-fr">
-                        <label class="form-check-label" for="cfg-lang-fr">FrancÃ©s</label>
+                        <label class="form-check-label" for="cfg-lang-fr">Francés</label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input config-extra-lang-cb" type="checkbox" value="uk" id="cfg-lang-uk">
@@ -152,17 +152,17 @@
                 <div id="config-account-msg" class="alert py-2 px-3 small d-none mb-3" role="status" aria-live="polite"></div>
 
                 <div class="d-grid gap-3">
-                    <button id="config-change-password-btn" type="button" class="btn btn-light border text-start py-2 px-3 bg-white" data-i18n="config.changePassword">Cambiar contraseÃ±a</button>
+                    <button id="config-change-password-btn" type="button" class="btn btn-light border text-start py-2 px-3 bg-white" data-i18n="config.changePassword">Cambiar contraseña</button>
 
                     <div id="config-subscription-wrap" class="border rounded-3 p-3 bg-light">
-                        <h6 class="fw-semibold mb-1" data-i18n="config.subscriptionTitle">SuscripciÃ³n Premium</h6>
+                        <h6 class="fw-semibold mb-1" data-i18n="config.subscriptionTitle">Suscripción Premium</h6>
                         <p class="text-muted small mb-2" data-i18n="config.subscriptionSub">Gestiona tu plan de pago</p>
-                        <p id="config-subscription-status" class="small text-secondary mb-3" role="status">Cargando estado de tu suscripciÃ³nâ€¦</p>
+                        <p id="config-subscription-status" class="small text-secondary mb-3" role="status">Cargando estado de tu suscripción…</p>
                         <div class="d-grid gap-2">
-                            <button id="config-manage-subscription-btn" type="button" class="btn btn-primary w-100" data-i18n="config.manageSubscriptionBtn">Gestionar suscripciÃ³n</button>
+                            <button id="config-manage-subscription-btn" type="button" class="btn btn-primary w-100" data-i18n="config.manageSubscriptionBtn">Gestionar suscripción</button>
                             <button id="config-cancel-subscription-btn" type="button" class="btn btn-outline-danger w-100" data-i18n="config.cancelSubscriptionBtn">Darme de baja (no volver a cobrar)</button>
                         </div>
-                        <p id="config-subscription-note" class="small text-muted mb-0 mt-3 d-none" data-i18n="config.subscriptionNoBilling">Tu Premium no tiene suscripciÃ³n de pago asociada. Si necesitas ayuda, contacta con soporte.</p>
+                        <p id="config-subscription-note" class="small text-muted mb-0 mt-3 d-none" data-i18n="config.subscriptionNoBilling">Tu Premium no tiene suscripción de pago asociada. Si necesitas ayuda, contacta con soporte.</p>
                     </div>
 
                     <button id="config-delete-account-btn" type="button" class="btn btn-light border text-start py-2 px-3 bg-white text-danger" data-i18n="config.deleteAccount">Eliminar cuenta</button>
@@ -172,7 +172,7 @@
 
     </main>
 
-    <!-- ConfirmaciÃ³n: darse de baja Premium -->
+    <!-- Confirmación: darse de baja Premium -->
     <div class="modal fade" id="config-cancel-subscription-modal" tabindex="-1" aria-labelledby="config-cancel-subscription-title" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -181,7 +181,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body" data-i18n="config.cancelModalBody">
-                    Â¿Seguro? DejarÃ¡s de pagar en la prÃ³xima renovaciÃ³n. MantendrÃ¡s Premium hasta el final del periodo ya pagado.
+                    ¿Seguro? Dejarás de pagar en la próxima renovación. Mantendrás Premium hasta el final del periodo ya pagado.
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal" id="config-cancel-subscription-dismiss" data-i18n="config.modalCancel">Cancelar</button>
@@ -191,7 +191,7 @@
         </div>
     </div>
 
-    <!-- ConfirmaciÃ³n: eliminar cuenta -->
+    <!-- Confirmación: eliminar cuenta -->
     <div class="modal fade" id="config-delete-account-modal" tabindex="-1" aria-labelledby="config-delete-account-title" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -200,7 +200,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body" data-i18n="config.deleteModalBody">
-                    Â¿EstÃ¡s seguro? Se borrarÃ¡n tu perfil, progreso y datos. Esta acciÃ³n no se puede deshacer.
+                    ¿Estás seguro? Se borrarán tu perfil, progreso y datos. Esta acción no se puede deshacer.
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal" id="config-delete-account-dismiss" data-i18n="config.modalCancel">Cancelar</button>
@@ -211,10 +211,13 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="a11y.js?v=20260602"></script>
-    <script src="app.js?v=20260602v"></script>
+    <script src="a11y.js?v=20260605z"></script>
+    <script src="app.js?v=20260605z"></script>
 </body>
 </html>
+
+
+
 
 
 

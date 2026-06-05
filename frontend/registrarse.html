@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=20260529t">
-    <link rel="stylesheet" href="a11y.css?v=20260602g">
+    <link rel="stylesheet" href="a11y.css?v=20260605z">
 
 </head>
 <body class="auth-page">
@@ -38,7 +38,7 @@
 
                     <h1 class="h3 text-center mb-2" data-i18n="register.title">Crear cuenta</h1>
                     <p class="text-center text-muted mb-4" data-i18n="register.lead">
-                        Ãšnete a CoreSpeak y comienza tu viaje de aprendizaje
+                        Únete a CoreSpeak y comienza tu viaje de aprendizaje
                     </p>
                     <div id="register-error" class="alert alert-danger py-2 px-3 small mb-3 d-none" role="alert" aria-live="assertive"></div>
 
@@ -55,7 +55,7 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="register-apellido" data-i18n="register.surname">Apellido</label>
-                                    <input id="register-apellido" name="family-name" type="text" class="form-control" placeholder="PÃ©rez" autocomplete="family-name" aria-describedby="register-apellido-error">
+                                    <input id="register-apellido" name="family-name" type="text" class="form-control" placeholder="Pérez" autocomplete="family-name" aria-describedby="register-apellido-error">
                                     <span id="register-apellido-error" class="a11y-field-error d-none" role="alert"></span>
                                 </div>
                             </div>
@@ -67,30 +67,30 @@
                         </fieldset>
 
                         <div class="mb-3">
-                            <label class="form-label" for="register-email" data-i18n="register.email">Correo electrÃ³nico</label>
+                            <label class="form-label" for="register-email" data-i18n="register.email">Correo electrónico</label>
                             <input id="register-email" name="email" type="email" class="form-control" data-i18n-placeholder="login.phEmail" placeholder="tu@email.com" autocomplete="email" required aria-describedby="register-email-error">
                             <span id="register-email-error" class="a11y-field-error d-none" role="alert"></span>
                         </div>
 
                         <fieldset class="border-0 p-0 m-0 mb-3">
-                            <legend class="form-label fw-semibold mb-3">ContraseÃ±a</legend>
+                            <legend class="form-label fw-semibold mb-3">Contraseña</legend>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="register-password" data-i18n="register.password">ContraseÃ±a</label>
+                                    <label class="form-label" for="register-password" data-i18n="register.password">Contraseña</label>
                                     <div class="input-group">
-                                        <input id="register-password" name="new-password" type="password" class="form-control" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="new-password" required minlength="8" aria-describedby="register-password-error register-password-hint">
-                                        <button id="toggle-register-password" class="btn btn-outline-secondary password-visibility-btn" type="button" aria-label="Mostrar contraseÃ±as" title="Mostrar contraseÃ±as">
+                                        <input id="register-password" name="new-password" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" required minlength="8" aria-describedby="register-password-error register-password-hint">
+                                        <button id="toggle-register-password" class="btn btn-outline-secondary password-visibility-btn" type="button" aria-label="Mostrar contraseñas" title="Mostrar contraseñas">
                                             <img src="img/eye-closed.svg" alt="" class="password-eye-icon" width="22" height="14" aria-hidden="true">
                                         </button>
                                     </div>
-                                    <span id="register-password-hint" class="form-text text-muted small">MÃ­nimo 8 caracteres, con nÃºmero y sÃ­mbolo.</span>
+                                    <span id="register-password-hint" class="form-text text-muted small">Mínimo 8 caracteres, con número y símbolo.</span>
                                     <span id="register-password-error" class="a11y-field-error d-none" role="alert"></span>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="register-password-confirm" data-i18n="register.confirm">Confirmar contraseÃ±a</label>
+                                    <label class="form-label" for="register-password-confirm" data-i18n="register.confirm">Confirmar contraseña</label>
                                     <div class="input-group">
-                                        <input id="register-password-confirm" name="password-confirm" type="password" class="form-control" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="new-password" required aria-describedby="register-password-confirm-error">
-                                        <button id="toggle-register-password-confirm" class="btn btn-outline-secondary password-visibility-btn" type="button" aria-label="Mostrar confirmaciÃ³n de contraseÃ±a" title="Mostrar confirmaciÃ³n de contraseÃ±a">
+                                        <input id="register-password-confirm" name="password-confirm" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" required aria-describedby="register-password-confirm-error">
+                                        <button id="toggle-register-password-confirm" class="btn btn-outline-secondary password-visibility-btn" type="button" aria-label="Mostrar confirmación de contraseña" title="Mostrar confirmación de contraseña">
                                             <img src="img/eye-closed.svg" alt="" class="password-eye-icon" width="22" height="14" aria-hidden="true">
                                         </button>
                                     </div>
@@ -102,7 +102,7 @@
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" id="register-consent" required aria-describedby="register-consent-error">
                             <label class="form-check-label small" for="register-consent">
-                                Acepto los tÃ©rminos, polÃ­tica de privacidad y tratamiento de datos (RGPD).
+                                Acepto los términos, política de privacidad y tratamiento de datos (RGPD).
                             </label>
                             <span id="register-consent-error" class="a11y-field-error d-none" role="alert"></span>
                         </div>
@@ -112,14 +112,14 @@
                         </button>
 
                         <p class="text-center small mt-3 text-muted" data-i18n="register.terms">
-                            Al registrarte, aceptas nuestros tÃ©rminos de servicio y polÃ­tica de privacidad
+                            Al registrarte, aceptas nuestros términos de servicio y política de privacidad
                         </p>
 
                     </form>
 
                     <div class="text-center mt-2 small">
-                        <span data-i18n="register.hasAccount">Â¿Ya tienes cuenta?</span>
-                        <a href="inicio_session.html" class="register-link"><span data-i18n="register.loginLink">Inicia sesiÃ³n aquÃ­</span></a>
+                        <span data-i18n="register.hasAccount">¿Ya tienes cuenta?</span>
+                        <a href="inicio_session.html" class="register-link"><span data-i18n="register.loginLink">Inicia sesión aquí</span></a>
                     </div>
 
                 </main>
@@ -129,10 +129,12 @@
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="a11y.js?v=20260602"></script>
-<script src="app.js?v=20260602v"></script>
+<script src="a11y.js?v=20260605z"></script>
+<script src="app.js?v=20260605z"></script>
 </body>
 </html>
+
+
 
 
 
