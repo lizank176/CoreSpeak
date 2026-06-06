@@ -1,6 +1,6 @@
 """Flujo de suscripciones y pagos con Stripe.
 
-Incluye checkout, estado de suscripción, portal de cliente y webhook.
+Incluye checkout, estado de suscripci?n, portal de cliente y webhook.
 """
 
 from __future__ import annotations
@@ -21,6 +21,25 @@ from app.schemas import CheckoutRequest, CheckoutResponse, CancelSubscriptionRes
 from app.services.enrollment_service import sync_user_enrollments
 
 router = APIRouter(prefix="/api/billing", tags=["billing"])
+
+
+def _public_app_base_url(request: Request) -> str:
+    """URL p?blica para redirecciones Stripe (?xito, cancelaci?n, portal).
+
+    Si APP_BASE_URL apunta a localhost pero la petici?n llega desde Render/producci?n,
+    usa el host real de la petici?n para evitar redirigir a 127.0.0.1 tras pagar.
+    """
+    configured = settings.app_base_url.rstrip("/")
+    if settings.stripe_success_url or settings.stripe_cancel_url:
+        return configured
+    low = configured.lower()
+    if "127.0.0.1" not in low and "localhost" not in low:
+        return configured
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(",")[0].strip()
+    if not host or host.startswith("127.0.0.1") or host.startswith("localhost"):
+        return configured
+    scheme = (request.headers.get("x-forwarded-proto") or request.url.scheme or "https").split(",")[0].strip()
+    return f"{scheme}://{host}".rstrip("/")
 
 
 def _resolve_stripe_customer_id(session: Session, user: AppUser) -> str | None:
@@ -57,7 +76,7 @@ def _sync_billing_from_stripe(session: Session, user: AppUser) -> None:
 
 
 def _resolve_stripe_subscription_id(session: Session, user: AppUser) -> str | None:
-    """Obtiene subscription_id de BD o, si falta, la suscripción activa del cliente en Stripe."""
+    """Obtiene subscription_id de BD o, si falta, la suscripci?n activa del cliente en Stripe."""
     existing = str(user.subscription_id or "").strip()
     if existing:
         return existing
@@ -92,7 +111,7 @@ def _resolve_stripe_subscription_id(session: Session, user: AppUser) -> str | No
 
 
 def _stripe_subscription_snapshot(user: AppUser) -> dict:
-    """Consulta snapshot de suscripción en Stripe para exponer estado actualizado."""
+    """Consulta snapshot de suscripci?n en Stripe para exponer estado actualizado."""
     sub_id = str(user.subscription_id or "").strip()
     if not sub_id or not settings.stripe_secret_key:
         return {}
@@ -113,7 +132,7 @@ def subscription_status(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> SubscriptionStatusResponse:
-    """Devuelve estado consolidado de suscripción para UI de configuración."""
+    """Devuelve estado consolidado de suscripci?n para UI de configuraci?n."""
     _sync_billing_from_stripe(session, user)
     status_value = user.subscription_status or "inactive"
     if user.is_premium and status_value == "inactive":
@@ -146,18 +165,18 @@ def cancel_subscription(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CancelSubscriptionResponse:
-    """Marca cancelación al final del período pagado (no cancela inmediatamente)."""
+    """Marca cancelaci?n al final del per?odo pagado (no cancela inmediatamente)."""
     _sync_billing_from_stripe(session, user)
     subscription_id = user.subscription_id or _resolve_stripe_subscription_id(session, user)
     if not subscription_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No tienes una suscripción de pago activa. Si Premium te lo concedió un administrador, contacta con soporte.",
+            detail="No tienes una suscripci?n de pago activa. Si Premium te lo concedi? un administrador, contacta con soporte.",
         )
     if not settings.stripe_secret_key:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="El sistema de pagos no está configurado. Contacta con soporte para darte de baja.",
+            detail="El sistema de pagos no est? configurado. Contacta con soporte para darte de baja.",
         )
 
     stripe.api_key = settings.stripe_secret_key
@@ -167,7 +186,7 @@ def cancel_subscription(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"No se pudo cancelar la suscripción: {exc}",
+            detail=f"No se pudo cancelar la suscripci?n: {exc}",
         ) from exc
 
     access_until = user.expiry_date
@@ -183,7 +202,7 @@ def cancel_subscription(
     until_text = access_until.strftime("%d/%m/%Y") if access_until else "el final del periodo pagado"
     return CancelSubscriptionResponse(
         message=(
-            f"Baja confirmada. No se te volverá a cobrar. "
+            f"Baja confirmada. No se te volver? a cobrar. "
             f"Mantienes Premium hasta {until_text}."
         ),
         cancel_at_period_end=True,
@@ -195,10 +214,11 @@ def cancel_subscription(
 @router.post("/checkout", response_model=CheckoutResponse)
 def create_checkout(
     payload: CheckoutRequest,
+    request: Request,
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> CheckoutResponse:
-    """Crea sesión de checkout de Stripe para plan mensual."""
+    """Crea sesi?n de checkout de Stripe para plan mensual."""
     _ = payload
     if not settings.stripe_secret_key or not settings.stripe_price_id_monthly:
         raise HTTPException(
@@ -207,8 +227,9 @@ def create_checkout(
         )
 
     stripe.api_key = settings.stripe_secret_key
-    success_url = settings.stripe_success_url or f"{settings.app_base_url}/ui/checkout_success.html?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = settings.stripe_cancel_url or f"{settings.app_base_url}/ui/checkout_cancel.html"
+    base = _public_app_base_url(request)
+    success_url = settings.stripe_success_url or f"{base}/ui/checkout_success.html?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = settings.stripe_cancel_url or f"{base}/ui/checkout_cancel.html"
     try:
         customer_id = user.customer_id
         if not customer_id:
@@ -246,7 +267,7 @@ def create_portal_session(
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> PortalResponse:
-    """Abre sesión del billing portal de Stripe para autogestión del usuario."""
+    """Abre sesi?n del billing portal de Stripe para autogesti?n del usuario."""
     if not settings.stripe_secret_key:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Configura STRIPE_SECRET_KEY")
     customer_id = _resolve_stripe_customer_id(session, user)
@@ -282,7 +303,7 @@ def checkout_session_status(
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"No se pudo consultar la sesión de Stripe: {exc}",
+            detail=f"No se pudo consultar la sesi?n de Stripe: {exc}",
         ) from exc
 
     data = _stripe_to_plain_dict(checkout_session)
@@ -300,7 +321,7 @@ def checkout_session_status(
     elif customer_email and customer_email.lower() == str(user.email or "").lower():
         owns_session = True
     if not owns_session:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesión de pago no encontrada")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesi?n de pago no encontrada")
 
     if str(data.get("payment_status") or "").lower() == "paid":
         _apply_paid_checkout_to_user(session, user, data)

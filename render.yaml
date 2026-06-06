@@ -17,3 +17,6 @@ services:
         value: "false"
       - key: APP_ENV
         value: production
+      # Sustituye por la URL real de tu servicio en Render (sin barra final).
+      - key: APP_BASE_URL
+        sync: false
