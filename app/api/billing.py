@@ -264,6 +264,7 @@ def create_checkout(
 
 @router.post("/portal", response_model=PortalResponse)
 def create_portal_session(
+    request: Request,
     user: AppUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> PortalResponse:
@@ -277,7 +278,7 @@ def create_portal_session(
             detail="No encontramos pagos de Stripe vinculados a tu cuenta. Si te cobran, contacta con soporte indicando tu email.",
         )
     stripe.api_key = settings.stripe_secret_key
-    return_url = f"{settings.app_base_url.rstrip('/')}/ui/configuracion.html"
+    return_url = f"{_public_app_base_url(request).rstrip('/')}/ui/configuracion.html"
     try:
         portal = stripe.billing_portal.Session.create(
             customer=customer_id,
