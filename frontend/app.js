@@ -721,11 +721,13 @@ const CORESPEAK_PAGE_I18N = {
       logout: "Cerrar sesión",
       premiumCta: "Hazte Premium",
       premiumHint: "Idiomas · IA · contenido exclusivo",
+      dashboard: "Dashboard",
     },
     dashboard: {
       greetingHi: "¡Hola,",
       userFallback: "Usuario",
       journey: "Continúa tu viaje de aprendizaje",
+      premiumDesc: "Desbloquea idiomas ilimitados, feedback avanzado y contenido exclusivo.",
       dailyTitle: "Reto diario",
       dailySub: "Completa tu desafío hoy",
       streakTitle: "Racha",
@@ -827,6 +829,16 @@ const CORESPEAK_PAGE_I18N = {
       noAccount: "¿No tienes cuenta?",
       register: "Regístrate aquí",
       phEmail: "tu@email.com",
+      backToHome: "Volver al inicio",
+      msgBusy: "Iniciando sesión…",
+      msgChecking: "Comprobando tus datos. Te llevaremos a tu panel en unos segundos…",
+      msgSuccess: "Sesión iniciada correctamente. Entrando al panel…",
+      errNetwork: "No se pudo conectar. Comprueba tu red e inténtalo de nuevo.",
+      errCredentials: "Correo o contraseña incorrectos.",
+      errValidation: "Revisa el correo y la contraseña.",
+      errServer: "No se pudo iniciar sesión. Inténtalo más tarde.",
+      errResponse: "Respuesta del servidor incompleta. Inténtalo de nuevo.",
+      errNoUser: "No se pudo identificar tu usuario. Inténtalo de nuevo.",
     },
     register: {
       title: "Crear cuenta",
@@ -844,6 +856,9 @@ const CORESPEAK_PAGE_I18N = {
       hasAccount: "¿Ya tienes cuenta?",
       loginLink: "Inicia sesión aquí",
       back: "Volver",
+      sectionPersonal: "Datos personales",
+      passwordHint: "Mínimo 8 caracteres, con número y símbolo.",
+      consent: "Acepto los términos, política de privacidad y tratamiento de datos (RGPD).",
     },
     onboarding: {
       title: "Test inicial rápido",
@@ -898,6 +913,7 @@ const CORESPEAK_PAGE_I18N = {
       modalAccept: "Aceptar",
     },
     landing: {
+      navFeatures: "Características", navHow: "Cómo funciona", navLangs: "Idiomas", navPricing: "Precios",
       navLogin: "Iniciar sesión", navCta: "Empezar gratis",
       heroBadge: "Plataforma de idiomas con IA",
       heroTitle1: "Aprende idiomas con", heroTitle2: "el ", heroGradient: "poder de la IA",
@@ -923,6 +939,30 @@ const CORESPEAK_PAGE_I18N = {
       prevLesson: "Pasado simple", prevLabel: "Elige la opción correcta",
       prevStreak: "🔥 7 días", prevCheck: "Comprobar",
     },
+    pricing: {
+      title: "Planes y precios",
+      lead: "Aprende idiomas con nuestro plan gratuito o desbloquea todo el potencial con Premium. Puedes cambiar o cancelar cuando quieras.",
+      loginNote: "Para contratar o ver tu facturación, inicia sesión.",
+      loginLink: "Ir a iniciar sesión",
+      freeTitle: "Gratis", freeTagline: "Ideal para empezar con constancia",
+      freeF1: "1 idioma de estudio (inglés)", freeF2: "Hasta 2 lecciones al día", freeF3: "Retos y feedback básico",
+      freeFootnote: "Siempre sin tarjeta",
+      ribbon: "Recomendado",
+      premTagline: "Más idiomas, práctica ilimitada y feedback con IA",
+      premF1: "Idiomas adicionales (además de inglés)", premF2: "Lecciones y retos avanzados ilimitados", premF3: "Feedback con IA en detalle",
+      premBtn: "Obtener Premium",
+      premFootnote: "Cancela cuando quieras desde tu perfil. Si un cargo falla, activamos un periodo de gracia de 24 h.",
+      billingTitle: "Historial de facturación", billingSub: "Pagos procesados con Stripe. Solo tú puedes ver esta información.",
+      colProvider: "Proveedor", colAmount: "Importe", colStatus: "Estado", colPaid: "Pagado", colPeriod: "Vence / periodo",
+      errLoginRequired: "Inicia sesión para continuar con el pago Premium.",
+      errCheckout: "Error iniciando la pasarela de pago.",
+      billingNoSession: "Inicia sesión para ver el historial de facturación.",
+      billingInvalid: "Sesión no válida.",
+      billingPremiumOnly: "El historial detallado está disponible para suscriptores Premium.",
+      billingLoadErr: "No se pudo cargar el historial. Inténtalo más tarde.",
+      billingEmpty: "Aún no hay facturas. Cuando tengas un pago, aparecerá aquí.",
+      billingConnErr: "Error de conexión.",
+    },
   },
   en: {
     nav: {
@@ -931,11 +971,13 @@ const CORESPEAK_PAGE_I18N = {
       logout: "Log out",
       premiumCta: "Go Premium",
       premiumHint: "Languages · AI · full access",
+      dashboard: "Dashboard",
     },
     dashboard: {
       greetingHi: "Hello,",
       userFallback: "User",
       journey: "Continue your learning journey",
+      premiumDesc: "Unlock unlimited languages, advanced feedback and exclusive content.",
       dailyTitle: "Daily challenge",
       dailySub: "Complete your challenge today",
       streakTitle: "Streak",
@@ -1037,6 +1079,16 @@ const CORESPEAK_PAGE_I18N = {
       noAccount: "No account yet?",
       register: "Register here",
       phEmail: "you@email.com",
+      backToHome: "Back to home",
+      msgBusy: "Logging in…",
+      msgChecking: "Checking your details. Redirecting to your dashboard…",
+      msgSuccess: "Login successful. Entering dashboard…",
+      errNetwork: "Could not connect. Check your network and try again.",
+      errCredentials: "Incorrect email or password.",
+      errValidation: "Please check your email and password.",
+      errServer: "Could not log in. Please try again later.",
+      errResponse: "Incomplete server response. Please try again.",
+      errNoUser: "Could not identify your account. Please try again.",
     },
     register: {
       title: "Create account",
@@ -1054,6 +1106,9 @@ const CORESPEAK_PAGE_I18N = {
       hasAccount: "Already have an account?",
       loginLink: "Log in here",
       back: "Back",
+      sectionPersonal: "Personal data",
+      passwordHint: "At least 8 characters, with a number and symbol.",
+      consent: "I accept the terms, privacy policy and data processing (GDPR).",
     },
     onboarding: {
       title: "Quick initial test",
@@ -1108,6 +1163,7 @@ const CORESPEAK_PAGE_I18N = {
       modalAccept: "Accept",
     },
     landing: {
+      navFeatures: "Features", navHow: "How it works", navLangs: "Languages", navPricing: "Pricing",
       navLogin: "Log in", navCta: "Get started free",
       heroBadge: "AI-powered language platform",
       heroTitle1: "Learn languages with", heroTitle2: "the ", heroGradient: "power of AI",
@@ -1133,6 +1189,30 @@ const CORESPEAK_PAGE_I18N = {
       prevLesson: "Simple past", prevLabel: "Choose the correct option",
       prevStreak: "🔥 7 days", prevCheck: "Check",
     },
+    pricing: {
+      title: "Plans and pricing",
+      lead: "Learn languages with our free plan or unlock the full potential with Premium. Change or cancel anytime.",
+      loginNote: "To subscribe or view your billing, please log in.",
+      loginLink: "Go to log in",
+      freeTitle: "Free", freeTagline: "Perfect for getting started consistently",
+      freeF1: "1 study language (English)", freeF2: "Up to 2 lessons per day", freeF3: "Challenges and basic feedback",
+      freeFootnote: "No card required, ever",
+      ribbon: "Recommended",
+      premTagline: "More languages, unlimited practice and AI feedback",
+      premF1: "Additional languages (beyond English)", premF2: "Unlimited advanced lessons and challenges", premF3: "Detailed AI feedback",
+      premBtn: "Get Premium",
+      premFootnote: "Cancel anytime from your profile. If a payment fails, we activate a 24h grace period.",
+      billingTitle: "Billing history", billingSub: "Payments processed by Stripe. Only you can see this information.",
+      colProvider: "Provider", colAmount: "Amount", colStatus: "Status", colPaid: "Paid", colPeriod: "Expires / period",
+      errLoginRequired: "Please log in to continue with your Premium purchase.",
+      errCheckout: "Error starting the payment gateway.",
+      billingNoSession: "Log in to view your billing history.",
+      billingInvalid: "Invalid session.",
+      billingPremiumOnly: "Detailed history is available for Premium subscribers.",
+      billingLoadErr: "Could not load billing history. Please try again later.",
+      billingEmpty: "No invoices yet. Your payments will appear here.",
+      billingConnErr: "Connection error.",
+    },
   },
   fr: {
     nav: {
@@ -1141,11 +1221,13 @@ const CORESPEAK_PAGE_I18N = {
       logout: "Déconnexion",
       premiumCta: "Passez au Premium",
       premiumHint: "Langues · IA · contenu exclusif",
+      dashboard: "Tableau de bord",
     },
     dashboard: {
       greetingHi: "Bonjour,",
       userFallback: "Utilisateur",
       journey: "Poursuivez votre apprentissage",
+      premiumDesc: "Débloquez des langues illimitées, des retours avancés et du contenu exclusif.",
       dailyTitle: "Défi du jour",
       dailySub: "Complétez votre défi aujourd’hui",
       streakTitle: "Série",
@@ -1246,6 +1328,16 @@ const CORESPEAK_PAGE_I18N = {
       noAccount: "Pas encore de compte ?",
       register: "Inscrivez-vous",
       phEmail: "vous@email.com",
+      backToHome: "Retour à l'accueil",
+      msgBusy: "Connexion en cours…",
+      msgChecking: "Vérification de vos données. Redirection vers votre tableau de bord…",
+      msgSuccess: "Connexion réussie. Chargement du tableau de bord…",
+      errNetwork: "Connexion impossible. Vérifiez votre réseau et réessayez.",
+      errCredentials: "E-mail ou mot de passe incorrect.",
+      errValidation: "Vérifiez votre e-mail et mot de passe.",
+      errServer: "Connexion échouée. Réessayez plus tard.",
+      errResponse: "Réponse du serveur incomplète. Réessayez.",
+      errNoUser: "Impossible d'identifier votre compte. Réessayez.",
     },
     register: {
       title: "Créer un compte",
@@ -1263,6 +1355,9 @@ const CORESPEAK_PAGE_I18N = {
       hasAccount: "Déjà un compte ?",
       loginLink: "Connectez-vous",
       back: "Retour",
+      sectionPersonal: "Données personnelles",
+      passwordHint: "Au moins 8 caractères, avec un chiffre et un symbole.",
+      consent: "J'accepte les conditions, la politique de confidentialité et le traitement des données (RGPD).",
     },
     onboarding: {
       title: "Test initial rapide",
@@ -1313,6 +1408,7 @@ const CORESPEAK_PAGE_I18N = {
       modalAccept: "Accepter",
     },
     landing: {
+      navFeatures: "Fonctionnalités", navHow: "Comment ça marche", navLangs: "Langues", navPricing: "Tarifs",
       navLogin: "Se connecter", navCta: "Commencer gratuitement",
       heroBadge: "Plateforme de langues avec IA",
       heroTitle1: "Apprenez des langues avec", heroTitle2: "la ", heroGradient: "puissance de l'IA",
@@ -1338,6 +1434,30 @@ const CORESPEAK_PAGE_I18N = {
       prevLesson: "Passé simple", prevLabel: "Choisissez la bonne option",
       prevStreak: "🔥 7 jours", prevCheck: "Vérifier",
     },
+    pricing: {
+      title: "Plans et tarifs",
+      lead: "Apprenez des langues avec notre plan gratuit ou débloquez tout le potentiel avec Premium. Changez ou annulez à tout moment.",
+      loginNote: "Pour souscrire ou voir votre facturation, connectez-vous.",
+      loginLink: "Aller à la connexion",
+      freeTitle: "Gratuit", freeTagline: "Idéal pour commencer avec régularité",
+      freeF1: "1 langue d'étude (anglais)", freeF2: "Jusqu'à 2 leçons par jour", freeF3: "Défis et feedback de base",
+      freeFootnote: "Toujours sans carte",
+      ribbon: "Recommandé",
+      premTagline: "Plus de langues, pratique illimitée et feedback IA",
+      premF1: "Langues supplémentaires (en plus de l'anglais)", premF2: "Leçons et défis avancés illimités", premF3: "Feedback IA détaillé",
+      premBtn: "Obtenir Premium",
+      premFootnote: "Annulez à tout moment depuis votre profil. En cas d'échec de paiement, une période de grâce de 24h s'active.",
+      billingTitle: "Historique de facturation", billingSub: "Paiements traités par Stripe. Seul vous pouvez voir ces informations.",
+      colProvider: "Fournisseur", colAmount: "Montant", colStatus: "Statut", colPaid: "Payé", colPeriod: "Expire / période",
+      errLoginRequired: "Veuillez vous connecter pour continuer avec votre achat Premium.",
+      errCheckout: "Erreur lors du lancement du paiement.",
+      billingNoSession: "Connectez-vous pour voir votre historique de facturation.",
+      billingInvalid: "Session invalide.",
+      billingPremiumOnly: "L'historique détaillé est disponible pour les abonnés Premium.",
+      billingLoadErr: "Impossible de charger l'historique. Réessayez plus tard.",
+      billingEmpty: "Aucune facture pour l'instant. Vos paiements apparaîtront ici.",
+      billingConnErr: "Erreur de connexion.",
+    },
   },
   de: {
     nav: {
@@ -1346,6 +1466,7 @@ const CORESPEAK_PAGE_I18N = {
       logout: "Abmelden",
       premiumCta: "Premium werden",
       premiumHint: "Sprachen · KI · Exklusivinhalt",
+      dashboard: "Dashboard",
     },
     dashboard: {
       greetingHi: "Hallo,",
@@ -1450,6 +1571,7 @@ const CORESPEAK_PAGE_I18N = {
       noAccount: "Noch kein Konto?",
       register: "Hier registrieren",
       phEmail: "du@email.com",
+      backToHome: "Zur Startseite",
     },
     register: {
       title: "Konto erstellen",
@@ -1517,6 +1639,7 @@ const CORESPEAK_PAGE_I18N = {
       modalAccept: "Bestätigen",
     },
     landing: {
+      navFeatures: "Funktionen", navHow: "So funktioniert's", navLangs: "Sprachen", navPricing: "Preise",
       navLogin: "Anmelden", navCta: "Kostenlos starten",
       heroBadge: "KI-gestützte Sprachlernplattform",
       heroTitle1: "Sprachen lernen mit", heroTitle2: "der ", heroGradient: "Kraft der KI",
@@ -1542,6 +1665,22 @@ const CORESPEAK_PAGE_I18N = {
       prevLesson: "Einfache Vergangenheit", prevLabel: "Wähle die richtige Option",
       prevStreak: "🔥 7 Tage", prevCheck: "Prüfen",
     },
+    pricing: {
+      title: "Pläne und Preise",
+      lead: "Lerne Sprachen mit unserem kostenlosen Plan oder schalte das volle Potenzial mit Premium frei. Jederzeit ändern oder kündigen.",
+      loginNote: "Um abzuschließen oder deine Abrechnung zu sehen, melde dich an.",
+      loginLink: "Zur Anmeldung",
+      freeTitle: "Kostenlos", freeTagline: "Ideal für den regelmäßigen Einstieg",
+      freeF1: "1 Lernsprache (Englisch)", freeF2: "Bis zu 2 Lektionen pro Tag", freeF3: "Challenges und grundlegendes Feedback",
+      freeFootnote: "Immer ohne Karte",
+      ribbon: "Empfohlen",
+      premTagline: "Mehr Sprachen, unbegrenzte Übungen und KI-Feedback",
+      premF1: "Weitere Sprachen (zusätzlich zu Englisch)", premF2: "Unbegrenzte fortgeschrittene Lektionen und Challenges", premF3: "Detailliertes KI-Feedback",
+      premBtn: "Premium erhalten",
+      premFootnote: "Jederzeit über dein Profil kündigen. Bei fehlgeschlagener Zahlung gilt eine 24h-Kulanzfrist.",
+      billingTitle: "Abrechnungsverlauf", billingSub: "Zahlungen über Stripe abgewickelt. Nur du kannst diese Informationen sehen.",
+      colProvider: "Anbieter", colAmount: "Betrag", colStatus: "Status", colPaid: "Bezahlt", colPeriod: "Läuft ab / Zeitraum",
+    },
   },
   uk: {
     nav: {
@@ -1550,11 +1689,13 @@ const CORESPEAK_PAGE_I18N = {
       logout: "Вийти",
       premiumCta: "Стань Premium",
       premiumHint: "Мови · ШІ · ексклюзив",
+      dashboard: "Панель",
     },
     dashboard: {
       greetingHi: "Привіт,",
       userFallback: "Користувач",
       journey: "Продовжуй навчання",
+      premiumDesc: "Розблокуй необмежені мови, розширений зворотній зв'язок та ексклюзивний контент.",
       dailyTitle: "Щоденний виклик",
       dailySub: "Виконай завдання сьогодні",
       streakTitle: "Серія",
@@ -1654,6 +1795,16 @@ const CORESPEAK_PAGE_I18N = {
       noAccount: "Немає облікового запису?",
       register: "Зареєструватися",
       phEmail: "ви@email.com",
+      backToHome: "На головну",
+      msgBusy: "Вхід…",
+      msgChecking: "Перевірка даних. Переходимо до панелі…",
+      msgSuccess: "Успішний вхід. Переходимо до панелі…",
+      errNetwork: "Неможливо підключитися. Перевірте з'єднання та спробуйте знову.",
+      errCredentials: "Неправильна пошта або пароль.",
+      errValidation: "Перевірте пошту та пароль.",
+      errServer: "Не вдалося увійти. Спробуйте пізніше.",
+      errResponse: "Неповна відповідь сервера. Спробуйте знову.",
+      errNoUser: "Не вдалося ідентифікувати обліковий запис. Спробуйте знову.",
     },
     register: {
       title: "Створити обліковий запис",
@@ -1671,6 +1822,9 @@ const CORESPEAK_PAGE_I18N = {
       hasAccount: "Вже є обліковий запис?",
       loginLink: "Увійти",
       back: "Назад",
+      sectionPersonal: "Особисті дані",
+      passwordHint: "Мінімум 8 символів, з цифрою та символом.",
+      consent: "Я приймаю умови, політику конфіденційності та обробку даних (GDPR).",
     },
     onboarding: {
       title: "Швидкий початковий тест",
@@ -1721,6 +1875,7 @@ const CORESPEAK_PAGE_I18N = {
       modalAccept: "Прийняти",
     },
     landing: {
+      navFeatures: "Функції", navHow: "Як це працює", navLangs: "Мови", navPricing: "Ціни",
       navLogin: "Увійти", navCta: "Почати безкоштовно",
       heroBadge: "Мовна платформа зі штучним інтелектом",
       heroTitle1: "Вивчайте мови за", heroTitle2: "допомогою ", heroGradient: "ШІ",
@@ -1745,6 +1900,30 @@ const CORESPEAK_PAGE_I18N = {
       ftCopy: "© 2026 CoreSpeak. Усі права захищені.",
       prevLesson: "Минулий простий", prevLabel: "Оберіть правильний варіант",
       prevStreak: "🔥 7 днів", prevCheck: "Перевірити",
+    },
+    pricing: {
+      title: "Плани та ціни",
+      lead: "Вивчайте мови з нашим безкоштовним планом або розкрийте повний потенціал з Premium. Змінюйте або скасовуйте будь-коли.",
+      loginNote: "Щоб підписатися або переглянути рахунки, увійдіть.",
+      loginLink: "Перейти до входу",
+      freeTitle: "Безкоштовно", freeTagline: "Ідеально для регулярного початку",
+      freeF1: "1 мова навчання (англійська)", freeF2: "До 2 уроків на день", freeF3: "Завдання та базовий відгук",
+      freeFootnote: "Завжди без картки",
+      ribbon: "Рекомендовано",
+      premTagline: "Більше мов, необмежена практика та відгук ШІ",
+      premF1: "Додаткові мови (крім англійської)", premF2: "Необмежені розширені уроки та завдання", premF3: "Детальний відгук ШІ",
+      premBtn: "Отримати Premium",
+      premFootnote: "Скасуйте будь-коли у своєму профілі. Якщо платіж не вдається, активується пільговий період 24 год.",
+      billingTitle: "Історія виставлення рахунків", billingSub: "Платежі обробляються Stripe. Тільки ви можете бачити цю інформацію.",
+      colProvider: "Постачальник", colAmount: "Сума", colStatus: "Статус", colPaid: "Оплачено", colPeriod: "Закінчується / період",
+      errLoginRequired: "Увійдіть, щоб продовжити оформлення Premium.",
+      errCheckout: "Помилка запуску платіжного шлюзу.",
+      billingNoSession: "Увійдіть, щоб переглянути історію рахунків.",
+      billingInvalid: "Недійсна сесія.",
+      billingPremiumOnly: "Детальна історія доступна для Premium-підписників.",
+      billingLoadErr: "Не вдалося завантажити історію рахунків. Спробуйте пізніше.",
+      billingEmpty: "Рахунків поки немає. Ваші платежі з'являться тут.",
+      billingConnErr: "Помилка з'єднання.",
     },
   },
 };
@@ -1976,13 +2155,14 @@ function coerceUserId(v) {
 async function login() {
   if (!validateLoginClientSide()) return;
 
+  const u = (getUiPack(getCurrentUiLangSync()).login) || {};
   const email = document.getElementById("login-email")?.value?.trim() || "";
   const password = document.getElementById("login-password")?.value || "";
   const btn = document.getElementById("login-btn");
   const a11y = typeof CoreSpeakA11y !== "undefined" ? CoreSpeakA11y : null;
-  const defaultLabel = btn?.textContent?.trim() || "Iniciar sesión";
-  if (a11y) a11y.setBusy(btn, true, "Iniciando sesión…", defaultLabel);
-  setLoginFormMessage("Comprobando tus datos. Te llevaremos a tu panel en unos segundos…", "info");
+  const defaultLabel = btn?.textContent?.trim() || u.submit || "Iniciar sesión";
+  if (a11y) a11y.setBusy(btn, true, u.msgBusy || "Iniciando sesión…", defaultLabel);
+  setLoginFormMessage(u.msgChecking || "Comprobando tus datos. Te llevaremos a tu panel en unos segundos…", "info");
 
   let res;
   try {
@@ -1994,7 +2174,7 @@ async function login() {
   } catch (e) {
     console.warn("login: red", e);
     if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
-    setLoginFormError("No se pudo conectar. Comprueba tu red e inténtalo de nuevo.");
+    setLoginFormError(u.errNetwork || "No se pudo conectar. Comprueba tu red e inténtalo de nuevo.");
     return;
   }
 
@@ -2002,12 +2182,12 @@ async function login() {
     const data = await res.json().catch(() => ({}));
     const fromApi = formatApiErrorDetail(data);
     if (res.status === 401) {
-      setLoginFormError(fromApi || "Correo o contraseña incorrectos.");
+      setLoginFormError(fromApi || u.errCredentials || "Correo o contraseña incorrectos.");
     } else if (res.status === 422) {
-      setLoginFormError(fromApi || "Revisa el correo y la contraseña.");
+      setLoginFormError(fromApi || u.errValidation || "Revisa el correo y la contraseña.");
     } else {
       console.warn("login: HTTP", res.status, data);
-      setLoginFormError(fromApi || "No se pudo iniciar sesión. Inténtalo más tarde.");
+      setLoginFormError(fromApi || u.errServer || "No se pudo iniciar sesión. Inténtalo más tarde.");
     }
     if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
     return;
@@ -2017,7 +2197,7 @@ async function login() {
   if (data.access_token == null || String(data.access_token).trim() === "") {
     console.warn("login: respuesta sin token");
     if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
-    setLoginFormError("Respuesta del servidor incompleta. Inténtalo de nuevo.");
+    setLoginFormError(u.errResponse || "Respuesta del servidor incompleta. Inténtalo de nuevo.");
     return;
   }
 
@@ -2042,7 +2222,7 @@ async function login() {
   if (uid == null) {
     console.warn("login: no se pudo obtener user_id", data);
     if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
-    setLoginFormError("No se pudo identificar tu usuario. Inténtalo de nuevo.");
+    setLoginFormError(u.errNoUser || "No se pudo identificar tu usuario. Inténtalo de nuevo.");
     return;
   }
 
@@ -2050,7 +2230,7 @@ async function login() {
   setStoredToken(data.access_token);
   localStorage.setItem(USER_ID_KEY, String(uid));
   if (a11y) a11y.setBusy(btn, false, "", defaultLabel);
-  setLoginFormMessage("Sesión iniciada correctamente. Entrando al panel…", "ok");
+  setLoginFormMessage(u.msgSuccess || "Sesión iniciada correctamente. Entrando al panel…", "ok");
   setTimeout(function () {
     window.location.href = "dashboard.html";
   }, 350);
@@ -2752,23 +2932,25 @@ async function initCoreSpeakAppNav() {
   if (navBtn && navBtn.dataset.bound !== "1") {
     navBtn.dataset.bound = "1";
     navBtn.addEventListener("click", function () {
-      void startPremiumCheckoutGeneric(null, navBtn);
+      window.location.href = "pricing.html";
     });
   }
 }
 
 async function startPremiumCheckoutGeneric(msgEl, btn) {
+  const p = (getUiPack(getCurrentUiLangSync()).pricing) || {};
   if (msgEl) {
     msgEl.classList.add("d-none");
     msgEl.textContent = "";
   }
   const headers = apiHeaders();
   if (!headers) {
+    const loginMsg = p.errLoginRequired || "Inicia sesión para continuar con el pago Premium.";
     if (msgEl) {
-      msgEl.textContent = "Inicia sesión para continuar con el pago Premium.";
+      msgEl.textContent = loginMsg;
       msgEl.classList.remove("d-none");
     } else {
-      alert("Inicia sesión para continuar con el pago Premium.");
+      alert(loginMsg);
     }
     return;
   }
@@ -2781,10 +2963,10 @@ async function startPremiumCheckoutGeneric(msgEl, btn) {
       body: JSON.stringify(payload),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.checkout_url) throw new Error(data.detail || "No se pudo iniciar Stripe Checkout");
+    if (!res.ok || !data.checkout_url) throw new Error(data.detail || p.errCheckout || "No se pudo iniciar Stripe Checkout");
     window.location.href = data.checkout_url;
   } catch (err) {
-    const msg = (err && err.message) || "Error iniciando la pasarela de pago.";
+    const msg = (err && err.message) || p.errCheckout || "Error iniciando la pasarela de pago.";
     if (msgEl) {
       msgEl.textContent = msg;
       msgEl.classList.remove("d-none");
@@ -2835,12 +3017,12 @@ async function initDashboardPremiumCta() {
     if (navBtn.dataset.bound !== "1") {
       navBtn.dataset.bound = "1";
       navBtn.addEventListener("click", function () {
-        void startPremiumCheckoutGeneric(msg, btn);
+        window.location.href = "pricing.html";
       });
     }
   }
   btn.addEventListener("click", function () {
-    void startPremiumCheckoutGeneric(msg, btn);
+    window.location.href = "pricing.html";
   });
 }
 
@@ -4634,6 +4816,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (document.getElementById("agenda-tbody")) {
     initAgendaPage().catch((err) => console.error("initAgendaPage", err));
+  }
+
+  // Pricing page: mostrar nav según estado de sesión
+  if (document.getElementById("pricing-nav")) {
+    const token = getStoredToken();
+    const guestNav = document.getElementById("pricing-nav-guest");
+    const authNav  = document.getElementById("pricing-nav-auth");
+    if (token) {
+      if (guestNav) guestNav.classList.add("d-none");
+      if (authNav)  authNav.classList.remove("d-none");
+    }
+    // Wiring del botón logout en pricing
+    document.querySelectorAll("#pricing-nav .corespeak-logout").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        clearStoredToken();
+        window.location.href = "/";
+      });
+    });
   }
 });
 

@@ -2,26 +2,61 @@
 html {
     overflow-x: clip;
     max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #F3E8FF;
 }
 
 body {
-    background: linear-gradient(
-        135deg,
-        #F3E8FF,
-        #ECFEFF,
-        #F3E8FF
-    );
-    min-height: 100vh;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    background: linear-gradient(135deg, #F3E8FF, #ECFEFF, #F3E8FF) no-repeat;
+    background-size: 100% max(100%, 100vh);
     overflow-x: clip;
     max-width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 .dashboard-header {
-    background-color: #fff; /* Fondo blanco para la barra */
+    background-color: #fff;
     padding: 10px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra sutil */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+/* Botón volver — páginas internas del dashboard */
+.dash-back-btn {
+    color: #2f3744;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 999px;
+    background: #eef3fa;
+    border: 1px solid #c9daf1;
+    padding: 0.5rem 0.95rem;
+    box-shadow: 0 3px 10px rgba(57, 82, 125, 0.1);
+    text-decoration: none;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, color 0.12s ease;
+}
+.dash-back-btn:hover {
+    color: #242c39;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(57, 82, 125, 0.14);
+}
+.dash-back-btn:active { transform: translateY(0); }
+
+/* Compensar la altura del header fijo (~95px: logo 75px + padding 20px) */
+.dashboard-content,
+main.dashboard-content {
+    padding-top: calc(95px + 1rem) !important;
+}
+
+.main-content,
+main.main-content {
+    padding-top: calc(95px + 1.25rem) !important;
 }
 
 .dashboard-logo {

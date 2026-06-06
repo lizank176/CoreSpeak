@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+  <meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoreSpeak - Iniciar sesión</title>
   <link rel="icon" type="image/png" href="/ui/img/favicon-corespeak.png?v=3">
@@ -16,7 +17,14 @@
 <body class="login-page auth-page">
     <a href="#main-content" class="skip-link">Saltar al contenido</a>
 
-    <div class="gradient-bg login-scene d-flex justify-content-center align-items-center min-vh-100">
+    <div class="gradient-bg login-scene d-flex justify-content-center align-items-center min-vh-100" style="padding-top: 3rem;">
+        <a href="/" class="auth-back-btn d-flex align-items-center position-absolute" style="top: 1.25rem; left: 1.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" class="auth-back-icon" aria-hidden="true">
+                <circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.35"/>
+                <path d="M12.9 7.2L9.2 11l3.7 3.8" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="ms-1" style="position:relative;top:-1px;" data-i18n="login.backToHome">Volver al inicio</span>
+        </a>
         <div class="login-orb orb-a" aria-hidden="true"></div>
         <div class="login-orb orb-b" aria-hidden="true"></div>
         <div class="login-orb orb-c" aria-hidden="true"></div>
@@ -26,7 +34,7 @@
                 <main id="main-content" class="login-card login-card-enhanced shadow-lg p-4 rounded-4 col-12 col-md-8 col-lg-5" tabindex="-1">
 
                 <div class="text-center mb-3 logo ">
-                    <a href="dashboard.html" class="text-decoration-none d-inline-block corespeak-logo-wrap" aria-label="Ir al inicio de CoreSpeak"><img src="/ui/img/logo.png?v=20260529hq" alt="" class="logo-img corespeak-logo-img"><span class="corespeak-logo-alt" aria-hidden="true">CoreSpeak</span></a>
+                    <a href="/" class="text-decoration-none d-inline-block corespeak-logo-wrap" aria-label="Ir al inicio de CoreSpeak"><img src="/ui/img/logo.png?v=20260529hq" alt="" class="logo-img corespeak-logo-img"><span class="corespeak-logo-alt" aria-hidden="true">CoreSpeak</span></a>
                 </div>
 
                 <div class="login-content-block">

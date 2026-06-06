@@ -2,82 +2,125 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="theme-color" content="#ffffff">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CoreSpeak - Planes</title>
   <link rel="icon" type="image/png" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="shortcut icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link rel="apple-touch-icon" href="/ui/img/favicon-corespeak.png?v=3">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=20260606a">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icon-css@3.5.0/css/flag-icon.min.css">
+  <link rel="stylesheet" href="dashboard.css?v=20260606d">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="pricing.css">
   <link rel="stylesheet" href="a11y.css?v=20260605z">
+  <style>
+    /* Navbar idéntico al de la landing — clases exclusivas de #pricing-nav para no colisionar */
+    html, body.pricing-page { margin: 0; padding: 0; }
+    #pricing-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.05); padding: 18px 0; }
+    body.pricing-page { padding-top: 116px; }
+    #pricing-nav .ln-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    #pricing-nav .ln-logo { display: inline-flex; align-items: center; text-decoration: none; flex-shrink: 0; margin-left: -20px; }
+    #pricing-nav .ln-logo img { height: 76px; width: auto; display: block; }
+    #pricing-nav .ln-links { display: flex; align-items: center; gap: .25rem; flex: 1; justify-content: center; }
+    #pricing-nav .ln-link { font-size: .88rem; font-weight: 500; color: #4b5563; text-decoration: none; padding: .4rem .75rem; border-radius: 999px; transition: color .14s, background .14s; white-space: nowrap; }
+    #pricing-nav .ln-link:hover { color: #7c3aed; background: rgba(124,58,237,.06); }
+    #pricing-nav .ln-actions { display: flex; align-items: center; gap: 1.8rem; flex-shrink: 0; }
+    #pricing-nav .ln-btns { display: flex; align-items: center; gap: .5rem; }
+    #pricing-nav .ln-btn-ghost { color: #7c3aed; background: transparent; border: 1.5px solid rgba(124,58,237,.3); border-radius: 999px; padding: .45rem 1.1rem; font-weight: 600; font-size: .9rem; text-decoration: none; transition: background .15s, transform .12s; white-space: nowrap; }
+    #pricing-nav .ln-btn-ghost:hover { background: rgba(124,58,237,.06); border-color: rgba(124,58,237,.5); color: #7c3aed; transform: translateY(-1px); text-decoration: none; }
+    #pricing-nav .ln-btn-primary { background: linear-gradient(90deg,#9a4dff,#00c2ff); color: #fff !important; border: none; border-radius: 999px; padding: .45rem 1.25rem; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 18px rgba(95,53,175,.22); text-decoration: none; transition: opacity .15s, transform .12s; white-space: nowrap; cursor: pointer; font-family: inherit; }
+    #pricing-nav .ln-btn-primary:hover { opacity: .93; transform: translateY(-1px); }
+  </style>
 </head>
 <body class="pricing-page m-0">
   <a href="#main-content" class="skip-link">Saltar al contenido</a>
-  <div class="container-fluid p-0">
-    <div class="dashboard-header">
-      <div class="container-fluid" id="corespeak-dashboard-nav-root"></div>
-    </div>
-  </div>
 
-  <main id="main-content" class="container py-4 py-md-5 px-3" tabindex="-1">
+  <!-- Nav idéntico al de la landing, adaptado según sesión -->
+  <nav id="pricing-nav" aria-label="Navegación principal">
+    <div class="container ln-inner">
+      <a href="/" class="ln-logo" aria-label="CoreSpeak — Inicio">
+        <img src="/ui/img/logo.png" alt="CoreSpeak">
+      </a>
+      <nav class="ln-links d-none d-lg-flex" aria-label="Secciones">
+        <a href="/ui/landing.html#features"     class="ln-link" data-i18n="landing.navFeatures">Características</a>
+        <a href="/ui/landing.html#como-funciona" class="ln-link" data-i18n="landing.navHow">Cómo funciona</a>
+        <a href="/ui/landing.html#idiomas"       class="ln-link" data-i18n="landing.navLangs">Idiomas</a>
+        <a href="/ui/pricing.html"               class="ln-link" style="color:#7c3aed;font-weight:700;" data-i18n="landing.navPricing">Precios</a>
+      </nav>
+      <div class="ln-actions">
+        <div id="landing-lang-slot"></div>
+        <!-- Sin sesión -->
+        <div id="pricing-nav-guest" class="ln-btns">
+          <a href="/ui/inicio_session.html" class="ln-btn-ghost" data-i18n="landing.navLogin">Iniciar sesión</a>
+          <a href="/ui/registrarse.html"    class="ln-btn-primary" data-i18n="landing.navCta">Empezar gratis</a>
+        </div>
+        <!-- Con sesión (oculto hasta que JS lo active) -->
+        <div id="pricing-nav-auth" class="ln-btns d-none">
+          <a href="dashboard.html"       class="ln-btn-ghost" data-i18n="nav.dashboard">Dashboard</a>
+          <button type="button" class="ln-btn-primary corespeak-logout" data-i18n="nav.logout">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main-content" class="container pb-4 pb-md-5 pt-2 pt-md-3 px-3" tabindex="-1">
     <div class="pricing-hero">
       <span class="pricing-hero-badge">CoreSpeak</span>
-      <h1>Planes y precios</h1>
-      <p class="pricing-hero-lead">
-        Aprende inglés con nuestro plan gratuito o desbloquea todo el potencial con Premium. Puedes cambiar o cancelar cuando quieras.
+      <h1 data-i18n="pricing.title">Planes y precios</h1>
+      <p class="pricing-hero-lead" data-i18n="pricing.lead">
+        Aprende idiomas con nuestro plan gratuito o desbloquea todo el potencial con Premium. Puedes cambiar o cancelar cuando quieras.
       </p>
     </div>
 
     <div id="pricing-login-note" class="alert py-3 px-4 d-none" role="status">
-      Para contratar o ver tu facturación, inicia sesión.
-      <a href="inicio_session.html" class="register-link fw-semibold">Ir a iniciar sesión</a>
+      <span data-i18n="pricing.loginNote">Para contratar o ver tu facturación, inicia sesión.</span>
+      <a href="inicio_session.html" class="register-link fw-semibold" data-i18n="pricing.loginLink">Ir a iniciar sesión</a>
     </div>
 
     <div class="pricing-grid">
       <article class="pricing-card pricing-card--free">
-        <h2 class="pricing-card-title">Gratis</h2>
-        <p class="pricing-card-tagline">Ideal para empezar con constancia</p>
+        <h2 class="pricing-card-title" data-i18n="pricing.freeTitle">Gratis</h2>
+        <p class="pricing-card-tagline" data-i18n="pricing.freeTagline">Ideal para empezar con constancia</p>
         <ul class="pricing-feature-list">
           <li>
             <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-            <span>1 idioma de estudio (inglés)</span>
+            <span data-i18n="pricing.freeF1">1 idioma de estudio (inglés)</span>
           </li>
           <li>
             <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-            <span>Hasta 2 lecciones al día</span>
+            <span data-i18n="pricing.freeF2">Hasta 2 lecciones al día</span>
           </li>
           <li>
             <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-            <span>Retos y feedback básico</span>
+            <span data-i18n="pricing.freeF3">Retos y feedback básico</span>
           </li>
         </ul>
-        <p class="pricing-footnote mb-0">Siempre sin tarjeta</p>
+        <p class="pricing-footnote mb-0" data-i18n="pricing.freeFootnote">Siempre sin tarjeta</p>
       </article>
 
       <article class="pricing-card pricing-card--featured position-relative">
-        <span class="pricing-ribbon">Recomendado</span>
+        <span class="pricing-ribbon" data-i18n="pricing.ribbon">Recomendado</span>
         <h2 class="pricing-card-title">Premium</h2>
-        <p class="pricing-card-price">5<small> â‚¬/mes</small></p>
-        <p class="pricing-card-tagline">Más idiomas, práctica ilimitada y feedback con IA</p>
+        <p class="pricing-card-price">5<small> €/mes</small></p>
+        <p class="pricing-card-tagline" data-i18n="pricing.premTagline">Más idiomas, práctica ilimitada y feedback con IA</p>
         <ul class="pricing-feature-list">
           <li>
             <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-            <span>Idiomas adicionales (además de inglés)</span>
+            <span data-i18n="pricing.premF1">Idiomas adicionales (además de inglés)</span>
           </li>
           <li>
             <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-            <span>Lecciones y retos avanzados ilimitados</span>
+            <span data-i18n="pricing.premF2">Lecciones y retos avanzados ilimitados</span>
           </li>
           <li>
             <svg class="pricing-check" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-            <span>Feedback con IA en detalle</span>
+            <span data-i18n="pricing.premF3">Feedback con IA en detalle</span>
           </li>
         </ul>
         <div id="pricing-checkout-msg" class="small text-danger text-center" aria-live="polite"></div>
-        <button type="button" id="btn-premium" class="btn pricing-btn-gradient mt-1">Obtener Premium</button>
-        <p class="pricing-footnote">
+        <button type="button" id="btn-premium" class="btn pricing-btn-gradient mt-1" data-i18n="pricing.premBtn">Obtener Premium</button>
+        <p class="pricing-footnote" data-i18n="pricing.premFootnote">
           Cancela cuando quieras desde tu perfil. Si un cargo falla, activamos un periodo de gracia de 24 h.
         </p>
       </article>
@@ -85,17 +128,17 @@
 
     <section class="pricing-section-history" aria-labelledby="history-heading">
       <div class="pricing-history-card">
-        <h2 id="history-heading" class="pricing-history-title">Historial de facturación</h2>
-        <p class="pricing-history-sub">Pagos procesados con Stripe. Solo tú puedes ver esta información.</p>
+        <h2 id="history-heading" class="pricing-history-title" data-i18n="pricing.billingTitle">Historial de facturación</h2>
+        <p class="pricing-history-sub" data-i18n="pricing.billingSub">Pagos procesados con Stripe. Solo tú puedes ver esta información.</p>
         <div class="pricing-table-wrap table-responsive">
           <table class="table table-sm align-middle">
             <thead>
               <tr>
-                <th>Proveedor</th>
-                <th>Importe</th>
-                <th>Estado</th>
-                <th>Pagado</th>
-                <th>Vence / periodo</th>
+                <th data-i18n="pricing.colProvider">Proveedor</th>
+                <th data-i18n="pricing.colAmount">Importe</th>
+                <th data-i18n="pricing.colStatus">Estado</th>
+                <th data-i18n="pricing.colPaid">Pagado</th>
+                <th data-i18n="pricing.colPeriod">Vence / periodo</th>
               </tr>
             </thead>
             <tbody id="billing-body">
@@ -129,6 +172,14 @@
           ? { Authorization: "Bearer " + token, "Content-Type": "application/json" }
           : null;
 
+      function p(key, fallback) {
+        if (typeof getUiPack === "function" && typeof getCurrentUiLangSync === "function") {
+          var val = (getUiPack(getCurrentUiLangSync()).pricing || {})[key];
+          if (val) return val;
+        }
+        return fallback;
+      }
+
       if (loginNote) {
         if (!auth) {
           loginNote.classList.remove("d-none");
@@ -141,15 +192,15 @@
         void fetch(apiUrl("/api/billing/history"), { headers })
           .then(function (res) {
             if (res.status === 401) {
-              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>Sesión no válida. <a class=\"register-link\" href='inicio_session.html'>Iniciar sesión</a></td></tr>";
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>" + p("billingInvalid", "Sesión no válida.") + " <a class=\"register-link\" href='inicio_session.html'>" + p("billingInvalidLink", "Iniciar sesión") + "</a></td></tr>";
               return;
             }
             if (res.status === 402) {
-              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>El historial detallado está disponible para suscriptores Premium. Después de contratar, verás aquí tus facturas.</td></tr>";
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>" + p("billingPremiumOnly", "El historial detallado está disponible para suscriptores Premium.") + "</td></tr>";
               return;
             }
             if (!res.ok) {
-              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>No se pudo cargar el historial. Inténtalo más tarde.</td></tr>";
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>" + p("billingLoadErr", "No se pudo cargar el historial. Inténtalo más tarde.") + "</td></tr>";
               return;
             }
             return res.json();
@@ -159,7 +210,7 @@
               return;
             }
             if (rows.length === 0) {
-              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>Aún no hay facturas. Cuando tengas un pago, aparecerá aquí.</td></tr>";
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>" + p("billingEmpty", "Aún no hay facturas. Cuando tengas un pago, aparecerá aquí.") + "</td></tr>";
               return;
             }
             tbody.innerHTML = rows
@@ -188,12 +239,12 @@
           })
           .catch(function () {
             if (tbody) {
-              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>Error de conexión.</td></tr>";
+              tbody.innerHTML = "<tr><td colspan='5' class='text-muted text-center py-4'>" + p("billingConnErr", "Error de conexión.") + "</td></tr>";
             }
           });
       } else if (tbody) {
         tbody.innerHTML =
-          "<tr><td colspan='5' class='text-muted text-center py-4'>Inicia sesión para ver el historial de facturación.</td></tr>";
+          "<tr><td colspan='5' class='text-muted text-center py-4'>" + p("billingNoSession", "Inicia sesión para ver el historial de facturación.") + "</td></tr>";
       }
 
       if (btn) {
@@ -218,7 +269,7 @@
               .then(function (o) {
                 if (!o.r.ok || !o.d.checkout_url) {
                   if (msg) {
-                    msg.textContent = o.d.detail || "No se pudo iniciar el pago";
+                    msg.textContent = o.d.detail || p("errCheckout", "No se pudo iniciar el pago.");
                     msg.className = "small text-danger text-center";
                   }
                   return;

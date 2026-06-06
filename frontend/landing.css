@@ -57,6 +57,30 @@ body.landing-page {
     width: auto;
 }
 
+.landing-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.landing-nav-link {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #4b5563;
+    text-decoration: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    transition: color 0.14s ease, background 0.14s ease;
+    white-space: nowrap;
+}
+
+.landing-nav-link:hover {
+    color: #7c3aed;
+    background: rgba(124, 58, 237, 0.06);
+}
+
 .landing-nav-actions {
     display: flex;
     align-items: center;

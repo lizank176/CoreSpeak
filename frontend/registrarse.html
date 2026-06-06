@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+  <meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoreSpeak - Crear cuenta</title>
   <link rel="icon" type="image/png" href="/ui/img/favicon-corespeak.png?v=3">
@@ -20,7 +21,7 @@
     <div class="gradient-bg min-vh-100 d-flex justify-content-center align-items-start ">
 
         <div class="container mt-4">
-            <a href="inicio_session.html" class="back-arrow auth-back-btn d-flex align-items-center col-12 col-md-8 col-lg-6 mx-auto mb-2">
+            <a href="/" class="back-arrow auth-back-btn d-flex align-items-center col-12 col-md-8 col-lg-6 mx-auto mb-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"
                     class="auth-back-icon" aria-hidden="true">
                     <circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.35"/>
@@ -33,7 +34,7 @@
                 <main id="main-content" class="login-card login-card-enhanced registrar shadow-lg p-4 rounded-4 col-12 col-md-8 col-lg-6" tabindex="-1">
 
                     <div class="text-center mb-2 logo">
-                        <a href="dashboard.html" class="text-decoration-none d-inline-block corespeak-logo-wrap" aria-label="Ir al inicio de CoreSpeak"><img src="/ui/img/logo.png?v=20260529hq" alt="" class="logo-img corespeak-logo-img"><span class="corespeak-logo-alt" aria-hidden="true">CoreSpeak</span></a>
+                        <a href="/" class="text-decoration-none d-inline-block corespeak-logo-wrap" aria-label="Ir al inicio de CoreSpeak"><img src="/ui/img/logo.png?v=20260529hq" alt="" class="logo-img corespeak-logo-img"><span class="corespeak-logo-alt" aria-hidden="true">CoreSpeak</span></a>
                     </div>
 
                     <h1 class="h3 text-center mb-2" data-i18n="register.title">Crear cuenta</h1>
@@ -45,7 +46,7 @@
                     <form id="register-form" novalidate>
 
                         <fieldset class="border-0 p-0 m-0 mb-3">
-                            <legend class="form-label fw-semibold mb-3">Datos personales</legend>
+                            <legend class="form-label fw-semibold mb-3" data-i18n="register.sectionPersonal">Datos personales</legend>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="register-nombre" data-i18n="register.name">Nombre</label>
@@ -73,7 +74,7 @@
                         </div>
 
                         <fieldset class="border-0 p-0 m-0 mb-3">
-                            <legend class="form-label fw-semibold mb-3">Contraseña</legend>
+                            <legend class="form-label fw-semibold mb-3" data-i18n="register.password">Contraseña</legend>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="register-password" data-i18n="register.password">Contraseña</label>
@@ -83,7 +84,7 @@
                                             <img src="img/eye-closed.svg" alt="" class="password-eye-icon" width="22" height="14" aria-hidden="true">
                                         </button>
                                     </div>
-                                    <span id="register-password-hint" class="form-text text-muted small">Mínimo 8 caracteres, con número y símbolo.</span>
+                                    <span id="register-password-hint" class="form-text text-muted small" data-i18n="register.passwordHint">Mínimo 8 caracteres, con número y símbolo.</span>
                                     <span id="register-password-error" class="a11y-field-error d-none" role="alert"></span>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -101,7 +102,7 @@
 
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" id="register-consent" required aria-describedby="register-consent-error">
-                            <label class="form-check-label small" for="register-consent">
+                            <label class="form-check-label small" for="register-consent" data-i18n="register.consent">
                                 Acepto los términos, política de privacidad y tratamiento de datos (RGPD).
                             </label>
                             <span id="register-consent-error" class="a11y-field-error d-none" role="alert"></span>
